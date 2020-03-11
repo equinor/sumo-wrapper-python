@@ -6,6 +6,6 @@ setup(
     version='0.1',
     author='Lindvar Lagran',
     author_email='llag@equinor.com',
-    install_requires=['azure'],
+    install_requires=['adal'],
     packages=['sumo']
 )
