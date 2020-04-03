@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='SumoSurfacePython',
+    name='sumo-surface-python',
     url='https://github.com/equinor/sumo-surface-python',
     version='0.1',
     author='Lindvar Lagran',
