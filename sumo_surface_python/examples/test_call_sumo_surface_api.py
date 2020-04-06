@@ -1,4 +1,4 @@
-from sumo.call_sumo_surface_api import CallSumoSurfaceApi
+from sumo_surface_python.call_sumo_surface_api import CallSumoSurfaceApi
 
 
 class TestCallSumoSurfaceApi:
@@ -9,7 +9,7 @@ class TestCallSumoSurfaceApi:
 
     def save_json(self):
         json = {"name": "Lindvar", "age": 44, "car": "Audi"}
-        post_objects_results = self.api.save__top_level_json(json=json)
+        post_objects_results = self.api.save_top_level_json(json=json)
         result = post_objects_results['result']
         if result == 'created':
             return post_objects_results['_id']

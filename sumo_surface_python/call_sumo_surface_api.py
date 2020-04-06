@@ -1,4 +1,4 @@
-from sumo.call_azure_api import CallAzureApi
+from .call_azure_api import CallAzureApi
 
 
 class CallSumoSurfaceApi:
@@ -58,7 +58,7 @@ class CallSumoSurfaceApi:
         url = f"{self.dev_base_url}/objects('{object_id}')"
         return self.callAzureApi.get_json(url, bearer)
 
-    def save__top_level_json(self, json, bearer=None):
+    def save_top_level_json(self, json, bearer=None):
         """
                      Adds a new top-level json object to SUMO.
 
