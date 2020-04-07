@@ -5,3 +5,4 @@ build
 SumoSurfacePython.egg-info/
 *.log
 .cache/
+sumo/__pycache__/

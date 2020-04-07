@@ -6,8 +6,26 @@ class CallSumoSurfaceApi:
         This class can be used for calling the Sumo Surface APi.
     """
 
-    dev_base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com'
+
     dev_resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
+
+    def __init__(self, env='prod'):
+        if env == 'prod':
+            self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com'
+        else:
+            self.base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com'
+
+        self.callAzureApi = CallAzureApi(self.dev_resource_id)
+
+    def __str__(self):
+        sb = []
+        for key in self.__dict__:
+            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
+
+        return ', '.join(sb)
+
+    def __repr__(self):
+        return self.__str__()
 
     def get_bear_token(self):
         """
@@ -37,7 +55,7 @@ class CallSumoSurfaceApi:
                         Search results.
 
         """
-        url = f'{self.dev_base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
+        url = f'{self.base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
         if buckets:
             url = f'{url}&$buckets={buckets}'
 
@@ -55,7 +73,7 @@ class CallSumoSurfaceApi:
                         json:
                             Json document for the given objectId.
         """
-        url = f"{self.dev_base_url}/objects('{object_id}')"
+        url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.get_json(url, bearer)
 
     def save__top_level_json(self, json, bearer=None):
@@ -70,7 +88,7 @@ class CallSumoSurfaceApi:
                         json:
                             A json object that includes the id of the newly created object.
         """
-        return self.__post_objects__(json=json, bearer=bearer)
+        return self._post_objects_(json=json, bearer=bearer)
 
     def save_child_level_json(self, object_id, json, bearer=None):
         """
@@ -87,7 +105,7 @@ class CallSumoSurfaceApi:
                         json:
                             A json object that includes the id of the newly created object.
         """
-        return self.__post_objects__(object_id=object_id, json=json, bearer=bearer)
+        return self._post_objects_(object_id=object_id, json=json, bearer=bearer)
 
     def get_blob(self, object_id, bearer=None):
         """
@@ -101,7 +119,7 @@ class CallSumoSurfaceApi:
                         binary:
                             Binary-stream for the objectId.
         """
-        url = f"{self.dev_base_url}/objects('{object_id}')/blob"
+        url = f"{self.base_url}/objects('{object_id}')/blob"
         return self.callAzureApi.get_content(url, bearer)
 
     def save_blob(self, object_id, blob, bearer=None):
@@ -117,7 +135,7 @@ class CallSumoSurfaceApi:
                         json:
                             A json object that includes the id of the newly updated object.
         """
-        return self.__post_objects__(object_id=object_id, blob=blob, bearer=bearer)
+        return self._post_objects_(object_id=object_id, blob=blob, bearer=bearer)
 
     def delete_object(self, object_id, bearer=None):
         """
@@ -131,26 +149,15 @@ class CallSumoSurfaceApi:
                         json:
                             A json object that includes the id of the deleted object.
         """
-        url = f"{self.dev_base_url}/objects('{object_id}')"
+        url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_json(url, bearer)
 
-    def __post_objects__(self, object_id=None, blob=None, json=None, bearer=None):
-        url = f'{self.dev_base_url}/objects'
+    def _post_objects_(self, object_id=None, blob=None, json=None, bearer=None):
+        url = f'{self.base_url}/objects'
         if object_id:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
         return self.callAzureApi.post_json(url, blob, json, bearer)
 
-    def __init__(self):
-        self.callAzureApi = CallAzureApi(self.dev_resource_id)
 
-    def __str__(self):
-        sb = []
-        for key in self.__dict__:
-            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
-
-        return ', '.join(sb)
-
-    def __repr__(self):
-        return self.__str__()
