@@ -1,1 +1,1 @@
-from ._fmu import SurfacesOnDisk, SurfaceOnDisk, SurfaceOnSumo
+from ._fmu import SurfacesOnDisk, SurfaceOnDisk, SurfaceOnSumo, IterationOnDisk

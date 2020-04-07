@@ -8,7 +8,8 @@ class TestCallSumoSurfaceApi:
         self.api.get_bear_token()
 
     def save_json(self):
-        json = {"name": "Lindvar", "age": 44, "car": "Audi"}
+        #json = {"name": "Lindvar", "age": 44, "car": "Audi"}
+        json = {"surfacename": "ones", "some_metadata": {"field1": "1", "field2": "2"}, "some_ints": {"field3": 3, "field4": 4}, "some_floats": {"field5": 5.0, "field6": 6.0}}
         post_objects_results = self.api.save_top_level_json(json=json)
         result = post_objects_results['result']
         if result == 'created':

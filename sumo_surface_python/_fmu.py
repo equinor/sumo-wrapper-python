@@ -26,8 +26,47 @@ class NoMetadataError(Error):
     corresponding metadata"""
     pass
 
+class IterationOnDisk:
+    def __init__(self, manifest_path:str):
+        self._manifest = self._load_manifest(manifest_path)
+        self.api = CallSumoSurfaceApi()
+        self.api.get_bear_token()
+
+    @property
+    def manifest(self):
+        return self._manifest
+
+    def upload(self):
+        """Upload the manifest to initialize this iteration on Sumo"""
+
+        object_id = self._upload_manifest(self.manifest)
+
+        return object_id
+
+    def _upload_manifest(self, manifest:dict):
+        """Given a manifest dict, upload it to Sumo"""
+        post_object_results = self.api.save_top_level_json(json=manifest)
+        result = post_object_results.get('result', None)
+        if not result == 'created':
+            raise SumoObjectNotCreated
+        return post_object_results.get('_id')
+
+
+    def _load_manifest(self, manifest_path:str):
+        """Given manifest path, load the yaml file, return dict"""
+
+        if not os.path.isfile(manifest_path):
+            raise IOError('File does not exist: {}'.format(manifest_path))
+
+        with open(manifest_path, 'r') as stream:
+            yaml_data = yaml.safe_load(stream)
+
+        return yaml_data
+
+
+
 class SurfacesOnDisk:
-    def __init__(self, surface_paths:list):
+    def __init__(self, surface_paths:list, iteration_id:str):
         """
         Class for many surfaces, which in turn calls the Surface class
         The purpose of this class is to facilitate uploading of multiple
@@ -37,6 +76,7 @@ class SurfacesOnDisk:
 
         """
 
+        self.iteration_id = iteration_id
         self.api = CallSumoSurfaceApi()
         self.api.get_bear_token()
         self.surfaces = self.load_surfaces(surface_paths)
@@ -52,38 +92,67 @@ class SurfacesOnDisk:
         """Upload the surfaces"""
 
         for surface in self.surfaces:
-            object_id = self._upload_metadata(surface.metadata)
-            #object_id_blob = _self.upload_bytestring(object_id=object_id, blob=surface.blob)
+            object_id = self._upload_metadata(metadata=surface.metadata, iteration_id=self.iteration_id)
+            object_id_blob = self._upload_bytestring(object_id=object_id, blob=surface.bytestring)
 
         return {'object_id': object_id,
-                'object_id_blob' : 123, #object_id_blob
+                'object_id_blob' : object_id_blob,
                 }
 
-    def _upload_metadata(self, metadata):
+    def _upload_metadata(self, metadata, iteration_id:str):
         print('upload_metadata')
-        print(type(metadata))
+        metadata = self._clean_metadata(metadata)
+
+        #if not self._is_json(d=metadata):
+        #    print(metadata)
+        #    raise ValueError('metadata is not valid JSON')
+
+        #post_object_results = self.api.save_top_level_json(json=metadata)
+
+        print(iteration_id)
         print(metadata)
-        post_object_results = self.api.save_top_level_json(json=metadata)
+        post_object_results = self.api.save_child_level_json(json=metadata, object_id=iteration_id)
         result = post_object_results.get('result', None)
         if not result == 'created':
             raise SumoObjectNotCreated
         print('/upload_metadata')
-        return result
+        return post_object_results.get('_id')
 
     def _upload_bytestring(self, object_id, blob):
         post_object_results = self.api.save_blob(object_id=object_id, blob=blob)
         result = post_object_results.get('result', None)
         if not result == 'updated':
             raise SumoObjectNotCreated
-        return result
+        return post_object_results.get('_id')
+
+    def _datetime_to_str(self, metadata:dict):
+        """Temporary (?) fix for datetime in incoming yaml, not serializable."""
+        datetime = metadata.get('datetime', None)
+        if datetime:
+            #metadata['datetime'] = str(datetime)
+            del(metadata['datetime'])
+
+        return metadata
+
+    def _clean_metadata(self, metadata:dict):
+
+        metadata = self._datetime_to_str(metadata)
+
+        return metadata
 
 
+    def _is_json(self, d:dict):
+        try:
+            json.loads(d)
+            return True
+        except:
+            return False
 
 class SurfaceOnDisk:
     """Class for handling one single surface from disk"""
     def __init__(self, surface_path:str):
         self._metadata_yaml = self.load_metadata(surface_path)
-        self._metadata = self.dict_to_json(self._metadata_yaml)
+        self._metadata = self._metadata_yaml #self.dict_to_json(self._metadata_yaml)
         self._bytestring = self.surface_to_bytestring(surface_path)
 
     @property
