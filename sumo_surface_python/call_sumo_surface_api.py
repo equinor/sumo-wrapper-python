@@ -6,7 +6,7 @@ class CallSumoSurfaceApi:
         This class can be used for calling the Sumo Surface APi.
     """
 
-    self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
+    dev_resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
 
     def __init__(self, env='prod'):
         if env == 'prod':
@@ -14,7 +14,7 @@ class CallSumoSurfaceApi:
         else:
             self.base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com'
 
-        self.callAzureApi = CallAzureApi(self.resource_id)
+        self.callAzureApi = CallAzureApi(self.dev_resource_id)
 
     def __str__(self):
         sb = []
@@ -169,5 +169,3 @@ class CallSumoSurfaceApi:
 
         return ', '.join(sb)
 
-    def __repr__(self):
-        return self.__str__()
