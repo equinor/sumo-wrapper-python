@@ -113,6 +113,9 @@ class CallAzureApi:
 
         return response.content
 
+
+        #### Hvorfor blob??
+
     def post_json(self, url, blob=None, json=None, bearer=None):
         """
                 Post binary or json to the url and return the response as json.
@@ -137,7 +140,9 @@ class CallAzureApi:
             self.bearer = bearer
 
         headers = {"Content-Type": "application/json",
-                   "Authorization": self.bearer}
+                   "Authorization": self.bearer,
+                   "Content-Length" : len(json),
+                   }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
 
@@ -166,7 +171,8 @@ class CallAzureApi:
             self.bearer = bearer
 
         headers = {"Content-Type": "application/json",
-                   "Authorization": self.bearer}
+                   "Authorization": self.bearer,
+                   }
 
         response = requests.delete(url, headers=headers)
 
