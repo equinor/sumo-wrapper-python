@@ -141,7 +141,6 @@ class CallAzureApi:
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer,
-                   "Content-Length" : len(json),
                    }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
