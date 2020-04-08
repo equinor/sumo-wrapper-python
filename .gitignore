@@ -3,6 +3,7 @@ dist
 build
 .idea
 SumoSurfacePython.egg-info/
+sumo_surface.egg-info/
 *.log
 .cache/
-sumo/__pycache__/
+sumo_surface_python/__pycache__/
