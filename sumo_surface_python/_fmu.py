@@ -111,21 +111,12 @@ class SurfacesOnDisk:
 
     def _upload_metadata(self, metadata, iteration_id:str):
         metadata = self._clean_metadata(metadata)
-        post_object_results = self.api.save_child_level_json(json=metadata, 
-                                                        object_id=iteration_id)
-        result = post_object_results.get('result', None)
-        if result not in ['updated', 'created']:
-            print('result was: {}'.format(result))
-            raise SumoObjectNotCreated()
-        return post_object_results.get('_id')
+        returned_object_id = self.api.save_child_level_json(json=metadata, object_id=iteration_id)
+        return returned_object_id
 
     def _upload_bytestring(self, object_id, blob):
-        post_object_results = self.api.save_blob(object_id=object_id, blob=blob)
-        result = post_object_results.get('result', None)
-        if not result == 'updated':
-            print('result was: {}'.format(result))
-            raise SumoObjectNotCreated()
-        return post_object_results.get('_id')
+        returned_object_id = self.api.save_blob(object_id=object_id, blob=blob)
+        return returned_object_id
 
     def _datetime_to_str(self, metadata:dict):
         """Temporary (?) fix for datetime in incoming yaml, not serializable."""
