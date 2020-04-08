@@ -1,9 +1,10 @@
 from .call_sumo_surface_api import CallSumoSurfaceApi
-from xtgeo import RegularSurface
+import xtgeo
 import os
 import yaml
 import json
 import time
+import io
 
 class Error(Exception):
    """Base class for other exceptions"""
@@ -45,11 +46,8 @@ class IterationOnDisk:
 
     def _upload_manifest(self, manifest:dict):
         """Given a manifest dict, upload it to Sumo"""
-        post_object_results = self.api.save_top_level_json(json=manifest)
-        result = post_object_results.get('result', None)
-        if not result == 'created':
-            raise SumoObjectNotCreated
-        return post_object_results.get('_id')
+        returned_object_id = self.api.save_top_level_json(json=manifest)
+        return returned_object_id
 
 
     def _load_manifest(self, manifest_path:str):
@@ -93,9 +91,9 @@ class SurfacesOnDisk:
 
         _t0 = time.perf_counter()
         for surface in self.surfaces:
-            print('Uploading {}'.format(surface.basename))
             object_id = self._upload_metadata(metadata=surface.metadata, iteration_id=self.iteration_id)
             object_id_blob = self._upload_bytestring(object_id=object_id, blob=surface.bytestring)
+            print('{} - object_id: {}'.format(surface.basename, object_id))
 
         _t1 = time.perf_counter()
 
@@ -212,17 +210,59 @@ class SurfaceOnDisk:
         return bytestring
 
 
+class SurfacesOnSumo:
+    """Class for handling surfaces stored on Sumo. """
+
+
+    def __init__(self, parent_id:str):
+        """
+        parent_id: The unique ID for the specific run
+
+        """
+
+        self.parent_id = parent_id
+        self.api = CallSumoSurfaceApi()
+        self.api.get_bear_token()
+        self.surfaces = self._find_surfaces(parent_id=parent_id)
+
+    def __repr__(self):
+        print(f'''
+            <SurfacesOnSumo>
+            Surfaces initialized: {len(self.surfaces)}
+            ''')
+
+    def _find_surfaces(self, parent_id:str):
+        """Send a search query to Sumo, return object ID list"""
+
+        query = f"_sumo.parent_object:{parent_id}"
+        search_results = self.api.search(query=query)
+        #def search(self, query, select=None, buckets=None, search_from=0, search_size=10, bearer=None):
+
+        hits = search_results.get('hits').get('hits')
+
+        surfaces = [SurfaceOnSumo(object_id=hit.get('_id'), api=self.api) for hit in hits]
+
+        return surfaces
+
+
 class SurfaceOnSumo:
     """Class for handling surfaces stored on Sumo"""
 
-    def __init__(self, object_id):
-        self.api = CallSumoSurfaceApi()
-        self.api.get_bear_token()
-        self._bytestring = None
+    def __init__(self, object_id, api=None):
 
-        self.metadata, self.bytestring = self.get_from_sumo(object_id)
-
+        if not api:
+            self.api = CallSumoSurfaceApi()
+            self.api.get_bear_token()
+        else:
+            self.api = api
+        
+        self.object_id = object_id
+        self.metadata = self.get_metadata(object_id=object_id)
+        self.bytestring = self.get_bytestring(object_id=object_id)
         self.regularsurface = self.bytestring_to_regularsurface(self.bytestring)
+
+    def __repr__(self):
+        return f"""ID: {self.object_id}"""
 
     def get_from_sumo(self, object_id):
         """Download surface with this object_id from Sumo"""
@@ -236,7 +276,7 @@ class SurfaceOnSumo:
         found = result.get('found', None)
         if not found:
             raise SumoObjectNotFound
-        return result.get('_id')
+        return result.get('_source')   # <-- as incoming yaml
 
     def get_bytestring(self, object_id):
         result = self.api.get_blob(object_id=object_id)
@@ -246,7 +286,7 @@ class SurfaceOnSumo:
         """Given a downloaded bytestring, make xtgeo.RegularSurface,
         return xtgeo.RegularSurface object"""
 
-        regularsurface = xtgeo.RegularSurface(bytestring)
+        regularsurface = xtgeo.RegularSurface(io.BytesIO(bytestring))
         return regularsurface
 
     def to_file(self, filename):
