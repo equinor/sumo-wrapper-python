@@ -3,7 +3,6 @@ from xtgeo import RegularSurface
 import os
 import yaml
 import json
-import webbrowser
 
 class Error(Exception):
    """Base class for other exceptions"""

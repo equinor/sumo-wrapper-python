@@ -1,0 +1,11 @@
+README.md
+setup.py
+sumo_surface.egg-info/PKG-INFO
+sumo_surface.egg-info/SOURCES.txt
+sumo_surface.egg-info/dependency_links.txt
+sumo_surface.egg-info/requires.txt
+sumo_surface.egg-info/top_level.txt
+sumo_surface_python/__init__.py
+sumo_surface_python/_fmu.py
+sumo_surface_python/call_azure_api.py
+sumo_surface_python/call_sumo_surface_api.py
