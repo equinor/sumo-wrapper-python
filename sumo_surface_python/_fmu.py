@@ -4,6 +4,7 @@ import os
 import yaml
 import json
 import webbrowser
+import time
 
 class Error(Exception):
    """Base class for other exceptions"""
@@ -91,38 +92,40 @@ class SurfacesOnDisk:
     def upload(self):
         """Upload the surfaces"""
 
+        _t0 = time.perf_counter()
         for surface in self.surfaces:
+            print('Uploading {}'.format(surface.basename))
             object_id = self._upload_metadata(metadata=surface.metadata, iteration_id=self.iteration_id)
             object_id_blob = self._upload_bytestring(object_id=object_id, blob=surface.bytestring)
 
-        return {'object_id': object_id,
-                'object_id_blob' : object_id_blob,
-                }
+        _t1 = time.perf_counter()
+
+        _dt = _t1-_t0
+
+        print(f'Uploaded {len(self.surfaces)} surfaces in {_dt:0.4f} seconds')
+
+        return {'elements' : [s.basename for s in self.surfaces],
+                'count' : len(self.surfaces),
+                'time_start' : _t0,
+                'time_end' : _t1,
+                'time_elapsed' : _dt,}
 
     def _upload_metadata(self, metadata, iteration_id:str):
-        print('upload_metadata')
         metadata = self._clean_metadata(metadata)
-
-        #if not self._is_json(d=metadata):
-        #    print(metadata)
-        #    raise ValueError('metadata is not valid JSON')
-
-        #post_object_results = self.api.save_top_level_json(json=metadata)
-
-        print(iteration_id)
-        print(metadata)
-        post_object_results = self.api.save_child_level_json(json=metadata, object_id=iteration_id)
+        post_object_results = self.api.save_child_level_json(json=metadata, 
+                                                        object_id=iteration_id)
         result = post_object_results.get('result', None)
-        if not result == 'created':
-            raise SumoObjectNotCreated
-        print('/upload_metadata')
+        if result not in ['updated', 'created']:
+            print('result was: {}'.format(result))
+            raise SumoObjectNotCreated()
         return post_object_results.get('_id')
 
     def _upload_bytestring(self, object_id, blob):
         post_object_results = self.api.save_blob(object_id=object_id, blob=blob)
         result = post_object_results.get('result', None)
         if not result == 'updated':
-            raise SumoObjectNotCreated
+            print('result was: {}'.format(result))
+            raise SumoObjectNotCreated()
         return post_object_results.get('_id')
 
     def _datetime_to_str(self, metadata:dict):
@@ -154,6 +157,11 @@ class SurfaceOnDisk:
         self._metadata_yaml = self.load_metadata(surface_path)
         self._metadata = self._metadata_yaml #self.dict_to_json(self._metadata_yaml)
         self._bytestring = self.surface_to_bytestring(surface_path)
+        self._basename = os.path.basename(surface_path)
+
+    @property
+    def basename(self):
+        return self._basename
 
     @property
     def bytestring(self):
