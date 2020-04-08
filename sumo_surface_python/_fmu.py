@@ -3,7 +3,6 @@ from xtgeo import RegularSurface
 import os
 import yaml
 import json
-import webbrowser
 import time
 
 class Error(Exception):

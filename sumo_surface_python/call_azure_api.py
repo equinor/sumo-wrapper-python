@@ -116,7 +116,7 @@ class CallAzureApi:
 
         #### Hvorfor blob??
 
-    def post_json(self, url, blob=None, json=None, bearer=None):
+    def post(self, url, blob=None, json=None, bearer=None):
         """
                 Post binary or json to the url and return the response as json.
 
@@ -130,14 +130,16 @@ class CallAzureApi:
                     bearer
                         Optional, if not entered it will generate one by calling the get_bear_token method
                 Return
-                        json:
-                            The json respond from the entered URL
+                        string:
+                            The string respond from the entered URL
         """
         if bearer is None:
             if self.bearer is None:
                 self.get_bear_token()
         else:
             self.bearer = bearer
+
+
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer,
@@ -148,7 +150,7 @@ class CallAzureApi:
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
-        return response.json()
+        return response.text
 
     def delete_json(self, url, bearer=None):
         """

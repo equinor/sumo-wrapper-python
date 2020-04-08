@@ -85,8 +85,8 @@ class CallSumoSurfaceApi:
                         bearer string, Azure OAuth2 bear token Default: will create one.
 
                     Return
-                        json:
-                            A json object that includes the id of the newly created object.
+                        string:
+                            The object_id of the newly updated object.
         """
         return self._post_objects(json=json, bearer=bearer)
 
@@ -102,8 +102,8 @@ class CallSumoSurfaceApi:
                         bearer string, Azure OAuth2 bear token Default: will create one.
 
                     Return
-                        json:
-                            A json object that includes the id of the newly created object.
+                        string:
+                            The object_id of the newly updated object.
         """
         return self._post_objects(object_id=object_id, json=json, bearer=bearer)
 
@@ -132,8 +132,8 @@ class CallSumoSurfaceApi:
                         bearer string, Azure OAuth2 bear token Default: will create one.
 
                     Return
-                        json:
-                            A json object that includes the id of the newly updated object.
+                        string:
+                            The object_id of the newly updated object.
         """
         return self._post_objects(object_id=object_id, blob=blob, bearer=bearer)
 
@@ -158,5 +158,5 @@ class CallSumoSurfaceApi:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
-        return self.callAzureApi.post_json(url, blob, json, bearer)
+        return self.callAzureApi.post(url, blob, json, bearer)
 
