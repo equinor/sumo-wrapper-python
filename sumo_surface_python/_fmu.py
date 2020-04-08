@@ -27,11 +27,43 @@ class NoMetadataError(Error):
     corresponding metadata"""
     pass
 
+
+class SumoConnection:
+    """Object to hold authentication towards Sumo"""
+
+    def __init__(self):
+        self._api = None
+
+    @property
+    def api(self):
+        if self._api is None:
+            self._api = self._establish_connection()
+        return self._api
+
+    def refresh(self):
+        """Re-create the connection"""
+        self._api = self._establish_connection()        
+
+    def _establish_connection(self):
+        """Establish the connection with Sumo API, take user through
+        2-factor authentication. Keep the connection."""
+
+        api = CallSumoSurfaceApi()
+        api.get_bear_token()
+
+        return api
+
+
+
 class IterationOnDisk:
-    def __init__(self, manifest_path:str):
+    def __init__(self, manifest_path:str, api=None):
         self._manifest = self._load_manifest(manifest_path)
-        self.api = CallSumoSurfaceApi()
-        self.api.get_bear_token()
+
+        if api is None:
+            _A = SumoConnection()
+            self.api = _A.api
+        else:
+            self.api = api
 
     @property
     def manifest(self):
@@ -64,7 +96,7 @@ class IterationOnDisk:
 
 
 class SurfacesOnDisk:
-    def __init__(self, surface_paths:list, iteration_id:str):
+    def __init__(self, surface_paths:list, iteration_id:str, api=None):
         """
         Class for many surfaces, which in turn calls the Surface class
         The purpose of this class is to facilitate uploading of multiple
@@ -75,8 +107,13 @@ class SurfacesOnDisk:
         """
 
         self.iteration_id = iteration_id
-        self.api = CallSumoSurfaceApi()
-        self.api.get_bear_token()
+
+        if api is None:
+            _A = SumoConnection()
+            self.api = _A.api
+        else:
+            self.api = api
+
         self.surfaces = self.load_surfaces(surface_paths)
 
     def load_surfaces(self, surface_paths:list):
@@ -138,6 +175,7 @@ class SurfacesOnDisk:
             return True
         except:
             return False
+
 
 class SurfaceOnDisk:
     """Class for handling one single surface from disk"""
@@ -214,15 +252,20 @@ class SurfacesOnSumo:
     """Class for handling surfaces stored on Sumo. """
 
 
-    def __init__(self, parent_id:str):
+    def __init__(self, parent_id:str, api=None):
         """
         parent_id: The unique ID for the specific run
 
         """
 
         self.parent_id = parent_id
-        self.api = CallSumoSurfaceApi()
-        self.api.get_bear_token()
+
+        if api is None:
+            _A = SumoConnection()
+            self.api = _A.api
+        else:
+            self.api = api
+
         self.surfaces = self._find_surfaces(parent_id=parent_id)
 
     def __repr__(self):
@@ -234,14 +277,17 @@ class SurfacesOnSumo:
     def _find_surfaces(self, parent_id:str):
         """Send a search query to Sumo, return object ID list"""
 
+        print(' --> finding surfaces on Sumo')
         query = f"_sumo.parent_object:{parent_id}"
         search_results = self.api.search(query=query)
         #def search(self, query, select=None, buckets=None, search_from=0, search_size=10, bearer=None):
 
         hits = search_results.get('hits').get('hits')
 
+        print(' --> Initializing Surface objects')
         surfaces = [SurfaceOnSumo(object_id=hit.get('_id'), api=self.api) for hit in hits]
 
+        print(' --> Returning list of Surface objects')
         return surfaces
 
 
@@ -250,43 +296,82 @@ class SurfaceOnSumo:
 
     def __init__(self, object_id, api=None):
 
-        if not api:
-            self.api = CallSumoSurfaceApi()
-            self.api.get_bear_token()
+        if api is None:
+            _A = SumoConnection()
+            self.api = _A.api
         else:
             self.api = api
         
         self.object_id = object_id
-        self.metadata = self.get_metadata(object_id=object_id)
-        self.bytestring = self.get_bytestring(object_id=object_id)
-        self.regularsurface = self.bytestring_to_regularsurface(self.bytestring)
+        self._metadata = None
+        self._bytestring = None
+        self._regularsurface = None
+
+    @property
+    def metadata(self):
+        if self._metadata is None:
+            self._metadata = self.get_metadata(object_id=self.object_id)
+        return self._metadata
+
+    @property
+    def bytestring(self):
+        if self._bytestring is None:
+            self._bytestring = self.get_bytestring(object_id=self.object_id)
+        return self._bytestring
+
+    @property
+    def regularsurface(self):
+        if self._regularsurface is None:
+            self._regularsurface = self.bytestring_to_regularsurface(self.bytestring)
+        return self._regularsurface
 
     def __repr__(self):
         return f"""ID: {self.object_id}"""
 
     def get_from_sumo(self, object_id):
         """Download surface with this object_id from Sumo"""
+
+        print(' --> Downloading metadata')
         _metadata = self.get_metadata(object_id=object_id)
+        print('     --> Done')
+        print(' --> Downloading bytestring')
         _bytestring = self.get_bytestring(object_id=object_id)
+        print('     --> Done')
 
         return _metadata, _bytestring
 
     def get_metadata(self, object_id):
+        _t0 = time.perf_counter()
+
         result = self.api.get_json(object_id=object_id)
         found = result.get('found', None)
         if not found:
             raise SumoObjectNotFound
+
+        _t1 = time.perf_counter()
+        _dt = _t1-_t0
+        print(f'Done in {_dt:0.4f} seconds')
+
         return result.get('_source')   # <-- as incoming yaml
 
     def get_bytestring(self, object_id):
+        print('  --> Bytestring from Sumo')
+        _t0 = time.perf_counter()
         result = self.api.get_blob(object_id=object_id)
+        _t1 = time.perf_counter()
+        _dt = _t1-_t0
+        print(f'    --> Done, {_dt:0.4f} seconds')
         return result
 
     def bytestring_to_regularsurface(self, bytestring):
         """Given a downloaded bytestring, make xtgeo.RegularSurface,
         return xtgeo.RegularSurface object"""
 
+        _t0 = time.perf_counter()        
+        print('  --> Bytestring --> xtgeo.RegularSurface()')
         regularsurface = xtgeo.RegularSurface(io.BytesIO(bytestring))
+        _dt = time.perf_counter() - _t0
+        print(f'    --> Done, {_dt:0.4f} seconds')
         return regularsurface
 
     def to_file(self, filename):
