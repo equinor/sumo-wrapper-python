@@ -95,6 +95,40 @@ class EnsembleOnDisk:
         return yaml_data
 
 
+class EnsembleOnSumo:
+    def __init__(self, ensemble_id:str, api=None):
+        """
+        sumo_ensemble_id: The unique ID for the specific run assigned by Sumo
+
+        Possible source of confusion: The ensemble_id is the one Sumo has assigned, not
+        the one that was given from the source.
+
+        """
+
+        self.ensemble_id = ensemble_id
+
+        if api is None:
+            _A = SumoConnection()
+            self.api = _A.api
+        else:
+            self.api = api
+
+        self._metadata = None
+
+        #self.surfaces = self._find_surfaces(ensemble_id=ensemble_id)
+
+    @property
+    def metadata(self):
+        if self._metadata is None:
+            self._metadata = self._get_metadata(ensemble_id=self.ensemble_id)
+        return self._metadata
+
+    def _get_metadata(self, ensemble_id:str):
+        """Get and store metadata for this run"""
+
+        data_from_sumo = self.api.get_json(object_id=ensemble_id)
+        return data_from_sumo
+
 
 class SurfacesOnDisk:
     def __init__(self, surface_paths:list, run_id:str, api=None):

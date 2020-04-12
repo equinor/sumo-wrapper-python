@@ -1,4 +1,4 @@
-from ._fmu import SurfacesOnDisk, SurfaceOnDisk 
-from ._fmu import SurfaceOnSumo, EnsembleOnDisk
-from ._fmu import SurfacesOnSumo, SumoConnection
+from ._fmu import SurfacesOnDisk, SurfaceOnDisk, SurfaceOnSumo, SurfacesOnSumo
+from ._fmu import EnsembleOnDisk, EnsembleOnSumo
+from ._fmu import SumoConnection
 
