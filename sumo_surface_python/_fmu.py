@@ -1,4 +1,4 @@
-from .call_sumo_surface_api import CallSumoSurfaceApi
+from ._call_sumo_surface_api import CallSumoSurfaceApi
 import xtgeo
 import os
 import yaml

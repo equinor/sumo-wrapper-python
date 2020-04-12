@@ -1,4 +1,4 @@
-from .call_azure_api import CallAzureApi
+from ._call_azure_api import CallAzureApi
 
 
 class CallSumoSurfaceApi:
