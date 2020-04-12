@@ -94,9 +94,43 @@ class EnsembleOnDisk:
 
         return yaml_data
 
+class EnsemblesOnSumo:
+    """Class for holding multiple ensembles on Sumo"""
+
+    def __init__(self, api=None):
+
+        if api is None:
+            _A = SumoConnection()
+            self.api = _A.api
+        else:
+            self.api = api
+
+        self.ensembles = self.get_ensembles()
+
+
+    def get_ensembles(self):
+        """Get list of ensembles from Sumo differentiated by their unique ID"""
+
+        query = "*"
+        search_results = self.api.search(query)
+        hits = search_results.get('hits').get('hits')
+
+        if hits is None:
+            print(f'hits not in search_results...')
+
+        if len(hits) == 0:
+            print(f'No hits for query {query}')
+
+        hit_ids = [h.get('_id') for h in hits]
+
+        ensembles = [EnsembleOnSumo(_id=_id, api=self.api) for _id in hit_ids]
+
+        return ensembles
 
 class EnsembleOnSumo:
-    def __init__(self, ensemble_id:str, api=None):
+    """Class for holding an ensemble stored on Sumo"""
+
+    def __init__(self, _id:str, api=None):
         """
         sumo_ensemble_id: The unique ID for the specific run assigned by Sumo
 
@@ -105,7 +139,7 @@ class EnsembleOnSumo:
 
         """
 
-        self.ensemble_id = ensemble_id
+        self._id = _id
 
         if api is None:
             _A = SumoConnection()
@@ -117,16 +151,19 @@ class EnsembleOnSumo:
 
         #self.surfaces = self._find_surfaces(ensemble_id=ensemble_id)
 
+    def __repr__(self):
+        return f"<EnsembleOnSumo> - ID: {self._id}"
+
     @property
     def metadata(self):
         if self._metadata is None:
-            self._metadata = self._get_metadata(ensemble_id=self.ensemble_id)
+            self._metadata = self._get_metadata(_id=self._id)
         return self._metadata
 
-    def _get_metadata(self, ensemble_id:str):
+    def _get_metadata(self, _id:str):
         """Get and store metadata for this run"""
 
-        data_from_sumo = self.api.get_json(object_id=ensemble_id)
+        data_from_sumo = self.api.get_json(object_id=_id)
         return data_from_sumo
 
 
