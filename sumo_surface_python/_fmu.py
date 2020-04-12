@@ -55,7 +55,8 @@ class SumoConnection:
 
 
 
-class IterationOnDisk:
+class EnsembleOnDisk:
+    """Class to hold information about an ERT run on disk"""
     def __init__(self, manifest_path:str, api=None):
         self._manifest = self._load_manifest(manifest_path)
 
@@ -70,7 +71,7 @@ class IterationOnDisk:
         return self._manifest
 
     def upload(self):
-        """Upload the manifest to initialize this iteration on Sumo"""
+        """Upload the manifest to initialize this run on Sumo"""
 
         object_id = self._upload_manifest(self.manifest)
 
@@ -96,7 +97,7 @@ class IterationOnDisk:
 
 
 class SurfacesOnDisk:
-    def __init__(self, surface_paths:list, iteration_id:str, api=None):
+    def __init__(self, surface_paths:list, run_id:str, api=None):
         """
         Class for many surfaces, which in turn calls the Surface class
         The purpose of this class is to facilitate uploading of multiple
@@ -106,7 +107,7 @@ class SurfacesOnDisk:
 
         """
 
-        self.iteration_id = iteration_id
+        self.run_id = run_id
 
         if api is None:
             _A = SumoConnection()
@@ -128,7 +129,7 @@ class SurfacesOnDisk:
 
         _t0 = time.perf_counter()
         for surface in self.surfaces:
-            object_id = self._upload_metadata(metadata=surface.metadata, iteration_id=self.iteration_id)
+            object_id = self._upload_metadata(metadata=surface.metadata, run_id=self.run_id)
             object_id_blob = self._upload_bytestring(object_id=object_id, blob=surface.bytestring)
             print('{} - object_id: {}'.format(surface.basename, object_id))
 
@@ -144,9 +145,9 @@ class SurfacesOnDisk:
                 'time_end' : _t1,
                 'time_elapsed' : _dt,}
 
-    def _upload_metadata(self, metadata, iteration_id:str):
+    def _upload_metadata(self, metadata, run_id:str):
         metadata = self._clean_metadata(metadata)
-        returned_object_id = self.api.save_child_level_json(json=metadata, object_id=iteration_id)
+        returned_object_id = self.api.save_child_level_json(json=metadata, object_id=run_id)
         return returned_object_id
 
     def _upload_bytestring(self, object_id, blob):
