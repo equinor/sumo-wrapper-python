@@ -123,23 +123,23 @@ class EnsemblesOnSumo:
 
         hit_ids = [h.get('_id') for h in hits]
 
-        ensembles = [EnsembleOnSumo(_id=_id, api=self.api) for _id in hit_ids]
+        ensembles = [EnsembleOnSumo(ensemble_id=_id, api=self.api) for _id in hit_ids]
 
         return ensembles
 
 class EnsembleOnSumo:
     """Class for holding an ensemble stored on Sumo"""
 
-    def __init__(self, _id:str, api=None):
+    def __init__(self, ensemble_id:str, api=None):
         """
-        sumo_ensemble_id: The unique ID for the specific run assigned by Sumo
+        ensemble_id: The unique ID for the specific run assigned by Sumo
 
         Possible source of confusion: The ensemble_id is the one Sumo has assigned, not
         the one that was given from the source.
 
         """
 
-        self._id = _id
+        self.ensemble_id = ensemble_id
 
         if api is None:
             _A = SumoConnection()
@@ -152,18 +152,18 @@ class EnsembleOnSumo:
         #self.surfaces = self._find_surfaces(ensemble_id=ensemble_id)
 
     def __repr__(self):
-        return f"<EnsembleOnSumo> - ID: {self._id}"
+        return f"<EnsembleOnSumo> - ID: {self.ensemble_id}"
 
     @property
     def metadata(self):
         if self._metadata is None:
-            self._metadata = self._get_metadata(_id=self._id)
+            self._metadata = self._get_metadata(ensemble_id=self.ensemble_id)
         return self._metadata
 
-    def _get_metadata(self, _id:str):
+    def _get_metadata(self, ensemble_id:str):
         """Get and store metadata for this run"""
 
-        data_from_sumo = self.api.get_json(object_id=_id)
+        data_from_sumo = self.api.get_json(object_id=ensemble_id)
         return data_from_sumo
 
 
