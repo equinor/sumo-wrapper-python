@@ -1,4 +1,4 @@
-from sumo.call_azure_api import CallAzureApi
+from ._call_azure_api import CallAzureApi
 
 
 class CallSumoSurfaceApi:
@@ -7,15 +7,15 @@ class CallSumoSurfaceApi:
     """
 
 
-    dev_resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
-
     def __init__(self, env='prod'):
         if env == 'prod':
             self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com'
         else:
             self.base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com'
 
-        self.callAzureApi = CallAzureApi(self.dev_resource_id)
+        self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
+
+        self.callAzureApi = CallAzureApi(self.resource_id)
 
     def __str__(self):
         sb = []
@@ -38,7 +38,7 @@ class CallSumoSurfaceApi:
         """
         return self.callAzureApi.get_bear_token()
 
-    def get_search(self, query, select=None, buckets=None, search_from=0, search_size=10, bearer=None):
+    def search(self, query, select=None, buckets=None, search_from=0, search_size=10, bearer=None):
         """
                  Search for specific objects.
 
@@ -76,7 +76,7 @@ class CallSumoSurfaceApi:
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.get_json(url, bearer)
 
-    def save__top_level_json(self, json, bearer=None):
+    def save_top_level_json(self, json, bearer=None):
         """
                      Adds a new top-level json object to SUMO.
 
@@ -85,10 +85,10 @@ class CallSumoSurfaceApi:
                         bearer string, Azure OAuth2 bear token Default: will create one.
 
                     Return
-                        json:
-                            A json object that includes the id of the newly created object.
+                        string:
+                            The object_id of the newly updated object.
         """
-        return self._post_objects_(json=json, bearer=bearer)
+        return self._post_objects(json=json, bearer=bearer)
 
     def save_child_level_json(self, object_id, json, bearer=None):
         """
@@ -102,10 +102,10 @@ class CallSumoSurfaceApi:
                         bearer string, Azure OAuth2 bear token Default: will create one.
 
                     Return
-                        json:
-                            A json object that includes the id of the newly created object.
+                        string:
+                            The object_id of the newly updated object.
         """
-        return self._post_objects_(object_id=object_id, json=json, bearer=bearer)
+        return self._post_objects(object_id=object_id, json=json, bearer=bearer)
 
     def get_blob(self, object_id, bearer=None):
         """
@@ -132,10 +132,10 @@ class CallSumoSurfaceApi:
                         bearer string, Azure OAuth2 bear token Default: will create one.
 
                     Return
-                        json:
-                            A json object that includes the id of the newly updated object.
+                        string:
+                            The object_id of the newly updated object.
         """
-        return self._post_objects_(object_id=object_id, blob=blob, bearer=bearer)
+        return self._post_objects(object_id=object_id, blob=blob, bearer=bearer)
 
     def delete_object(self, object_id, bearer=None):
         """
@@ -152,12 +152,11 @@ class CallSumoSurfaceApi:
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_json(url, bearer)
 
-    def _post_objects_(self, object_id=None, blob=None, json=None, bearer=None):
+    def _post_objects(self, object_id=None, blob=None, json=None, bearer=None):
         url = f'{self.base_url}/objects'
         if object_id:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
-        return self.callAzureApi.post_json(url, blob, json, bearer)
-
+        return self.callAzureApi.post(url, blob, json, bearer)
 

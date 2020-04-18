@@ -1,4 +1,4 @@
-from sumo.call_sumo_surface_api import CallSumoSurfaceApi
+from sumo_surface_python.call_sumo_surface_api import CallSumoSurfaceApi
 
 
 class TestCallSumoSurfaceApi:
@@ -8,22 +8,14 @@ class TestCallSumoSurfaceApi:
         self.api.get_bear_token()
 
     def save_json(self):
-        json = {"name": "Lindvar", "age": 44, "car": "Audi"}
-        post_objects_results = self.api.save__top_level_json(json=json)
-        result = post_objects_results['result']
-        if result == 'created':
-            return post_objects_results['_id']
-        else:
-            raise Exception(f'Object not created : {result}')
+        json = {"surfacename": "ones", "some_metadata": {"field1": "1", "field2": "2"}, "some_ints": {"field3": 3, "field4": 4}, "some_floats": {"field5": 5.0, "field6": 6.0}}
+        object_id = self.api.save_top_level_json(json=json)
+        return object_id
 
     def save_blob(self, object_id):
         b = b'123456789'
-        post_objects_results = self.api.save_blob(object_id=object_id, blob=b)
-        result = post_objects_results['result']
-        if result == 'updated':
-            return post_objects_results['_id']
-        else:
-            raise Exception(f'Object not created : {result}')
+        object_id = self.api.save_blob(object_id=object_id, blob=b)
+        return object_id
 
     def get_json(self, object_id):
         objects_results = self.api.get_json(object_id)
