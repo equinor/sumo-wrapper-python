@@ -45,8 +45,7 @@ class SumoConnection:
         self._api = self._establish_connection()        
 
     def _establish_connection(self):
-        """Establish the connection with Sumo API, take user through
-        2-factor authentication. Keep the connection."""
+        """Establish the connection with Sumo API, take user through 2FA."""
 
         api = CallSumoSurfaceApi()
         api.get_bear_token()
@@ -54,9 +53,12 @@ class SumoConnection:
         return api
 
 
-
 class EnsembleOnDisk:
-    """Class to hold information about an ERT run on disk"""
+    """
+    Class to hold information about an ERT run on disk.
+    Should perhaps be part of fmu.ensemble once it converges.
+    """
+
     def __init__(self, manifest_path:str, api=None):
         self._manifest = self._load_manifest(manifest_path)
 
@@ -74,14 +76,12 @@ class EnsembleOnDisk:
         """Upload the manifest to initialize this run on Sumo"""
 
         object_id = self._upload_manifest(self.manifest)
-
         return object_id
 
     def _upload_manifest(self, manifest:dict):
         """Given a manifest dict, upload it to Sumo"""
         returned_object_id = self.api.save_top_level_json(json=manifest)
         return returned_object_id
-
 
     def _load_manifest(self, manifest_path:str):
         """Given manifest path, load the yaml file, return dict"""
@@ -93,6 +93,7 @@ class EnsembleOnDisk:
             yaml_data = yaml.safe_load(stream)
 
         return yaml_data
+
 
 class EnsemblesOnSumo:
     """Class for holding multiple ensembles on Sumo"""
@@ -106,7 +107,6 @@ class EnsemblesOnSumo:
             self.api = api
 
         self.ensembles = self.get_ensembles()
-
 
     def get_ensembles(self):
         """Get list of ensembles from Sumo differentiated by their unique ID"""
@@ -126,6 +126,7 @@ class EnsemblesOnSumo:
         ensembles = [EnsembleOnSumo(ensemble_id=_id, api=self.api) for _id in hit_ids]
 
         return ensembles
+
 
 class EnsembleOnSumo:
     """Class for holding an ensemble stored on Sumo"""
@@ -159,6 +160,12 @@ class EnsembleOnSumo:
         if self._metadata is None:
             self._metadata = self._get_metadata(ensemble_id=self.ensemble_id)
         return self._metadata
+
+    def delete(self):
+        """Delete this ensemble from Sumo"""
+
+        # no good methods for this yet?
+        pass
 
     def _get_metadata(self, ensemble_id:str):
         """Get and store metadata for this run"""
@@ -322,7 +329,6 @@ class SurfaceOnDisk:
 
 class SurfacesOnSumo:
     """Class for handling surfaces stored on Sumo. """
-
 
     def __init__(self, parent_id:str, api=None):
         """
