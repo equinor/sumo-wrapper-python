@@ -1,6 +1,5 @@
 from ._call_azure_api import CallAzureApi
 
-
 class CallSumoSurfaceApi:
     """
         This class can be used for calling the Sumo Surface APi.

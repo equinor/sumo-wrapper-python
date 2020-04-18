@@ -1,4 +1,4 @@
-from sumo_surface_python.call_sumo_surface_api import CallSumoSurfaceApi
+from sumo_surface_python import CallSumoSurfaceApi
 
 
 class TestCallSumoSurfaceApi:
@@ -40,7 +40,7 @@ class TestCallSumoSurfaceApi:
             raise Exception(f'Object not deleted : {result}')
 
     def search(self):
-        search_results = self.api.get_search('name=Lindvar', 'name,age,car')
+        search_results = self.api.search('name=Lindvar', 'name,age,car')
         return search_results['hits']['total']['value']
 
 
