@@ -207,7 +207,9 @@ class SurfacesOnDisk:
 
         _t0 = time.perf_counter()
         for surface in self.surfaces:
+            print(f'upload metadata: {surface.metadata}')
             object_id = self._upload_metadata(metadata=surface.metadata, run_id=self.run_id)
+            print('upload binary')
             object_id_blob = self._upload_bytestring(object_id=object_id, blob=surface.bytestring)
             print('{} - object_id: {}'.format(surface.basename, object_id))
 
@@ -304,6 +306,11 @@ class SurfaceOnDisk:
 
         with open(ypath, 'r') as stream:
             ydata = yaml.safe_load(stream)
+
+
+        ## TEMP
+        ydata['source'] = "FMU"
+
 
         return ydata
 

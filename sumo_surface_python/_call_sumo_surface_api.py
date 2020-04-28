@@ -6,9 +6,9 @@ class CallSumoSurfaceApi:
     """
 
 
-    def __init__(self, env='dev'):
+    def __init__(self, env='prod'):
         if env == 'prod':
-            self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com'
+            self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com/api/v1'
         else:
             self.base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com/api/v1'
 
@@ -157,5 +157,7 @@ class CallSumoSurfaceApi:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
+
+        print(f'\nURL: {url}\n')
         return self.callAzureApi.post(url, blob, json, bearer)
 
