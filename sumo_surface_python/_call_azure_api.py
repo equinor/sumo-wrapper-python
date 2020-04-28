@@ -133,6 +133,9 @@ class CallAzureApi:
                         string:
                             The string respond from the entered URL
         """
+
+        print('post')
+
         if bearer is None:
             if self.bearer is None:
                 self.get_bear_token()
@@ -141,12 +144,16 @@ class CallAzureApi:
 
 
 
-        headers = {"Content-Type": "application/json",
+        headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
                    "Authorization": self.bearer,
                    "Content-Length" : str(len(json) if json != None else len(blob)),
                    }
 
+        print('headers: {}'.format(headers))
+
         response = requests.post(url, data=blob, json=json, headers=headers)
+
+        print('response: {}'.format(response))
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')

@@ -6,7 +6,7 @@ class CallSumoSurfaceApi:
     """
 
 
-    def __init__(self, env='prod'):
+    def __init__(self, env='dev'):
         if env == 'prod':
             self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com/api/v1'
         else:
