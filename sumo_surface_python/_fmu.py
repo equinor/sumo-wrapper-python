@@ -173,7 +173,6 @@ class EnsembleOnSumo:
         data_from_sumo = self.api.get_json(object_id=ensemble_id)
         return data_from_sumo
 
-
 class SurfacesOnDisk:
     def __init__(self, surface_paths:list, run_id:str, api=None):
         """
@@ -206,12 +205,16 @@ class SurfacesOnDisk:
         """Upload the surfaces"""
 
         _t0 = time.perf_counter()
+
         for surface in self.surfaces:
-            print(f'upload metadata: {surface.metadata}')
+            print(f'Uploading {surface.basename}')
+            print('  metadata', end='')
+            #print(f'  metadata: {surface.metadata}')
             object_id = self._upload_metadata(metadata=surface.metadata, run_id=self.run_id)
-            print('upload binary')
+            print(' OK')
+            print('  binary', end='')
             object_id_blob = self._upload_bytestring(object_id=object_id, blob=surface.bytestring)
-            print('{} - object_id: {}'.format(surface.basename, object_id))
+            print(' OK --> object_id: {}\n'.format(object_id))
 
         _t1 = time.perf_counter()
 
@@ -354,10 +357,10 @@ class SurfacesOnSumo:
         self.surfaces = self._find_surfaces(parent_id=parent_id)
 
     def __repr__(self):
-        print(f'''
+        return f'''
             <SurfacesOnSumo>
             Surfaces initialized: {len(self.surfaces)}
-            ''')
+            '''
 
     def _find_surfaces(self, parent_id:str):
         """Send a search query to Sumo, return object ID list"""
