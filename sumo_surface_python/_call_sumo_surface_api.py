@@ -158,6 +158,5 @@ class CallSumoSurfaceApi:
         if blob:
             url = f'{url}/blob'
 
-        print(f'\nURL: {url}\n')
         return self.callAzureApi.post(url, blob, json, bearer)
 
