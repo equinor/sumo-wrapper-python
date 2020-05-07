@@ -37,7 +37,7 @@ class CallSumoSurfaceApi:
         """
         return self.callAzureApi.get_bear_token()
 
-    def search(self, query, select=None, buckets=None, search_from=0, search_size=10, bearer=None):
+    def search(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
         """
                  Search for specific objects.
 
@@ -55,6 +55,17 @@ class CallSumoSurfaceApi:
 
         """
         url = f'{self.base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
+        if buckets:
+            url = f'{url}&$buckets={buckets}'
+
+        return self.callAzureApi.get_json(url, bearer)
+
+    def searchroot(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
+        """
+                Search for parent objects (object without parent)
+        """
+
+        url = f'{self.base_url}/searchroot?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
         if buckets:
             url = f'{url}&$buckets={buckets}'
 
@@ -149,10 +160,12 @@ class CallSumoSurfaceApi:
                             A json object that includes the id of the deleted object.
         """
         url = f"{self.base_url}/objects('{object_id}')"
+        print('url: {}'.format(url))
         return self.callAzureApi.delete_json(url, bearer)
 
     def _post_objects(self, object_id=None, blob=None, json=None, bearer=None):
         url = f'{self.base_url}/objects'
+        print(object_id)
         if object_id:
             url = f"{url}('{object_id}')"
         if blob:
