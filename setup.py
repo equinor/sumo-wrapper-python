@@ -7,7 +7,7 @@ setup(
     author='Lindvar Lagran',
     author_email='llag@equinor.com',
     install_requires=[
-                    'adal',
+                    'msal',
                     'xtgeo',
                     ],
     packages=['sumo_surface_python']

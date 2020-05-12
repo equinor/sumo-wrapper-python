@@ -32,10 +32,9 @@ class TestCallSumoSurfaceApi:
             raise Exception(f'blob is : {str_results}')
 
     def delete_object(self, object_id):
-        results = self.api.delete_object(object_id)
-        result = results['result']
-        if result == 'deleted':
-            return results['_id']
+        result = self.api.delete_object(object_id)
+        if result == 'ok':
+            return result
         else:
             raise Exception(f'Object not deleted : {result}')
 
