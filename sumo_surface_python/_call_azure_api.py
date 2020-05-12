@@ -1,6 +1,5 @@
-from adal import AuthenticationContext
 import requests
-
+from ._auth import Auth
 
 class CallAzureApi:
     """
@@ -12,16 +11,11 @@ class CallAzureApi:
                 resourceId:
                     Need to be an Azure resourceId
     """
-
-    tenant = "statoilsrm.onmicrosoft.com"
-    authorityHostUrl = "https://login.microsoftonline.com"
-    authority_url = (authorityHostUrl + '/' + tenant)
-
-    clientId = "1826bd7c-582f-4838-880d-5b4da5c3eea2"
+    client_id = "1826bd7c-582f-4838-880d-5b4da5c3eea2"
     bearer = None
 
-    def __init__(self, resourceId):
-        self.resourceId = resourceId
+    def __init__(self, resource_id):
+        self.auth = Auth(self.client_id, resource_id)
 
     def __str__(self):
         sb = []
@@ -42,15 +36,8 @@ class CallAzureApi:
                         accessToken:
                             The Bearer Authorization string
         """
-        context = AuthenticationContext(self.authority_url, validate_authority=self.tenant, cache=None,
-                                        api_version=None,
-                                        timeout=None, enable_pii=False)
-        code = context.acquire_user_code(self.resourceId, self.clientId)
 
-        print(code['message'])
-
-        token = context.acquire_token_with_device_code(self.resourceId, code, self.clientId)
-        self.bearer = "Bearer " + token['accessToken']
+        self.bearer = "Bearer " + self.auth.get_token()
 
         return self.bearer
 
