@@ -1,4 +1,3 @@
-from ._call_sumo_surface_api import CallSumoSurfaceApi
 import xtgeo
 import os
 import yaml
@@ -6,6 +5,10 @@ import json
 import time
 import io
 import glob
+import datetime
+
+from ._connection import SumoConnection
+from ._errors import *
 
 """
 
@@ -13,63 +16,35 @@ This file contains sketchy prototyping. NOT FOR PRODUCTION.
 
 """
 
-class Error(Exception):
-   """Base class for other exceptions"""
-   pass
+class Sumo:
+    """Main class to rule all classes. Or something."""
 
-class SumoObjectNotCreated(Error):
-   """Raised when and object was not created"""
-   pass
+    def __init__(self, api=None):
+        if api is None:
+            _A = SumoConnection()
+            self.api = _A.api
+        else:
+            self.api = api
 
-class SumoObjectNotFound(Error):
-   """Raised when the requested object was not found"""
-   pass
+    def __str__(self):
+        return f'{self.__class__}'
 
-class SumoObjectNotDeleted(Error):
-    """Raised when an object was not deleted"""
-    pass
+    def find_ensembles(self, select='source,field', buckets='source', query=None, **kwargs):
+        """Trigger search on Sumo, return EnsembleOnSumo instances"""
 
-class NoMetadataError(Error):
-    """Raised when a specific surface did not have
-    corresponding metadata"""
-    pass
+        if kwargs:
+            for kwarg in kwargs:
+                query += f'&${kwarg}'
 
-class MetadataError(Error):
-    """Raised when something went wrong reading from metadata"""
-    pass
+        if query is None:
+            query = '*'
 
-class DuplicateSumoEnsemblesError(Error):
-    """Raised when program finds more than one Sumo ensemble with the same fmu_ensemble_id"""
-    pass
+        print(f'query: {query}')
+        response = self.api.searchroot(query=query, select=select, buckets=buckets)
 
-class SumoDeleteFailed():
-    """Raised when a delete job failed"""
-    pass
+        hits = response.get('hits').get('hits')
 
-class SumoConnection:
-    """Object to hold authentication towards Sumo"""
-
-    def __init__(self):
-        self._api = None
-
-    @property
-    def api(self):
-        if self._api is None:
-            self._api = self._establish_connection()
-        return self._api
-
-    def refresh(self):
-        """Re-create the connection"""
-        self._api = self._establish_connection()        
-
-    def _establish_connection(self):
-        """Establish the connection with Sumo API, take user through 2FA."""
-
-        api = CallSumoSurfaceApi()
-        api.get_bear_token()
-
-        return api
-
+        return [EnsembleOnSumo(hit.get('_id'), api=self.api) for hit in hits]
 
 class EnsembleOnDisk:
     """
@@ -88,10 +63,11 @@ class EnsembleOnDisk:
         print('INIT EnsembleOnDisk')
 
         self._manifest = self._load_manifest(manifest_path)
-        self._fmu_id = None
+        self._fmu_ensemble_id = None
         self._files = []
         self._api = api
         self._sumo_ensemble_id = None
+        self._on_sumo = None
 
     def __str__(self):
         s = f'{self.__class__}, {len(self._files)} files.'
@@ -107,6 +83,12 @@ class EnsembleOnDisk:
 
     def __repr__(self):
         return str(self.__str__)
+
+    @property
+    def on_sumo(self):
+        if self._on_sumo is None:
+            self.find_ensemble_on_sumo()
+        return self._on_sumo            
 
     @property
     def api(self):
@@ -130,14 +112,32 @@ class EnsembleOnDisk:
         return self._sumo_ensemble_id
 
     @property
-    def fmu_id(self):
-        if self._fmu_id is None:
-            self._fmu_id = self._get_fmu_id()
-        return self._fmu_id
+    def fmu_ensemble_id(self):
+        if self._fmu_ensemble_id is None:
+            self._fmu_ensemble_id = self._get_fmu_ensemble_id()
+        return self._fmu_ensemble_id
 
     @property
     def files(self):
         return self._files
+
+    def find_ensemble_on_sumo(self):
+        """Call Sumo, search for this ensemble. Return True if found, and set self._sumo_ensemble_id.
+        return False if not.
+
+        Criteria for ensemble identified on Sumo: fmu_ensemble_id
+        """
+
+        ensembles_on_sumo = [e for e in EnsemblesOnSumo(api=self.api).ensembles]
+
+        for ensemble_on_sumo in ensembles_on_sumo:
+            if self.fmu_ensemble_id == ensemble_on_sumo.fmu_ensemble_id:
+                print('Found it on Sumo')
+                self.sumo_ensemble_id = ensemble_on_sumo.sumo_ensemble_id
+                return True
+            print('Not found on Sumo')
+            return False
+
 
     def add_files(self, searchstring):
         """Add files to the ensemble, based on searchstring"""
@@ -158,9 +158,16 @@ class EnsembleOnDisk:
 
         print('Getting SumoID')
 
-        # search for all ensembles on Sumo
+        # search for all ensembles on Sumo, matching on fmu_ensemble_id
         E = EnsemblesOnSumo(api=self.api)
-        matches = [m.sumo_ensemble_id for m in E.ensembles if m.fmu_id == self.fmu_id]
+        matches = [m.sumo_ensemble_id for m in E.ensembles if m.fmu_ensemble_id == self.fmu_ensemble_id]
+
+        print('fmu_ids on Sumo:')
+        for _id in [e.fmu_ensemble_id for e in E.ensembles]:
+            print(_id)
+
+        print('this fmu_ensemble_id:')
+        print(self.fmu_ensemble_id)
 
         if len(matches) == 0:
             print('No matching ensembles found on Sumo --> Not registered on Sumo')
@@ -197,9 +204,10 @@ class EnsembleOnDisk:
 
         return yaml_data
 
-    def _get_fmu_id(self):
+    def _get_fmu_ensemble_id(self):
         """Look up and return ensemble_id from manifest"""
-        eid = self.manifest.get('')
+        fmu_ensemble_id = self.manifest.get('fmu_ensemble_id')
+        return fmu_ensemble_id
 
     def upload(self, upload_files=True):
         """Trigger upload of ensemble"""
@@ -211,10 +219,15 @@ class EnsembleOnDisk:
 
         print('Uploaded')
 
+
 class EnsemblesOnSumo:
     """Class for holding multiple ensembles on Sumo"""
 
     def __init__(self, api=None):
+
+        """
+        ensembles: List of EnsembleOnSumo instances
+        """
 
         print('INIT EnsemblesOnSumo')
 
@@ -224,7 +237,11 @@ class EnsemblesOnSumo:
         else:
             self.api = api
 
-        self.ensembles = self.get_ensembles()
+        self._ensembles = self.get_ensembles()
+
+    @property
+    def ensembles(self):
+        return self._ensembles
 
     def get_ensembles(self):
         """Get list of ensembles from Sumo differentiated by their unique ID"""
@@ -250,7 +267,6 @@ class EnsemblesOnSumo:
 
         return ensembles
 
-
 class EnsembleOnSumo:
     """Class for holding an ensemble stored on Sumo"""
 
@@ -265,7 +281,7 @@ class EnsembleOnSumo:
         print('INIT EnsembleOnSumo. sumo_ensemble_id given: {}'.format(sumo_ensemble_id))
 
         self.sumo_ensemble_id = sumo_ensemble_id
-        self._fmu_id = None
+        self._fmu_ensemble_id = None
         self._casename = None
 
         if api is None:
@@ -274,28 +290,41 @@ class EnsembleOnSumo:
         else:
             self.api = api
 
-        self._manifest = None
+        self._metadata = None
+        self._data = None
 
     def __repr__(self):
-        return f"<EnsembleOnSumo> - SumoID: {self.sumo_ensemble_id}"
+        txt = f"""
+    <EnsembleOnSumo> - 
+    sumo_ensemble_id: {self.sumo_ensemble_id}
+    fmu_ensemble_id: {self.fmu_ensemble_id}
+    case: {self.casename}
+    user: {self.user}
+    """
+
+        return str(txt)
+
+    @property
+    def metadata(self):
+        if self._metadata is None:
+            self._metadata = self._get_metadata()
+        return self._metadata
 
     @property
     def manifest(self):
-        if self._manifest is None:
-            self._manifest = self._get_manifest(sumo_ensemble_id=self.sumo_ensemble_id)
-        return self._manifest
+        return self.metadata.get('_source')
 
     @property
-    def fmu_id(self):
-        if self._fmu_id is None:
-            self._fmu_id = self.manifest.get('fmu_ensemble_id')
-        return self._fmu_id
+    def fmu_ensemble_id(self):
+        return self.manifest.get('fmu_ensemble_id')
 
     @property
     def casename(self):
-        if self._casename is None:
-            self._casename = self.manifest.get('case')
-        return self._casename
+        return self.manifest.get('case')
+
+    @property
+    def user(self):
+        return self.manifest.get('user')
 
     def delete(self):
         """Delete this ensemble from Sumo"""
@@ -310,11 +339,19 @@ class EnsembleOnSumo:
 
         return response
 
-    def _get_manifest(self, sumo_ensemble_id:str):
-        """Get and store manifest (metadata) for this run"""
+    def data(self):
+        if self._data is None:
+            self._data = self._get_data()
+        return self._data
 
-        data_from_sumo = self.api.get_json(object_id=sumo_ensemble_id)
+    def _get_metadata(self):
+        """Get metadata for this ensemble"""
+        data_from_sumo = self.api.get_json(object_id=self.sumo_ensemble_id)
         return data_from_sumo
+
+    def _get_data(self):
+        """Get children for this ensemble"""
+        data_from_sumo = self.api.get_json()
 
 class FilesOnDisk:
 
@@ -369,24 +406,35 @@ class FileOnDisk:
         self._metadata = self.get_metadata(self.metadata_path)
         self._bytestring = self.file_to_bytestring(path)
         self._path = path
+        self._casename = None
         self._sumo_ensemble_id = None
+        self._sumo_file_id = None
+        self._sumo_file_id_blob = None
+        self._filepath_relative_to_case_root = None
         self._basename = None
         self._dirname = None
         self._dtype = None
         self._fformat = None
 
+        self._metadata['datetime'] = self._datetime_now()
+        self._metadata['id'] = self._id_block()
+        self._metadata['data']['relative_file_path'] = self.filepath_relative_to_case_root
+
+
     def __repr__(self):
         s =  f'\n# {self.__class__}'
         s += f'\n# Diskpath: {self.path}'
         s += f'\n# Basename: {self.basename}'
+        s += f'\n# Casename: {self.casename}'
+        s += f'\n# Relative path: {self.filepath_relative_to_case_root}'
         s += f'\n# Bytestring length: {len(self.bytestring)}'
         s += f'\n# Data type: {self.dtype}'
         s += f'\n# File format: {self.fformat}'
 
-        if self.sumo_ensemble_id is None:
+        if self.sumo_id is None:
             s += '\n# Not uploaded to Sumo'
         else:
-            s += f'\n# Uploaded to Sumo. Sumo_ID: {self.sumo_ensemble_id}'
+            s += f'\n# Uploaded to Sumo. Sumo_ID: {self.sumo_file_id}'
 
         s += '\n\n'
 
@@ -405,8 +453,32 @@ class FileOnDisk:
         self._sumo_ensemble_id = None
 
     @property
+    def sumo_file_id(self):
+        return self._sumo_file_id
+
+    @sumo_file_id.setter
+    def sumo_file_id(self, sumo_file_id):
+        self._sumo_file_id = sumo_file_id
+
+    @sumo_file_id.deleter
+    def sumo_file_id(self):
+        self._sumo_file_id = None
+
+    @property
+    def filepath_relative_to_case_root(self):
+        if self._filepath_relative_to_case_root is None:
+            self._filepath_relative_to_case_root = self._get_filepath_relative_to_case_root()
+        return self._filepath_relative_to_case_root
+
+    @property
     def path(self):
         return self._path
+
+    @property
+    def casename(self):
+        if self._casename is None:
+            self._casename = self._get_casename()
+        return self._casename
 
     @property
     def basename(self):
@@ -439,6 +511,36 @@ class FileOnDisk:
     @property
     def bytestring(self):
         return self._bytestring
+
+    def _id_block(self):
+        """Create the id block to the metadata"""
+        
+        if self.dtype == 'surface':
+            ids = ["data.relative_file_path", "fmu_ensemble_id"]
+        elif self.dtype == 'polygons':
+            ids = ["data.relative_file_path", "fmu_ensemble_id"]
+        else:
+            raise ValueError('Unknown data type: {}'.format(type))
+
+        return ids
+
+    def _datetime_now(self):
+        """Return datetime now on FMU standard format"""
+        return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    def _get_filepath_relative_to_case_root(self):
+        """Derive the local filepath from the absolute path"""
+        casename = self.metadata.get('case')
+        if casename not in self.path:
+            raise IOError('Could not find casename in filepath')
+        return self.path.split(casename)[-1][1:]
+
+    def _get_casename(self):
+        """Look up casename from metadata"""
+        casename = self.metadata.get('case')
+        if not casename:
+            raise MetadataError('Could not get casename from metadata')
+        return casename
 
     def _get_dtype(self):
         """Look up file format from metadata"""
@@ -499,6 +601,29 @@ class FileOnDisk:
 
         return bytestring
 
+    def _upload_metadata(self, api):
+        returned_object_id = api.save_child_level_json(json=self.metadata, object_id=self.sumo_file_id)
+        return returned_object_id
+
+    def _upload_bytestring(self, api):
+        returned_object_id = api.save_blob(object_id=self.sumo_file_id, blob=self.bytestring)
+        return returned_object_id
+
+    def upload_to_sumo(self, api=None):
+        """Upload this file to Sumo"""
+
+        # what if sumo_ensemble_id does not exist on Sumo?
+
+        print(f'  Uploading {self.basename}')
+        print('  > metadata')
+
+        self.sumo_file_id = self._upload_metadata(api=api)
+
+        print('  > bytestring')
+        self.sumo_file_id_blob = self._upload_bytestring(api=api)
+        print(' OK --> object_id: {}\n'.format(object_id))
+
+
 def UPLOAD_FILES(files:list, sumo_ensemble_id:str, api=None):
     """
     Upload files, including JSON, to specified ensemble
@@ -509,35 +634,10 @@ def UPLOAD_FILES(files:list, sumo_ensemble_id:str, api=None):
     Upload is kept outside classes to ease multithreading.
     """
 
-    def _upload_metadata(api, metadata:dict, object_id:str):
-        metadata = _clean_metadata(metadata)
-        returned_object_id = api.save_child_level_json(json=metadata, object_id=object_id)
-        return returned_object_id
-
-    def _upload_bytestring(api, object_id, blob):
-        returned_object_id = api.save_blob(object_id=object_id, blob=blob)
-        return returned_object_id
-
-    def _datetime_to_str(metadata:dict):
-        """Temporary (?) fix for datetime in incoming yaml, not serializable."""
-        datetime = metadata.get('datetime', None)
-        if datetime:
-            del(metadata['datetime'])
-        return metadata
-
-    def _clean_metadata(metadata:dict):
-        metadata = _datetime_to_str(metadata)
-        return metadata
-
     _t0 = time.perf_counter()
 
     for file in files:
-        print(f'  Uploading {file.basename}')
-        print('  > metadata')
-        object_id = _upload_metadata(api=api, metadata=file.metadata, object_id=sumo_ensemble_id)
-        print('  > bytestring')
-        object_id_blob = _upload_bytestring(api=api, blob=file.bytestring, object_id=object_id)
-        print(' OK --> object_id: {}\n'.format(object_id))
+        file.upload_to_sumo(api=api)
 
     _t1 = time.perf_counter()
     _dt = _t1-_t0
