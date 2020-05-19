@@ -7,6 +7,8 @@ import io
 import glob
 import datetime
 
+from concurrent.futures import ThreadPoolExecutor
+
 from ._connection import SumoConnection
 from ._errors import *
 
@@ -66,14 +68,14 @@ class EnsembleOnDisk:
         self._fmu_ensemble_id = None
         self._files = []
         self._api = api
-        self._sumo_ensemble_id = None
+        self._sumo_parent_id = None
         self._on_sumo = None
 
     def __str__(self):
         s = f'{self.__class__}, {len(self._files)} files.'
 
-        if self._sumo_ensemble_id is not None:
-            s += f'\nInitialized on Sumo. Sumo_ID: {self._sumo_ensemble_id}'
+        if self._sumo_parent_id is not None:
+            s += f'\nInitialized on Sumo. Sumo_ID: {self._sumo_parent_id}'
         else:
             s += '\nNot initialized on Sumo.'
 
@@ -106,10 +108,10 @@ class EnsembleOnDisk:
         return self._manifest.get('case')
 
     @property
-    def sumo_ensemble_id(self):
-        if self._sumo_ensemble_id is None:
-            self._sumo_ensemble_id = self._get_sumo_ensemble_id()
-        return self._sumo_ensemble_id
+    def sumo_parent_id(self):
+        if self._sumo_parent_id is None:
+            self._sumo_parent_id = self._get_sumo_parent_id()
+        return self._sumo_parent_id
 
     @property
     def fmu_ensemble_id(self):
@@ -122,7 +124,7 @@ class EnsembleOnDisk:
         return self._files
 
     def find_ensemble_on_sumo(self):
-        """Call Sumo, search for this ensemble. Return True if found, and set self._sumo_ensemble_id.
+        """Call Sumo, search for this ensemble. Return True if found, and set self._sumo_parent_id.
         return False if not.
 
         Criteria for ensemble identified on Sumo: fmu_ensemble_id
@@ -133,7 +135,7 @@ class EnsembleOnDisk:
         for ensemble_on_sumo in ensembles_on_sumo:
             if self.fmu_ensemble_id == ensemble_on_sumo.fmu_ensemble_id:
                 print('Found it on Sumo')
-                self.sumo_ensemble_id = ensemble_on_sumo.sumo_ensemble_id
+                self.sumo_parent_id = ensemble_on_sumo.sumo_parent_id
                 return True
             print('Not found on Sumo')
             return False
@@ -153,14 +155,14 @@ class EnsembleOnDisk:
             print('Searchstring: {}'.format(searchstring))
         return files
 
-    def _get_sumo_ensemble_id(self):
+    def _get_sumo_parent_id(self):
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
 
         print('Getting SumoID')
 
         # search for all ensembles on Sumo, matching on fmu_ensemble_id
         E = EnsemblesOnSumo(api=self.api)
-        matches = [m.sumo_ensemble_id for m in E.ensembles if m.fmu_ensemble_id == self.fmu_ensemble_id]
+        matches = [m.sumo_parent_id for m in E.ensembles if m.fmu_ensemble_id == self.fmu_ensemble_id]
 
         print('fmu_ids on Sumo:')
         for _id in [e.fmu_ensemble_id for e in E.ensembles]:
@@ -172,9 +174,9 @@ class EnsembleOnDisk:
         if len(matches) == 0:
             print('No matching ensembles found on Sumo --> Not registered on Sumo')
             print('Registering ensemble on Sumo')
-            sumo_ensemble_id = self._upload_manifest(self.manifest)
-            print('Ensemble registered. SumoID: {}'.format(sumo_ensemble_id))
-            return sumo_ensemble_id
+            sumo_parent_id = self._upload_manifest(self.manifest)
+            print('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
+            return sumo_parent_id
 
         if len(matches) == 1:
             print('Found one matching ensemble on Sumo --> Registered on Sumo')
@@ -190,7 +192,8 @@ class EnsembleOnDisk:
     def _upload_manifest(self, manifest:dict):
         """Given a manifest dict, upload it to Sumo"""
         print('UPLOAD MANIFEST')
-        returned_object_id = self.api.save_top_level_json(json=manifest)
+        response = self.api.save_top_level_json(json=manifest)
+        returned_object_id = response.text
         return returned_object_id
 
     def _load_manifest(self, manifest_path:str):
@@ -209,16 +212,15 @@ class EnsembleOnDisk:
         fmu_ensemble_id = self.manifest.get('fmu_ensemble_id')
         return fmu_ensemble_id
 
-    def upload(self, upload_files=True):
+    def upload(self, upload_files=True, threads=4):
         """Trigger upload of ensemble"""
-        if self._sumo_ensemble_id is None:
-            self._sumo_ensemble_id = self._get_sumo_ensemble_id()
+        if self._sumo_parent_id is None:
+            self._sumo_parent_id = self._get_sumo_parent_id()
 
         if upload_files:
-            UPLOAD_FILES(files=self.files, sumo_ensemble_id=self._sumo_ensemble_id, api=self.api)
+            upload_response = UPLOAD_FILES(files=self.files, sumo_parent_id=self._sumo_parent_id, api=self.api, threads=threads)
 
-        print('Uploaded')
-
+        print(f'Uploaded {len(self.files)} in {upload_response.get("time_elapsed")} seconds')
 
 class EnsemblesOnSumo:
     """Class for holding multiple ensembles on Sumo"""
@@ -251,11 +253,12 @@ class EnsemblesOnSumo:
         select = 'source,field'
         buckets = 'source'
         search_results = self.api.searchroot(query, select=select, buckets=buckets)
-        hits = search_results.get('hits').get('hits')
+        hits = search_results.get('hits', {}).get('hits')
 
         if hits is None:
-            raise IOError('Unexpected response from Sumo. "hits" was not included.')
-            #return []
+            #raise IOError('Unexpected response from Sumo. "hits" was not included.')
+            print('No hits - empty index?')
+            return []
 
         if len(hits) == 0:
             print(f'No hits for query {query}')
@@ -263,24 +266,24 @@ class EnsemblesOnSumo:
 
         hit_ids = [h.get('_id') for h in hits]
 
-        ensembles = [EnsembleOnSumo(sumo_ensemble_id=_id, api=self.api) for _id in hit_ids]
+        ensembles = [EnsembleOnSumo(sumo_parent_id=_id, api=self.api) for _id in hit_ids]
 
         return ensembles
 
 class EnsembleOnSumo:
     """Class for holding an ensemble stored on Sumo"""
 
-    def __init__(self, sumo_ensemble_id:str, api=None):
+    def __init__(self, sumo_parent_id:str, api=None):
         """
-        sumo_ensemble_id: The unique ID for the specific run assigned by Sumo
+        sumo_parent_id: The unique ID for the specific run assigned by Sumo
 
         Possible source of confusion: The ensemble_id is the one Sumo has assigned, not
         the one that was given from the source.
         """
 
-        print('INIT EnsembleOnSumo. sumo_ensemble_id given: {}'.format(sumo_ensemble_id))
+        print('INIT EnsembleOnSumo. sumo_parent_id given: {}'.format(sumo_parent_id))
 
-        self.sumo_ensemble_id = sumo_ensemble_id
+        self.sumo_parent_id = sumo_parent_id
         self._fmu_ensemble_id = None
         self._casename = None
 
@@ -294,15 +297,19 @@ class EnsembleOnSumo:
         self._data = None
 
     def __repr__(self):
-        txt = f"""
-    <EnsembleOnSumo> - 
-    sumo_ensemble_id: {self.sumo_ensemble_id}
-    fmu_ensemble_id: {self.fmu_ensemble_id}
-    case: {self.casename}
-    user: {self.user}
-    """
+        txt = f"""{self.__class__} ({self.casename})"""
+        return str(txt)
+
+    def describe(self):
+        """Give a more extensive description of the ensemble"""
+        txt = f"\n{self.__class__}"\
+              f"\nsumo_parent_id: {self.sumo_parent_id}"\
+              f"\nfmu_ensemble_id: {self.fmu_ensemble_id}"\
+              f"\ncase: {self.casename}"\
+              f"\nuser: {self.user}"\
 
         return str(txt)
+
 
     @property
     def metadata(self):
@@ -328,9 +335,9 @@ class EnsembleOnSumo:
 
     def delete(self):
         """Delete this ensemble from Sumo"""
-        print(self.sumo_ensemble_id)
-        print(type(self.sumo_ensemble_id))
-        response = self.api.delete_object(self.sumo_ensemble_id)
+        print(self.sumo_parent_id)
+        print(type(self.sumo_parent_id))
+        response = self.api.delete_object(self.sumo_parent_id)
 
         if response != 'ok':
             print('\n')
@@ -346,7 +353,7 @@ class EnsembleOnSumo:
 
     def _get_metadata(self):
         """Get metadata for this ensemble"""
-        data_from_sumo = self.api.get_json(object_id=self.sumo_ensemble_id)
+        data_from_sumo = self.api.get_json(object_id=self.sumo_parent_id)
         return data_from_sumo
 
     def _get_data(self):
@@ -384,10 +391,11 @@ class FilesOnDisk:
         file_paths = [f for f in glob.glob(searchstring) if os.path.isfile(f)]
         return [FileOnDisk(path) for path in file_paths]
 
-    def upload(self):
-        """Trigger upload of all files"""
-
-        UPLOAD_FILES(files=files, api=api)
+    #def upload(self):
+    #    """Trigger upload of all files"""
+    #
+    #    upload_respnse = UPLOAD_FILES(files=files, api=api)
+    #    print(f'Uploaded {len(self.files)} in {upload_response.get('time_elapsed')} seconds')
 
 class FileOnDisk:
 
@@ -407,9 +415,9 @@ class FileOnDisk:
         self._bytestring = self.file_to_bytestring(path)
         self._path = path
         self._casename = None
-        self._sumo_ensemble_id = None
-        self._sumo_file_id = None
-        self._sumo_file_id_blob = None
+        self._sumo_parent_id = None
+        self._sumo_child_id = None
+        self._sumo_child_id_blob = None
         self._filepath_relative_to_case_root = None
         self._basename = None
         self._dirname = None
@@ -431,38 +439,22 @@ class FileOnDisk:
         s += f'\n# Data type: {self.dtype}'
         s += f'\n# File format: {self.fformat}'
 
-        if self.sumo_id is None:
+        if self.sumo_child_id is None:
             s += '\n# Not uploaded to Sumo'
         else:
-            s += f'\n# Uploaded to Sumo. Sumo_ID: {self.sumo_file_id}'
+            s += f'\n# Uploaded to Sumo. Sumo_ID: {self.sumo_child_id}'
 
         s += '\n\n'
 
         return s
 
     @property
-    def sumo_ensemble_id(self):
-        return self._sumo_ensemble_id
-
-    @sumo_ensemble_id.setter
-    def sumo_ensemble_id(self, sumo_ensemble_id):
-        self._sumo_ensemble_id = sumo_ensemble_id
-
-    @sumo_ensemble_id.deleter
-    def sumo_ensemble_id(self):
-        self._sumo_ensemble_id = None
+    def sumo_parent_id(self):
+        return self._sumo_parent_id
 
     @property
-    def sumo_file_id(self):
-        return self._sumo_file_id
-
-    @sumo_file_id.setter
-    def sumo_file_id(self, sumo_file_id):
-        self._sumo_file_id = sumo_file_id
-
-    @sumo_file_id.deleter
-    def sumo_file_id(self):
-        self._sumo_file_id = None
+    def sumo_child_id(self):
+        return self._sumo_child_id
 
     @property
     def filepath_relative_to_case_root(self):
@@ -601,55 +593,109 @@ class FileOnDisk:
 
         return bytestring
 
-    def _upload_metadata(self, api):
-        returned_object_id = api.save_child_level_json(json=self.metadata, object_id=self.sumo_file_id)
-        return returned_object_id
+    def _upload_metadata(self, api, sumo_parent_id):
+        response = api.save_child_level_json(json=self.metadata, object_id=sumo_parent_id)
+        return response
 
     def _upload_bytestring(self, api):
-        returned_object_id = api.save_blob(object_id=self.sumo_file_id, blob=self.bytestring)
-        return returned_object_id
+        response = api.save_blob(object_id=self.sumo_child_id, blob=self.bytestring)
+        return response
 
-    def upload_to_sumo(self, api=None):
+    def upload_to_sumo(self, sumo_parent_id, api=None):
         """Upload this file to Sumo"""
 
-        # what if sumo_ensemble_id does not exist on Sumo?
+        # what if sumo_parent_id does not exist on Sumo?
 
-        print(f'  Uploading {self.basename}')
-        print('  > metadata')
+        response = {}
 
-        self.sumo_file_id = self._upload_metadata(api=api)
+        if not sumo_parent_id:
+            return {'status': 'failed', 'response': 'Failed, sumo_parent_id passed to upload_to_sumo: {}'.format(sumo_parent_id)}
 
-        print('  > bytestring')
-        self.sumo_file_id_blob = self._upload_bytestring(api=api)
-        print(' OK --> object_id: {}\n'.format(object_id))
+        # TODO: Do a check towards Sumo for confirming that ID is referring to existing ensemble
+
+        #print(f'  Uploading {self.filepath_relative_to_case_root}')
+        #print('  > metadata')
+        response = self._upload_metadata(api=api, sumo_parent_id=sumo_parent_id)
+        if not response.ok:
+            return {'status': 'failed', 'response': response}
+        self._sumo_child_id = response.text
+
+        response = self._upload_bytestring(api=api)
+        if not response.ok:
+            return {'status': 'failed', 'response': response}
+        self._sumo_child_id_blob = response.text
+
+        return {'status': 'ok', 'response': response.text}
 
 
-def UPLOAD_FILES(files:list, sumo_ensemble_id:str, api=None):
+def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
     """
     Upload files, including JSON, to specified ensemble
 
     files: list of FileOnDisk objects
-    sumo_ensemble_id: sumo_ensemble_id for the parent ensemble
+    sumo_parent_id: sumo_parent_id for the parent ensemble
 
     Upload is kept outside classes to ease multithreading.
     """
 
+    def _upload_files(files, api, sumo_parent_id, threads=4):
+        with ThreadPoolExecutor(threads) as executor:
+            files_and_responses = executor.map(_upload_file, [(file, api, sumo_parent_id) for file in files])
+        return files_and_responses
+
+    def _upload_file(arg):
+        file, api, sumo_parent_id = arg
+        file_and_response = (file, file.upload_to_sumo(api=api, sumo_parent_id=sumo_parent_id))
+        return file_and_response
+
     _t0 = time.perf_counter()
 
-    for file in files:
-        file.upload_to_sumo(api=api)
+    print(f'UPLOADING {len(files)} files with {threads} threads.')
+
+    # first attempt
+    files_and_responses = _upload_files(files=files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
+    failed_uploads = [(file, response) for file, response in files_and_responses if response.get('status') != 'ok']
+
+    if not failed_uploads:
+        _t1 = time.perf_counter()
+        _dt = _t1-_t0
+
+        print('\n==== UPLOAD DONE ====')
+        return {'elements' : [s.basename for s in files],
+                'sumo_parent_id' : sumo_parent_id,
+                'count' : len(files),
+                'time_start' : _t0,
+                'time_end' : _t1,
+                'time_elapsed' : _dt,}
+
+    if len(failed_uploads) == len(files):
+        print('\nALL FILES FAILED')
+    else:
+        print('\nSome uploads failed:')
+
+    for file, response in failed_uploads:
+        print(f'{file.filepath_relative_to_case_root}: {response}')
+
+    print('\nRetrying {} failed uploads:'.format(len(failed_uploads)))
+    failed_files = [file for file, response in failed_uploads]
+    files_and_responses = _upload_files(files=failed_files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
+    failed_uploads = [(file, response) for file, response in files_and_responses if response.get('status') != 'ok']
+
+    if failed_uploads:
+        print('Uploads still failed after second attempt:')
+        for failed in failed_uploads:
+            print(failed)
 
     _t1 = time.perf_counter()
     _dt = _t1-_t0
 
-    print(f'Uploaded {len(files)} surfaces in {_dt:0.4f} seconds')
-
-    return {'elements' : [s.basename for s in files],
-            'sumo_ensemble_id' : sumo_ensemble_id,
-            'count' : len(files),
-            'time_start' : _t0,
-            'time_end' : _t1,
-            'time_elapsed' : _dt,}
+    return {'elements': [s.basename for s in files],
+            'sumo_parent_id': sumo_parent_id,
+            'count': len(files),
+            'time_start': _t0,
+            'time_end': _t1,
+            'time_elapsed': _dt,
+            'failed': len(failed_uploads)}
 
 
 class SurfaceOnSumo:

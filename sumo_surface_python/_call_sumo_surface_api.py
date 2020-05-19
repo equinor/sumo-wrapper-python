@@ -6,7 +6,7 @@ class CallSumoSurfaceApi:
     """
 
 
-    def __init__(self, env='dev'):
+    def __init__(self, env='env'):
         if env == 'prod':
             self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com/api/v1'
         else:
@@ -25,6 +25,12 @@ class CallSumoSurfaceApi:
 
     def __repr__(self):
         return self.__str__()
+
+    @property
+    def userdata(self):
+        """Get user data from Sumo enpoint /userdata"""
+        url = f"{self.base_url}/userdata"
+        return self.callAzureApi.get_json(url)
 
     def get_bear_token(self):
         """
@@ -54,10 +60,18 @@ class CallSumoSurfaceApi:
                         Search results.
 
         """
-        url = f'{self.base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
+        url = f'{self.base_url}/search?$query={query}'
+
+        if search_from is not None:
+            url = f'{url}&$from={search_from}'
+        if search_size is not None:
+            url = f'{url}&$size={search_size}'
+        if select:
+            url = f'{url}&$select={select}'
         if buckets:
             url = f'{url}&$buckets={buckets}'
 
+        print(url)
         return self.callAzureApi.get_json(url, bearer)
 
     def searchroot(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
@@ -113,9 +127,10 @@ class CallSumoSurfaceApi:
 
                     Return
                         string:
-                            The object_id of the newly updated object.
+                            The object_id of the newly updated object, or error message.
         """
-        return self._post_objects(object_id=object_id, json=json, bearer=bearer)
+        response = self._post_objects(object_id=object_id, json=json, bearer=bearer)
+        return response
 
     def get_blob(self, object_id, bearer=None):
         """
@@ -160,16 +175,20 @@ class CallSumoSurfaceApi:
                             A json object that includes the id of the deleted object.
         """
         url = f"{self.base_url}/objects('{object_id}')"
-        print('url: {}'.format(url))
+        #print('url: {}'.format(url))
         return self.callAzureApi.delete_json(url, bearer)
 
     def _post_objects(self, object_id=None, blob=None, json=None, bearer=None):
         url = f'{self.base_url}/objects'
-        print(object_id)
         if object_id:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
+
+        if blob is not None and object_id is None:
+            raise ValueError('Blobs can only be uploaded to an existing object. A blob was passed, while object_id was None when passed to _post_objects.')
+
+        #print(url)
 
         return self.callAzureApi.post(url, blob, json, bearer)
 

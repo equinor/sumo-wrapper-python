@@ -101,8 +101,6 @@ class CallAzureApi:
         return response.content
 
 
-        #### Hvorfor blob??
-
     def post(self, url, blob=None, json=None, bearer=None):
         """
                 Post binary or json to the url and return the response as json.
@@ -127,7 +125,8 @@ class CallAzureApi:
         else:
             self.bearer = bearer
 
-
+        if blob and json:
+            raise ValueError('Both blob and json given to post - can only have one at the time.')
 
         headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
                    "Authorization": self.bearer,
@@ -136,10 +135,11 @@ class CallAzureApi:
 
         response = requests.post(url, data=blob, json=json, headers=headers)
 
-        if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+        #if not response.ok:
+        #    raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
-        return response.text
+        #return response.text
+        return response
 
     def delete_json(self, url, bearer=None):
         """

@@ -10,6 +10,7 @@ HOME_DIR = os.path.expanduser('~')
 class Auth():
 
     def __init__(self, client_id, resource_id, authority=AUTHORITY_URI, client_crediatials=None):
+        
         self.client_id = client_id
         self.resource_id = resource_id
         self.scope = self.resource_id + "/.default"
@@ -17,12 +18,15 @@ class Auth():
         self.client_crediatials = client_crediatials
         self.token_path = os.path.join(HOME_DIR, ".omnia", str(self.resource_id) + ".token")
         self._get_cache()
-        self.app = msal.PublicClientApplication(self.client_id, authority=AUTHORITY_URI,
-                                                client_credential=self.client_crediatials, token_cache=self.cache)
+        self.app = msal.PublicClientApplication(self.client_id, 
+                                                authority=AUTHORITY_URI,
+                                                client_credential=self.client_crediatials, 
+                                                token_cache=self.cache)
         self.accounts = self.app.get_accounts()
         self._oauth_get_token_silent() if self._cache_availible() else self._oauth_device_code()
 
     def get_token(self):
+        print('get_token')
         self._oauth_get_token_silent()
         return self.result["access_token"]
 
@@ -42,7 +46,9 @@ class Auth():
 
         if "user_code" not in flow:
             raise ValueError(
-                "Fail to create device flow. Err: %s" % json.dumps(flow, indent=4))
+                "Fail to create device flow. Err: {}".format(json.dumps(flow, indent=4)))
+
+        print(flow.get('message'))
 
         self.result = self.app.acquire_token_by_device_flow(flow)
         self._write_cache()
