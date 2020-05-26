@@ -615,17 +615,65 @@ class FileOnDisk:
 
         #print(f'  Uploading {self.filepath_relative_to_case_root}')
         #print('  > metadata')
+
+        result = {'status': None,
+
+                  'response': {'metadata': None, 
+                               'blob': None},
+
+                  'timing': {'metadata': {'size': None,
+                                      'time_start' : None,
+                                      'time_end' : None,
+                                      'time_elapsed': None,
+                                      },
+
+                             'blob': {'size': None,
+                                      'time_start' : None,
+                                      'time_end' : None,
+                                      'time_elapsed': None,
+                                      },
+
+                             'total': None}
+                             }
+
+        _t0 = time.perf_counter()
+
+        _t0_metadata = time.perf_counter()
         response = self._upload_metadata(api=api, sumo_parent_id=sumo_parent_id)
+        _t1_metadata = time.perf_counter()
+        result['response']['metadata'] = response
+        result['timing']['metadata'] = {'size' : None, 
+                                        'time_start': _t0_metadata, 
+                                        'time_end': _t1_metadata, 
+                                        'time_elapsed': _t1_metadata-_t0_metadata}
         if not response.ok:
-            return {'status': 'failed', 'response': response}
+            result['status'] = 'failed'
+            return result
         self._sumo_child_id = response.text
 
+        _t0_blob = time.perf_counter()
         response = self._upload_bytestring(api=api)
+        _t1_blob = time.perf_counter()
+        result['response']['blob'] = response
+        result['timing']['blob'] = {'size' : None, 
+                                        'time_start': _t0_blob, 
+                                        'time_end': _t1_blob, 
+                                        'time_elapsed': _t1_blob-_t0_blob}
+
         if not response.ok:
-            return {'status': 'failed', 'response': response}
+            result['status'] = 'failed'
+            return result
         self._sumo_child_id_blob = response.text
 
-        return {'status': 'ok', 'response': response.text}
+        _t1 = time.perf_counter()
+        result['timing']['total'] = {'size' : None, 
+                                     'time_start': _t0, 
+                                     'time_end': _t1, 
+                                     'time_elapsed': _t1-_t0}
+
+        result['status'] = 'ok'
+
+        return result
 
 
 def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
@@ -640,27 +688,61 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
 
     def _upload_files(files, api, sumo_parent_id, threads=4):
         with ThreadPoolExecutor(threads) as executor:
-            files_and_responses = executor.map(_upload_file, [(file, api, sumo_parent_id) for file in files])
-        return files_and_responses
+            results = executor.map(_upload_file, [(file, api, sumo_parent_id) for file in files])
+        return results
 
     def _upload_file(arg):
         file, api, sumo_parent_id = arg
-        file_and_response = (file, file.upload_to_sumo(api=api, sumo_parent_id=sumo_parent_id))
-        return file_and_response
+        result = file.upload_to_sumo(api=api, sumo_parent_id=sumo_parent_id)
+        result['file'] = file
+        return result
+
+    def _summary(ok_uploads, to_file='upload_log.txt'):
+        #print('Total time spent: {} seconds'.format(_dt))
+
+        lines = []    
+        for result in ok_uploads:
+            filepath = result.get('file').filepath_relative_to_case_root
+            time_elapsed = round(result.get('timing').get('total').get('time_elapsed'), 2)
+            time_start_metadata = round(result.get('timing').get('metadata').get('time_start'))
+            time_start_blob = round(result.get('timing').get('blob').get('time_start'))
+            statuscodeblob = result.get('response').get('blob').status_code
+            statuscodemetadata = result.get('response').get('metadata').status_code
+            #line = f'{filepath}: {time_elapsed} s. Metadata start: {time_start_metadata}, blob start: {time_start_blob}. (Metadata: {statuscodemetadata}, blob: {statuscodeblob})\n'
+            line = f'{filepath}: {time_elapsed} s. Metadata: {statuscodemetadata}, blob: {statuscodeblob}\n'
+            lines.append(line)
+        if not to_file:
+            for line in lines:
+                print(line)
+        else:
+            with open(to_file, 'w') as f:
+                for line in lines:
+                    f.write(line)
+
+
 
     _t0 = time.perf_counter()
 
     print(f'UPLOADING {len(files)} files with {threads} threads.')
 
     # first attempt
-    files_and_responses = _upload_files(files=files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
-    failed_uploads = [(file, response) for file, response in files_and_responses if response.get('status') != 'ok']
+    results = _upload_files(files=files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
+
+    ok_uploads = []
+    failed_uploads = []
+    for r in results:
+        _status = r.get('status')
+        if _status == 'ok':
+            ok_uploads.append(r)
+        else:
+            failed_uploads.append(r)
 
     if not failed_uploads:
         _t1 = time.perf_counter()
         _dt = _t1-_t0
 
         print('\n==== UPLOAD DONE ====')
+        _summary(ok_uploads)
         return {'elements' : [s.basename for s in files],
                 'sumo_parent_id' : sumo_parent_id,
                 'count' : len(files),
@@ -668,34 +750,43 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
                 'time_end' : _t1,
                 'time_elapsed' : _dt,}
 
-    if len(failed_uploads) == len(files):
+    if not ok_uploads:
         print('\nALL FILES FAILED')
     else:
-        print('\nSome uploads failed:')
+        if failed_uploads:
+            print('\nSome uploads failed:')
 
-    for file, response in failed_uploads:
+    for result in failed_uploads:
+        file = result.get('file')
+        response = result.get('response')
         print(f'{file.filepath_relative_to_case_root}: {response}')
 
-    print('\nRetrying {} failed uploads:'.format(len(failed_uploads)))
-    failed_files = [file for file, response in failed_uploads]
-    files_and_responses = _upload_files(files=failed_files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
-    failed_uploads = [(file, response) for file, response in files_and_responses if response.get('status') != 'ok']
+    print('\nRetrying {} failed uploads.'.format(len(failed_uploads)))
+    failed_files = [result.get('file') for result in failed_uploads]
+    results = _upload_files(files=failed_files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
+    failed_uploads = []
+    for r in results:
+        _status = r.get('status')
+        if _status == 'ok':
+            ok_uploads.append(r)
+        else:
+            failed_uploads.append(r)
 
     if failed_uploads:
         print('Uploads still failed after second attempt:')
-        for failed in failed_uploads:
-            print(failed)
+        _summary(failed_uploads)
+    else:
+        print('After second attempt, all uploads are OK. Summary:')
+        _summary(ok_uploads)
 
-    _t1 = time.perf_counter()
-    _dt = _t1-_t0
-
-    return {'elements': [s.basename for s in files],
-            'sumo_parent_id': sumo_parent_id,
-            'count': len(files),
-            'time_start': _t0,
-            'time_end': _t1,
-            'time_elapsed': _dt,
-            'failed': len(failed_uploads)}
+    return {'elements' : [s.basename for s in files],
+            'sumo_parent_id' : sumo_parent_id,
+            'count' : len(files),
+            'ok_uploads': ok_uploads,
+            'failed_uploads': failed_uploads,
+            'time_start' : _t0,
+            'time_end' : _t1,
+            'time_elapsed' : _dt,}
 
 
 class SurfaceOnSumo:
