@@ -32,6 +32,18 @@ class CallSumoSurfaceApi:
         url = f"{self.base_url}/userdata"
         return self.callAzureApi.get_json(url)
 
+    @property
+    def userphoto(self):
+        """Get user photo from Sumo endpoint /userphoto"""
+        url = f"{self.base_url}/userphoto"
+        return self.callAzureApi.get_json(url)
+
+    @property
+    def userprofile(self):
+        """Get user profile from Sumo endpoint /userprofile"""
+        url = f"{self.base_url}/userprofile"
+        return self.callAzureApi.get_json(url)
+
     def get_bear_token(self):
         """
                Generating an Azure OAuth2 bear token.
