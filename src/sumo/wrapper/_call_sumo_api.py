@@ -1,19 +1,14 @@
 from ._call_azure_api import CallAzureApi
 
-class CallSumoSurfaceApi:
+class CallSumoApi:
     """
-        This class can be used for calling the Sumo Surface APi.
+        This class can be used for calling the Sumo APi.
     """
 
 
     def __init__(self, env='dev'):
-        if env == 'prod':
-            self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com'
-        else:
-            self.base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com/api/v1'
-
+        self.base_url = f'https://main-sumo-surface-proto-{env}.playground.radix.equinor.com/api/v1'
         self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
-
         self.callAzureApi = CallAzureApi(self.resource_id)
 
     def __str__(self):
