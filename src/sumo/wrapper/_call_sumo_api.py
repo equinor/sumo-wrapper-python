@@ -21,6 +21,25 @@ class CallSumoApi:
     def __repr__(self):
         return self.__str__()
 
+    @property
+    def userdata(self):
+        """Get user data from Sumo endpoint /userdata"""
+        url = f"{self.base_url}/userdata"
+        return self.callAzureApi.get_json(url)
+
+    @property
+    def userphoto(self):
+        """Get user photo from Sumo endpoint /userphoto"""
+        url = f"{self.base_url}/userphoto"
+        return self.callAzureApi.get_image(url)
+
+    @property
+    def userprofile(self):
+        """Get user profile from Sumo endpoint /userprofile"""
+        url = f"{self.base_url}/userprofile"
+        return self.callAzureApi.get_json(url)
+
+
     def get_bear_token(self):
         """
                Generating an Azure OAuth2 bear token.
@@ -32,7 +51,7 @@ class CallSumoApi:
         """
         return self.callAzureApi.get_bear_token()
 
-    def search(self, query, select=None, buckets=None, search_from=0, search_size=10, bearer=None):
+    def search(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
         """
                  Search for specific objects.
 
@@ -54,6 +73,29 @@ class CallSumoApi:
             url = f'{url}&$buckets={buckets}'
 
         return self.callAzureApi.get_json(url, bearer)
+
+    def searchroot(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
+        """
+                Search for parent objects (object without parent)
+        """
+
+        url = f'{self.base_url}/searchroot?$query={query}'
+
+        if search_from is None:
+            search_from = 0
+        url = f'{url}&$from={search_from}'
+        
+        if search_size is None:
+            search_size = 100
+        url = f'{url}&$size={search_size}'
+        
+        if select:
+            url = f'{url}&$select={select}'
+        if buckets:
+            url = f'{url}&$buckets={buckets}'
+
+        return self.callAzureApi.get_json(url, bearer)
+
 
     def get_json(self, object_id, bearer=None):
         """
@@ -97,7 +139,7 @@ class CallSumoApi:
 
                     Return
                         string:
-                            The object_id of the newly updated object.
+                            The object_id of the newly updated object, or error message.
         """
         return self._post_objects(object_id=object_id, json=json, bearer=bearer)
 

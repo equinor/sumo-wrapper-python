@@ -1,5 +1,6 @@
 import requests
 from ._auth import Auth
+from io import BytesIO, StringIO
 
 class CallAzureApi:
     """
@@ -70,6 +71,17 @@ class CallAzureApi:
 
         return response.json()
 
+    def get_image(self, url, bearer=None):
+        """Send a request, get image in return"""
+        headers = {"Content-Type": "html/text",
+                   "Authorization": self.bearer}
+
+        response = requests.get(url, headers=headers, stream=True)
+        if response.status_code == 200:
+            return response.raw.read()
+
+        return None
+
     def get_content(self, url, bearer=None):
         """
                 Send an request to the url.
@@ -126,19 +138,20 @@ class CallAzureApi:
         else:
             self.bearer = bearer
 
+        if blob and json:
+            raise ValueError('Both blob and json given to post - can only have one at the time.')
 
-
-        headers = {"Content-Type": "application/json",
+        headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
                    "Authorization": self.bearer,
                    "Content-Length" : str(len(json) if json != None else len(blob)),
                    }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
 
-        if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+        #if not response.ok:
+        #    raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
-        return response.text
+        return response
 
     def delete_json(self, url, bearer=None):
         """
