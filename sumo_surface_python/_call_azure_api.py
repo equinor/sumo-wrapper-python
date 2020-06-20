@@ -1,5 +1,6 @@
 import requests
 from ._auth import Auth
+from io import BytesIO, StringIO
 
 class CallAzureApi:
     """
@@ -69,6 +70,18 @@ class CallAzureApi:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
         return response.json()
+
+    def get_image(self, url, bearer=None):
+        """Send a request, get image in return"""
+        headers = {"Content-Type": "html/text",
+                   "Authorization": self.bearer}
+
+        print('get_image()')
+        response = requests.get(url, headers=headers, stream=True)
+        if response.status_code == 200:
+            return response.raw.read()
+
+        return None
 
     def get_content(self, url, bearer=None):
         """

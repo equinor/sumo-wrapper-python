@@ -6,11 +6,11 @@ class CallSumoSurfaceApi:
     """
 
 
-    def __init__(self, env='env'):
+    def __init__(self, env='dev'):
         if env == 'prod':
-            self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com/api/v1'
+            self.base_url = 'https://main-sumo-surface-proto-prod.radix.equinor.com/api/v1'
         else:
-            self.base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com/api/v1'
+            self.base_url = 'https://main-sumo-surface-proto-dev.radix.equinor.com/api/v1'
 
         self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
 
@@ -36,7 +36,7 @@ class CallSumoSurfaceApi:
     def userphoto(self):
         """Get user photo from Sumo endpoint /userphoto"""
         url = f"{self.base_url}/userphoto"
-        return self.callAzureApi.get_json(url)
+        return self.callAzureApi.get_image(url)
 
     @property
     def userprofile(self):
