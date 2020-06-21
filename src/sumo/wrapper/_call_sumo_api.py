@@ -68,7 +68,19 @@ class CallSumoApi:
                         Search results.
 
         """
-        url = f'{self.base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
+        #print('======= SEARCHING!')
+        #url = f'{self.base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
+        #if buckets:
+        #    url = f'{url}&$buckets={buckets}'
+
+        url = f'{self.base_url}/search?$query={query}'
+        
+        if search_from is not None:
+            url = f'{url}&$from={search_from}'
+        if search_size is not None:
+            url = f'{url}&$size={search_size}'
+        if select:
+            url = f'{url}&$select={select}'
         if buckets:
             url = f'{url}&$buckets={buckets}'
 
