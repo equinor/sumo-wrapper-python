@@ -7,7 +7,7 @@ class CallSumoApi:
 
 
     def __init__(self, env='dev'):
-        self.base_url = f'https://main-sumo-surface-proto-{env}.playground.radix.equinor.com/api/v1'
+        self.base_url = f'https://main-sumo-surface-proto-{env}.radix.equinor.com/api/v1'
         self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
         self.callAzureApi = CallAzureApi(self.resource_id)
 
@@ -68,10 +68,6 @@ class CallSumoApi:
                         Search results.
 
         """
-        #print('======= SEARCHING!')
-        #url = f'{self.base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
-        #if buckets:
-        #    url = f'{url}&$buckets={buckets}'
 
         url = f'{self.base_url}/search?$query={query}'
         

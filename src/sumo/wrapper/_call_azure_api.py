@@ -112,9 +112,6 @@ class CallAzureApi:
 
         return response.content
 
-
-        #### Hvorfor blob??
-
     def post(self, url, blob=None, json=None, bearer=None):
         """
                 Post binary or json to the url and return the response as json.
