@@ -8,6 +8,7 @@ class CallSumoApi:
 
     def __init__(self, env='dev'):
         self.base_url = f'https://main-sumo-surface-proto-{env}.radix.equinor.com/api/v1'
+        self.base_url = f'http://localhost:8084/api/v1'
         self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
         self.callAzureApi = CallAzureApi(self.resource_id)
 
@@ -168,7 +169,7 @@ class CallSumoApi:
 
     def save_blob(self, object_id, blob, bearer=None):
         """
-                     Post a binary file to blob storage for the objectId.
+                     Put a binary file to blob storage for the objectId.
 
                      Parameters
                         object_id string, the id of the json object that this blob document will be attached to.
@@ -179,7 +180,7 @@ class CallSumoApi:
                         string:
                             The object_id of the newly updated object.
         """
-        return self._post_objects(object_id=object_id, blob=blob, bearer=bearer)
+        return self._put_objects(object_id=object_id, blob=blob, bearer=bearer)
 
     def delete_object(self, object_id, bearer=None):
         """
@@ -204,3 +205,10 @@ class CallSumoApi:
             url = f'{url}/blob'
         return self.callAzureApi.post(url, blob, json, bearer)
 
+    def _put_objects(self, object_id=None, blob=None, json=None, bearer=None):
+        url = f'{self.base_url}/objects'
+        if object_id:
+            url = f"{url}('{object_id}')"
+        if blob:
+            url = f'{url}/blob'
+        return self.callAzureApi.put(url, blob, json, bearer)
