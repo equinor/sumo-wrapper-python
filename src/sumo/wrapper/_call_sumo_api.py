@@ -202,5 +202,6 @@ class CallSumoApi:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
+
         return self.callAzureApi.post(url, blob, json, bearer)
 
