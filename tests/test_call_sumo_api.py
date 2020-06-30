@@ -29,7 +29,8 @@ def _download_object(C, object_id):
 def _upload_child_level_json(C, parent_id, json):
     response = C.api.save_child_level_json(object_id=parent_id, json=json)
     if not 200 <= response.status_code < 202:
-        raise Exception(response.text)
+        print(json)
+        raise Exception(f'Response: {response.status_code}, Text: {response.text}')
     child_id = response.text
     return child_id
 
@@ -40,22 +41,28 @@ def _delete_object(C, object_id):
 
 ##### TESTS #####
 
-def test_fail_on_wrong_metadata():
-    C = Connection()
-
-    # upload a parent object with erroneous metadata, confirm failure
-    json = {"some field": "some value"}
-    response = C.api.save_top_level_json(json=json)
-    assert response.status_code == 400
+#def test_fail_on_wrong_metadata():
+#    C = Connection()
+#
+#    # upload a parent object with erroneous metadata, confirm failure
+#    json = {"some field": "some value"}
+#    response = C.api.save_top_level_json(json=json)
+#    assert response.status_code == 400
 
 def test_sequence():
     C = Connection()
     unique_text = 'ThisIsMyUniqueText'
     b = b'123456789'
 
-    parent_wrong_field_guid_json = {"status": "scratch",
+    parent_wrong_field_guid_json = {
+            "class": {
+                "type": "fmu_ensemble",
+                "class_version": "0.8",
+            },
+            "status": "scratch",
             "field": "NOT A VALID FIELD",
             "field_guid": 1234567,
+            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
             "testdata": 'parent',
             "country_identifier": "Norway",
             "some_parent_metadata": {"field1": "1", "field2": "2"}, 
@@ -63,31 +70,49 @@ def test_sequence():
                 "some_floats": {"field5": 5.0, "field6": 6.0}
                 }
 
-    parent_json = {"status": "scratch",
+    parent_json = {
+            "class": {
+                "type": "fmu_ensemble",
+                "class_version": "0.8",
+            },
+            "status": "scratch",
             "field": "JOHAN SVERDRUP",
             "field_guid": 268281971,
             "testdata": 'parent',
+            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
             "country_identifier": "Norway",
             "some_parent_metadata": {"field1": "1", "field2": "2"}, 
                 "some_ints": {"field3": 3, "field4": 4}, 
                 "some_floats": {"field5": 5.0, "field6": 6.0}
                 }
 
-    child1_json = {"status": "scratch",
+    child1_json = {
+            "class": {
+                "type": "fmu_regularsurface",
+                "class_version": "0.8",
+            },
+            "status": "scratch",
             "field": "JOHAN SVERDRUP",
             "field_guid": 268281971,
             "testdata": 'child1',
+            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
             "country_identifier": "Norway",
             "some_child_metadata": {"field1": "1", "field2": "2"}, 
                 "some_ints": {"field3": 3, "field4": 4}, 
-                "some_floats": {"field5": 5.0, "field6": 6.0}
-                },
+                "some_floats": {"field5": 5.0, "field6": 6.0},
             "checksum": 234723984723948237409238472309,
+                },
 
-    child2_json = {"status": "scratch",
+    child2_json = {
+            "class": {
+                "type": "fmu_regularsurface",
+                "class_version": "0.8",
+            },
+            "status": "scratch",
             "field": "JOHAN SVERDRUP",
             "field_guid": 268281971,
             "testdata": 'child2',
+            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
             "country_identifier": "Norway",
             "some_child_metadata": {"field1": "1", "field2": "2"}, 
                 "some_ints": {"field3": 3, "field4": 4}, 
@@ -98,6 +123,10 @@ def test_sequence():
 
     #upload a parent object, get object_id
     parent_id = _upload_parent_object(C=C, json=parent_json)
+
+    print('parent_id: {}'.format(parent_id))
+
+    # confirm 
 
     # confirm failure on blob upload to parent object
     # Not implemented
