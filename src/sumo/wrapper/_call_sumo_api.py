@@ -167,7 +167,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')/blob"
         return self.callAzureApi.get_content(url, bearer)
 
-    def save_blob(self, object_id, blob, bearer=None):
+    def save_blob(self, object_id, blob, bearer=None, url=None):
         """
                      Put a binary file to blob storage for the objectId.
 
@@ -180,7 +180,7 @@ class CallSumoApi:
                         string:
                             The object_id of the newly updated object.
         """
-        return self._put_objects(object_id=object_id, blob=blob, bearer=bearer)
+        return self._put_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
 
     def delete_object(self, object_id, bearer=None):
         """
@@ -196,6 +196,20 @@ class CallSumoApi:
         """
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_json(url, bearer)
+    
+    def get_blob_uri(self, object_id, bearer=None):
+        """
+                   Get the redirect uri to blob storage for uploading a blob
+                   Parameters
+                        object_id string, the id of the json object that will be deleted.
+                        bearer string, Azure OAuth2 bear token Default: will create one.
+
+                    Return
+                        string:
+        """
+        url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
+        return self.callAzureApi.get_content(url, bearer)
+
 
     def _post_objects(self, object_id=None, blob=None, json=None, bearer=None):
         url = f'{self.base_url}/objects'
@@ -205,10 +219,12 @@ class CallSumoApi:
             url = f'{url}/blob'
         return self.callAzureApi.post(url, blob, json, bearer)
 
-    def _put_objects(self, object_id=None, blob=None, json=None, bearer=None):
-        url = f'{self.base_url}/objects'
-        if object_id:
-            url = f"{url}('{object_id}')"
-        if blob:
-            url = f'{url}/blob'
+    def _put_objects(self, object_id=None, blob=None, json=None, bearer=None, url=None):
+        if url is None:
+            url = f'{self.base_url}/objects'
+            if object_id:
+                url = f"{url}('{object_id}')"
+            if blob:
+                url = f'{url}/blob'
         return self.callAzureApi.put(url, blob, json, bearer)
+

@@ -1,5 +1,7 @@
 """Example code for communicating with Sumo"""
-
+import sys
+import json
+sys.path.insert(0,'c:/appl/sumo-wrapper-python/src/')
 import pytest
 from sumo.wrapper import CallSumoApi
 
@@ -16,11 +18,20 @@ def _upload_parent_object(C, json):
     parent_id = response.text
     return parent_id
 
-def _upload_blob(C, object_id, blob):
-    response = C.api.save_blob(object_id=object_id, blob=blob)
+def _upload_blob(C, object_id, blob, url=None):
+    response = C.api.save_blob(object_id=object_id, blob=blob, url=url)
+    print("Blob save " + str(response.status_code), flush=True);
     if not 200 <= response.status_code < 202:
-        raise Exception(f'blob upload to object_id {object_id} returned {response}')    
+        raise Exception(f'blob upload to object_id {object_id} returned {response.text} {response.status_code}')    
     return response.text
+
+def _get_blob_uri(C, objectid, url=None):
+    response = C.api.get_blob_uri(object_id=object_id)
+    print("Blob save " + str(response.status_code), flush=True);
+    if not 200 <= response.status_code < 202:
+        raise Exception(f'get blob uri for {object_id} returned {response.text} {response.status_code}')    
+    return response.text
+    
 
 def _download_object(C, object_id):
     json = C.api.get_json(object_id=object_id)
@@ -30,8 +41,8 @@ def _upload_child_level_json(C, parent_id, json):
     response = C.api.save_child_level_json(object_id=parent_id, json=json)
     if not 200 <= response.status_code < 202:
         raise Exception(response.text)
-    child_id = response.text
-    return child_id
+    return response.json()
+
 
 def _delete_object(C, object_id):
     response = C.api.delete_object(object_id=object_id)
@@ -65,7 +76,8 @@ def test_sequence():
     child1_json = {"status": "scratch",
             "field": "JOHAN SVERDRUP",
             "field_guid": 268281971,
-            "testdata": 'child1',
+                   "testdata": 'child1',
+                   "data": {"name" : "child1"},       
             "country_identifier": "Norway",
             "some_child_metadata": {"field1": "1", "field2": "2"}, 
                 "some_ints": {"field3": 3, "field4": 4}, 
@@ -76,6 +88,7 @@ def test_sequence():
             "field": "JOHAN SVERDRUP",
             "field_guid": 268281971,
             "testdata": 'child2',
+                   "data": {"name" : "child2"},       
             "country_identifier": "Norway",
             "some_child_metadata": {"field1": "1", "field2": "2"}, 
                 "some_ints": {"field3": 3, "field4": 4}, 
@@ -87,17 +100,20 @@ def test_sequence():
     parent_id = _upload_parent_object(C=C, json=parent_json)
 
     # confirm failure on blob upload to parent object
-    with pytest.raises(Exception):
-        _upload_blob(C=C, object_id=parent_id, blob=b)
+    #with pytest.raises(Exception):
+    #    _upload_blob(C=C, object_id=parent_id, blob=b)
 
     # upload child object, get child_id
-    child1_id = _upload_child_level_json(C=C, parent_id=parent_id, json=child1_json)
-    child2_id = _upload_child_level_json(C=C, parent_id=parent_id, json=child2_json)
+    child1 = _upload_child_level_json(C=C, parent_id=parent_id, json=child1_json)
+    child1_id = child1["objectid"]
+    child2 = _upload_child_level_json(C=C, parent_id=parent_id, json=child2_json)
+    child2_id = child2["objectid"]
     assert child1_id != child2_id
 
+
     # upload blob on child level
-    _upload_blob(C=C, object_id=child1_id, blob=b)
-    _upload_blob(C=C, object_id=child2_id, blob=b)
+    _upload_blob(C=C, object_id=child1_id, blob=b, url=child1["blob-uri"])
+    _upload_blob(C=C, object_id=child2_id, blob=b, url=child2["blob-uri"])
 
     # get child1 JSON
     objects_results = _download_object(C=C, object_id=child1_id)
