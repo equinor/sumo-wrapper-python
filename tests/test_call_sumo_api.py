@@ -2,7 +2,8 @@
 
 import pytest
 from sumo.wrapper import CallSumoApi
-
+import yaml
+from time import sleep
 
 class Connection:
     def __init__(self):
@@ -39,154 +40,151 @@ def _delete_object(C, object_id):
     return response
 
 
+class ValueKeeper:
+    """Class for keeping/passing values between tests"""
+    pass
+
+V = ValueKeeper()
+C = Connection()
+b = b'123456789'
+
 ##### TESTS #####
 
-#def test_fail_on_wrong_metadata():
-#    C = Connection()
-#
-#    # upload a parent object with erroneous metadata, confirm failure
-#    json = {"some field": "some value"}
-#    response = C.api.save_top_level_json(json=json)
-#    assert response.status_code == 400
+def test_fail_on_wrong_metadata():
 
-def test_sequence():
-    C = Connection()
-    unique_text = 'ThisIsMyUniqueText'
-    b = b'123456789'
-
-    parent_wrong_field_guid_json = {
-            "class": {
-                "type": "fmu_ensemble",
-                "class_version": "0.8",
-            },
-            "status": "scratch",
-            "field": "NOT A VALID FIELD",
-            "field_guid": 1234567,
-            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
-            "testdata": 'parent',
-            "country_identifier": "Norway",
-            "some_parent_metadata": {"field1": "1", "field2": "2"}, 
-                "some_ints": {"field3": 3, "field4": 4}, 
-                "some_floats": {"field5": 5.0, "field6": 6.0}
-                }
-
-    parent_json = {
-            "class": {
-                "type": "fmu_ensemble",
-                "class_version": "0.8",
-            },
-            "status": "scratch",
-            "field": "JOHAN SVERDRUP",
-            "field_guid": 268281971,
-            "testdata": 'parent',
-            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
-            "country_identifier": "Norway",
-            "some_parent_metadata": {"field1": "1", "field2": "2"}, 
-                "some_ints": {"field3": 3, "field4": 4}, 
-                "some_floats": {"field5": 5.0, "field6": 6.0}
-                }
-
-    child1_json = {
-            "class": {
-                "type": "fmu_regularsurface",
-                "class_version": "0.8",
-            },
-            "status": "scratch",
-            "field": "JOHAN SVERDRUP",
-            "field_guid": 268281971,
-            "testdata": 'child1',
-            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
-            "country_identifier": "Norway",
-            "some_child_metadata": {"field1": "1", "field2": "2"}, 
-                "some_ints": {"field3": 3, "field4": 4}, 
-                "some_floats": {"field5": 5.0, "field6": 6.0},
-            "checksum": 234723984723948237409238472309,
-                },
-
-    child2_json = {
-            "class": {
-                "type": "fmu_regularsurface",
-                "class_version": "0.8",
-            },
-            "status": "scratch",
-            "field": "JOHAN SVERDRUP",
-            "field_guid": 268281971,
-            "testdata": 'child2',
-            "fmu_ensemble_id": "2343k23nknb23kbjk2b423jhb2",
-            "country_identifier": "Norway",
-            "some_child_metadata": {"field1": "1", "field2": "2"}, 
-                "some_ints": {"field3": 3, "field4": 4}, 
-                "some_floats": {"field5": 5.0, "field6": 6.0},
-            "checksum": 1278462384623847236482374623876,
-            }
+    # upload a parent object with erroneous metadata, confirm failure
+    json = {"some field": "some value"}
+    response = C.api.save_top_level_json(json=json)
+    assert response.status_code == 400
 
 
-    #upload a parent object, get object_id
-    parent_id = _upload_parent_object(C=C, json=parent_json)
+def test_upload_ensemble():
+    #C = Connection()
 
-    print('parent_id: {}'.format(parent_id))
+    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
+        fmu_ensemble_metadata = yaml.safe_load(stream)
+        # add a test attribute
+        fmu_ensemble_metadata['_test'] = {'test1': 'test2'}
 
-    # confirm 
+    #upload ensemble metadata, get object_id
+    V.ensemble_id = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+    V.fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
-    # confirm failure on blob upload to parent object
-    # Not implemented
-    #with pytest.raises(Exception):
-    #    _upload_blob(C=C, object_id=parent_id, blob=b)
+    print('ensemble uploaded, ensemble ID: {}'.format(V.ensemble_id))
+    print('FMU ensemble ID: {}'.format(V.fmu_ensemble_id))
 
-    # upload child object, get child_id
-    child1_id = _upload_child_level_json(C=C, parent_id=parent_id, json=child1_json)
-    child2_id = _upload_child_level_json(C=C, parent_id=parent_id, json=child2_json)
+    assert V.ensemble_id != V.fmu_ensemble_id
+
+    # wait
+    sleep(2)
+
+
+def test_search_for_ensemble():
+    """Search for the uploaded ensemble, confirm 1 hit"""
+
+
+    print('search for fmu_ensemble_id: {}'.format(V.fmu_ensemble_id))
+    query = f'fmu_ensemble.fmu_ensemble_id:{V.fmu_ensemble_id}'
+    search_results = C.api.searchroot(query, select='source', buckets='source')
+    hits = search_results.get('hits').get('hits')
+
+    if len(hits) == 0:
+        print(query)
+        print(search_results)
+
+    assert len(hits) == 1
+
+
+def test_upload_regularsurface():
+
+    with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
+        fmu_regularsurface_metadata1 = yaml.safe_load(stream)
+        fmu_regularsurface_metadata1['_tests'] = {'test1': 'test'}
+
+    with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
+        fmu_regularsurface_metadata2 = yaml.safe_load(stream)
+        fmu_regularsurface_metadata2['_tests'] = {'test2': 'test'}
+
+        # manipulate local path to get different ID
+        fmu_regularsurface_metadata2['data']['relative_file_path'] += '_2'
+
+    assert fmu_regularsurface_metadata1 != fmu_regularsurface_metadata2
+
+    #print('parent_id: {}'.format(ensemble_id))
+
+    # upload regularsurface child object, get child_id
+    V.regularsurface_id1 = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata1)
+    results = _upload_blob(C=C, object_id=V.regularsurface_id1, blob=b)
+    assert results == '"Created"'
+
+    V.regularsurface_id2 = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata2)
+    results = _upload_blob(C=C, object_id=V.regularsurface_id2, blob=b)
+    assert results == '"Created"'
 
     # confirm that the two childs are different objects on Sumo
-    # Not implemented
-    assert child1_id != child2_id
+    print(fmu_regularsurface_metadata1.get('data').get('relative_file_path'))
+    print(fmu_regularsurface_metadata2.get('data').get('relative_file_path'))
+    assert V.regularsurface_id1 != V.regularsurface_id2
 
-    # upload blob on child level
-    _upload_blob(C=C, object_id=child1_id, blob=b)
-    _upload_blob(C=C, object_id=child2_id, blob=b)
 
-    # get child1 JSON
-    objects_results = _download_object(C=C, object_id=child1_id)
-    found = objects_results['found']
-    if found:
-        print('text:')
-        print(objects_results)
-    else:
-        raise Exception(f'Object not found : {found}')
+def test_search_for_regularsurface():
 
-    # search for child1, get one hit
-    search_results = C.api.search(query='child1')
+    # search for regularsurface, get one hit
+    search_results = C.api.search(query='_tests.test1:test')
+    print(search_results)
     hits = search_results.get('hits').get('hits')
     total = search_results.get('hits').get('total').get('value')
+
+    # confirm that search gives 1 hit only
     assert total == 1
     assert len(hits) == 1
 
-    # search for child2, get one hit
-    search_results = C.api.search(query='child2')
+    # confirm that the one hit is the same as was previously uploaded
+    _id = hits[0].get('_id')
+    assert V.regularsurface_id1 == _id
+
+def test_delete_regularsurface():
+
+    # delete regularsurface
+    result = _delete_object(C=C, object_id=V.regularsurface_id1)
+    assert result == 'Accepted'
+
+    # wait
+    sleep(2)
+
+
+def test_search_for_nonexisting_regularsurface():
+
+
+    # search for regularsurface, get zero hits
+    search_results = C.api.search(query='_tests.test1:test')
+    print(search_results)
     hits = search_results.get('hits').get('hits')
     total = search_results.get('hits').get('total').get('value')
-    assert total == 1
-    assert len(hits) == 1
 
-    # delete child2
-    result = _delete_object(C=C, object_id=child2_id)
-    assert result == 'ok'
-
-    # search for child2, get zero hits
-    search_results = C.api.search(query='child2')
-    hits = search_results.get('hits').get('hits')
-    total = search_results.get('hits').get('total').get('value')
     assert total == 0
     assert len(hits) == 0
+
+
+def test_delete_ensemble():
 
     # delete parent
-    result = _delete_object(C=C, object_id=parent_id)
-    assert result == 'ok'
+    result = _delete_object(C=C, object_id=V.ensemble_id)
+    assert result == 'Accepted'
 
     # search for child1, get zero hits
-    search_results = C.api.search('testdata:child1')
+    search_results = C.api.search('_tests:test1')
     hits = search_results.get('hits').get('hits')
     total = search_results.get('hits').get('total').get('value')
     assert total == 0
     assert len(hits) == 0
 
+# download
+#    # get child1 JSON
+#    objects_results = _download_object(C=C, object_id=V.regularsurface_id)
+#    found = objects_results['found']
+#    if found:
+#        print('text:')
+#        print(objects_results)
+#    else:
+#        raise Exception(f'Object not found : {found}')#
