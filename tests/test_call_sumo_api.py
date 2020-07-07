@@ -75,7 +75,7 @@ def test_upload_ensemble():
 
     #upload ensemble metadata, get object_id
     response = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
-    assert response.status_code == 200, response.status_code
+    assert 200 <= response.status_code <= 202, response.status_code
     assert isinstance(response.json(), dict)
     V.ensemble_id = response.json().get('objectid')
     V.fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
