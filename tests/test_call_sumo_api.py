@@ -14,8 +14,7 @@ def _upload_parent_object(C, json):
     response = C.api.save_top_level_json(json=json)
     if not 200 <= response.status_code < 202:
         raise Exception(f'code: {response.status_code}, text: {response.text}')
-    parent_id = response.text
-    return parent_id
+    return response
 
 def _upload_blob(C, object_id, blob):
     response = C.api.save_blob(object_id=object_id, blob=blob)
@@ -32,8 +31,7 @@ def _upload_child_level_json(C, parent_id, json):
     if not 200 <= response.status_code < 202:
         print(json)
         raise Exception(f'Response: {response.status_code}, Text: {response.text}')
-    child_id = response.text
-    return child_id
+    return response
 
 def _delete_object(C, object_id):
     response = C.api.delete_object(object_id=object_id)
@@ -67,7 +65,10 @@ def test_upload_ensemble():
         fmu_ensemble_metadata['_test'] = {'test1': 'test2'}
 
     #upload ensemble metadata, get object_id
-    V.ensemble_id = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+    response = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+    assert response.status_code == 200, response.status_code
+    assert isinstance(response.json(), dict)
+    V.ensemble_id = response.json().get('objectid')
     V.fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
     print('ensemble uploaded, ensemble ID: {}'.format(V.ensemble_id))
@@ -113,11 +114,13 @@ def test_upload_regularsurface():
     #print('parent_id: {}'.format(ensemble_id))
 
     # upload regularsurface child object, get child_id
-    V.regularsurface_id1 = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata1)
+    response = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata1)
+    V.regularsurface_id1 = response.json().get('objectid')
     results = _upload_blob(C=C, object_id=V.regularsurface_id1, blob=b)
     assert results == '"Created"'
 
-    V.regularsurface_id2 = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata2)
+    response = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata2)
+    V.regularsurface_id2 = response.json().get('objectid')
     results = _upload_blob(C=C, object_id=V.regularsurface_id2, blob=b)
     assert results == '"Created"'
 
