@@ -7,8 +7,12 @@ class CallSumoApi:
 
 
     def __init__(self, env='dev'):
-        self.base_url = f'https://main-sumo-surface-proto-{env}.radix.equinor.com/api/v1'
-        self.base_url = f'http://localhost:8084/api/v1'
+
+        if env == 'exp':
+            self.base_url = 'https://main-sumo-experiment-dev.playground.radix.equinor.com/api/v1'
+        else:
+            self.base_url = f'https://main-sumo-surface-proto-{env}.radix.equinor.com/api/v1'
+        #self.base_url = f'http://localhost:8084/api/v1'
         self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
         self.callAzureApi = CallAzureApi(self.resource_id)
 
@@ -217,6 +221,7 @@ class CallSumoApi:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
+
         return self.callAzureApi.post(url, blob, json, bearer)
 
     def _put_objects(self, object_id=None, blob=None, json=None, bearer=None, url=None):
