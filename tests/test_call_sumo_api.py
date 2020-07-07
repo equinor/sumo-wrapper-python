@@ -1,5 +1,7 @@
 """Example code for communicating with Sumo"""
-
+import sys
+import json
+sys.path.insert(0,'c:/appl/sumo-wrapper-python/src/')
 import pytest
 from sumo.wrapper import CallSumoApi
 import yaml
@@ -16,11 +18,20 @@ def _upload_parent_object(C, json):
         raise Exception(f'code: {response.status_code}, text: {response.text}')
     return response
 
-def _upload_blob(C, object_id, blob):
-    response = C.api.save_blob(object_id=object_id, blob=blob)
+def _upload_blob(C, object_id, blob, url=None):
+    response = C.api.save_blob(object_id=object_id, blob=blob, url=url)
+    print("Blob save " + str(response.status_code), flush=True);
     if not 200 <= response.status_code < 202:
-        raise Exception(f'blob upload to object_id {object_id} returned {response}')    
+        raise Exception(f'blob upload to object_id {object_id} returned {response.text} {response.status_code}')    
     return response.text
+
+def _get_blob_uri(C, objectid, url=None):
+    response = C.api.get_blob_uri(object_id=object_id)
+    print("Blob save " + str(response.status_code), flush=True);
+    if not 200 <= response.status_code < 202:
+        raise Exception(f'get blob uri for {object_id} returned {response.text} {response.status_code}')    
+    return response.text
+    
 
 def _download_object(C, object_id):
     json = C.api.get_json(object_id=object_id)
@@ -29,7 +40,6 @@ def _download_object(C, object_id):
 def _upload_child_level_json(C, parent_id, json):
     response = C.api.save_child_level_json(object_id=parent_id, json=json)
     if not 200 <= response.status_code < 202:
-        print(json)
         raise Exception(f'Response: {response.status_code}, Text: {response.text}')
     return response
 
@@ -54,7 +64,6 @@ def test_fail_on_wrong_metadata():
     json = {"some field": "some value"}
     response = C.api.save_top_level_json(json=json)
     assert response.status_code == 400
-
 
 def test_upload_ensemble():
     #C = Connection()
@@ -87,6 +96,7 @@ def test_search_for_ensemble():
     print('search for fmu_ensemble_id: {}'.format(V.fmu_ensemble_id))
     query = f'fmu_ensemble.fmu_ensemble_id:{V.fmu_ensemble_id}'
     search_results = C.api.searchroot(query, select='source', buckets='source')
+
     hits = search_results.get('hits').get('hits')
 
     if len(hits) == 0:

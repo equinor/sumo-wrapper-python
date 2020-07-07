@@ -167,6 +167,7 @@ class CallAzureApi:
                         string:
                             The string respond from the entered URL
         """
+
         if bearer is None:
             if self.bearer is None:
                 self.get_bear_token()
@@ -177,10 +178,12 @@ class CallAzureApi:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
 
         headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
-                   "Authorization": self.bearer,
                    "Content-Length" : str(len(json) if json != None else len(blob)),
                    "x-ms-blob-type" : "BlockBlob"
                    }
+
+        if url.find("sig=") < 0 :
+            headers["Authorization"] = self.bearer
 
         response = requests.put(url, data=blob, json=json, headers=headers)
 
