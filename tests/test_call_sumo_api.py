@@ -18,19 +18,19 @@ def _upload_parent_object(C, json):
         raise Exception(f'code: {response.status_code}, text: {response.text}')
     return response
 
-def _upload_blob(C, object_id, blob, url=None):
+def _upload_blob(C, blob, url=None, object_id=None):
     response = C.api.save_blob(object_id=object_id, blob=blob, url=url)
     print("Blob save " + str(response.status_code), flush=True);
     if not 200 <= response.status_code < 202:
         raise Exception(f'blob upload to object_id {object_id} returned {response.text} {response.status_code}')    
-    return response.text
+    return response
 
 def _get_blob_uri(C, objectid, url=None):
     response = C.api.get_blob_uri(object_id=object_id)
     print("Blob save " + str(response.status_code), flush=True);
     if not 200 <= response.status_code < 202:
         raise Exception(f'get blob uri for {object_id} returned {response.text} {response.status_code}')    
-    return response.text
+    return response
     
 
 def _download_object(C, object_id):
@@ -88,10 +88,8 @@ def test_upload_ensemble():
     # wait
     sleep(2)
 
-
 def test_search_for_ensemble():
     """Search for the uploaded ensemble, confirm 1 hit"""
-
 
     print('search for fmu_ensemble_id: {}'.format(V.fmu_ensemble_id))
     query = f'fmu_ensemble.fmu_ensemble_id:{V.fmu_ensemble_id}'
@@ -104,7 +102,6 @@ def test_search_for_ensemble():
         print(search_results)
 
     assert len(hits) == 1
-
 
 def test_upload_regularsurface():
 
@@ -121,24 +118,23 @@ def test_upload_regularsurface():
 
     assert fmu_regularsurface_metadata1 != fmu_regularsurface_metadata2
 
-    #print('parent_id: {}'.format(ensemble_id))
-
     # upload regularsurface child object, get child_id
-    response = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata1)
-    V.regularsurface_id1 = response.json().get('objectid')
-    results = _upload_blob(C=C, object_id=V.regularsurface_id1, blob=b)
-    assert results == '"Created"'
+    response_json = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata1)
+    V.regularsurface_id1 = response_json.json().get('objectid')
+    url = response_json.json().get('blob_url')
+    response_blob = _upload_blob(C=C, blob=b, url=url)
+    assert response_blob.status_code == 201
 
-    response = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata2)
-    V.regularsurface_id2 = response.json().get('objectid')
-    results = _upload_blob(C=C, object_id=V.regularsurface_id2, blob=b)
-    assert results == '"Created"'
+    response_json = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_regularsurface_metadata2)
+    V.regularsurface_id2 = response_json.json().get('objectid')
+    url = response_json.json().get('blob_url')
+    response_blob = _upload_blob(C=C, blob=b, url=url)
+    assert response_blob.status_code == 201
 
     # confirm that the two childs are different objects on Sumo
     print(fmu_regularsurface_metadata1.get('data').get('relative_file_path'))
     print(fmu_regularsurface_metadata2.get('data').get('relative_file_path'))
     assert V.regularsurface_id1 != V.regularsurface_id2
-
 
 def test_search_for_regularsurface():
 
@@ -165,11 +161,8 @@ def test_delete_regularsurface():
     # wait
     sleep(2)
 
-
 def test_search_for_nonexisting_regularsurface():
-
-
-    # search for regularsurface, get zero hits
+    """Search for regularsurface, get zero hits"""
     search_results = C.api.search(query='_tests.test1:test')
     print(search_results)
     hits = search_results.get('hits').get('hits')
@@ -177,7 +170,6 @@ def test_search_for_nonexisting_regularsurface():
 
     assert total == 0
     assert len(hits) == 0
-
 
 def test_delete_ensemble():
 
