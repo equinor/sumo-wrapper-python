@@ -1,0 +1,16 @@
+Metadata-Version: 1.2
+Name: sumo-wrapper-python
+Version: 0.1
+Summary: Python wrapper for the Sumo API
+Home-page: https://github.com/equinor/sumo-wrapper-python
+Author: Lindvar Lagran
+Author-email: llag@equinor.com
+License: UNKNOWN
+Description: UNKNOWN
+Keywords: sumo,python
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3.7Programming Language :: Python :: 3.8
+Requires-Python: >=3.4

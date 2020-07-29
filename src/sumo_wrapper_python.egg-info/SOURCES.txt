@@ -1,0 +1,8 @@
+README.md
+setup.py
+src/sumo_wrapper_python.egg-info/PKG-INFO
+src/sumo_wrapper_python.egg-info/SOURCES.txt
+src/sumo_wrapper_python.egg-info/dependency_links.txt
+src/sumo_wrapper_python.egg-info/not-zip-safe
+src/sumo_wrapper_python.egg-info/requires.txt
+src/sumo_wrapper_python.egg-info/top_level.txt
