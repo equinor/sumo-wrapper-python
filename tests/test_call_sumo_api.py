@@ -1,7 +1,6 @@
 """Example code for communicating with Sumo"""
 import sys
 import json
-sys.path.insert(0,'c:/appl/sumo-wrapper-python/src/')
 import pytest
 from sumo.wrapper import CallSumoApi
 import yaml
