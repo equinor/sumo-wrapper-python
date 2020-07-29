@@ -21,6 +21,7 @@ setup(
                     'requests',
                     'msal',
                     'xtgeo',
+                    'pyaml',
                     ],
     python_requires=">=3.4",
     packages=find_packages("src"),
