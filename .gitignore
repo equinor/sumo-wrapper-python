@@ -1,9 +1,6 @@
 venv
 dist
 build
-.idea
-SumoSurfacePython.egg-info/
-sumo_surface.egg-info/
+*.egg-info/
 *.log
 .cache/
-sumo_surface_python/__pycache__/

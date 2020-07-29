@@ -1,5 +1,6 @@
 import requests
 from ._auth import Auth
+from io import BytesIO, StringIO
 
 class CallAzureApi:
     """
@@ -70,6 +71,17 @@ class CallAzureApi:
 
         return response.json()
 
+    def get_image(self, url, bearer=None):
+        """Send a request, get image in return"""
+        headers = {"Content-Type": "html/text",
+                   "Authorization": self.bearer}
+
+        response = requests.get(url, headers=headers, stream=True)
+        if response.status_code == 200:
+            return response.raw.read()
+
+        return None
+
     def get_content(self, url, bearer=None):
         """
                 Send an request to the url.
@@ -100,9 +112,6 @@ class CallAzureApi:
 
         return response.content
 
-
-        #### Hvorfor blob??
-
     def post(self, url, blob=None, json=None, bearer=None):
         """
                 Post binary or json to the url and return the response as json.
@@ -126,20 +135,64 @@ class CallAzureApi:
         else:
             self.bearer = bearer
 
+        if blob and json:
+            raise ValueError('Both blob and json given to post - can only have one at the time.')
 
-
-        headers = {"Content-Type": "application/json",
+        headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
                    "Authorization": self.bearer,
                    "Content-Length" : str(len(json) if json != None else len(blob)),
                    }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
 
-        if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+        #if not response.ok:
+        #    raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
-        return response.text
+        return response
 
+    def put(self, url, blob=None, json=None, bearer=None):
+        """
+                Put binary to the url and return the response as json.
+
+                Parameters
+                    url
+                        Need to be a Azure rest url that returns a JSON.
+                    blob
+                        Optional, the binary to save
+                    json
+                        Optional, the json to save
+                    bearer
+                        Optional, if not entered it will generate one by calling the get_bear_token method
+                Return
+                        string:
+                            The string respond from the entered URL
+        """
+
+        if bearer is None:
+            if self.bearer is None:
+                self.get_bear_token()
+        else:
+            self.bearer = bearer
+
+        if blob and json:
+            raise ValueError('Both blob and json given to post - can only have one at the time.')
+
+        headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
+                   "Content-Length" : str(len(json) if json != None else len(blob)),
+                   "x-ms-blob-type" : "BlockBlob"
+                   }
+
+        if url.find("sig=") < 0 :
+            headers["Authorization"] = self.bearer
+
+        response = requests.put(url, data=blob, json=json, headers=headers)
+
+        #if not response.ok:
+        #    raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+
+        return response
+
+    
     def delete_json(self, url, bearer=None):
         """
                 Send delete to the url and return the response as json.

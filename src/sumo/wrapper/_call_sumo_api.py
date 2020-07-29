@@ -1,19 +1,19 @@
 from ._call_azure_api import CallAzureApi
 
-class CallSumoSurfaceApi:
+class CallSumoApi:
     """
-        This class can be used for calling the Sumo Surface APi.
+        This class can be used for calling the Sumo APi.
     """
 
 
     def __init__(self, env='dev'):
-        if env == 'prod':
-            self.base_url = 'https://main-sumo-surface-proto-prod.playground.radix.equinor.com'
+
+        if env == 'exp':
+            self.base_url = 'https://main-sumo-experiment-dev.playground.radix.equinor.com/api/v1'
         else:
-            self.base_url = 'https://main-sumo-surface-proto-dev.playground.radix.equinor.com/api/v1'
-
+            self.base_url = f'https://main-sumo-surface-proto-{env}.radix.equinor.com/api/v1'
+        #self.base_url = f'http://localhost:8084/api/v1'
         self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
-
         self.callAzureApi = CallAzureApi(self.resource_id)
 
     def __str__(self):
@@ -26,6 +26,25 @@ class CallSumoSurfaceApi:
     def __repr__(self):
         return self.__str__()
 
+    @property
+    def userdata(self):
+        """Get user data from Sumo endpoint /userdata"""
+        url = f"{self.base_url}/userdata"
+        return self.callAzureApi.get_json(url)
+
+    @property
+    def userphoto(self):
+        """Get user photo from Sumo endpoint /userphoto"""
+        url = f"{self.base_url}/userphoto"
+        return self.callAzureApi.get_image(url)
+
+    @property
+    def userprofile(self):
+        """Get user profile from Sumo endpoint /userprofile"""
+        url = f"{self.base_url}/userprofile"
+        return self.callAzureApi.get_json(url)
+
+
     def get_bear_token(self):
         """
                Generating an Azure OAuth2 bear token.
@@ -37,7 +56,7 @@ class CallSumoSurfaceApi:
         """
         return self.callAzureApi.get_bear_token()
 
-    def search(self, query, select=None, buckets=None, search_from=0, search_size=10, bearer=None):
+    def search(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
         """
                  Search for specific objects.
 
@@ -54,11 +73,42 @@ class CallSumoSurfaceApi:
                         Search results.
 
         """
-        url = f'{self.base_url}/search?$query={query}&$from={search_from}&$size={search_size}&$select={select}'
+
+        url = f'{self.base_url}/search?$query={query}'
+        
+        if search_from is not None:
+            url = f'{url}&$from={search_from}'
+        if search_size is not None:
+            url = f'{url}&$size={search_size}'
+        if select:
+            url = f'{url}&$select={select}'
         if buckets:
             url = f'{url}&$buckets={buckets}'
 
         return self.callAzureApi.get_json(url, bearer)
+
+    def searchroot(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
+        """
+                Search for parent objects (object without parent)
+        """
+
+        url = f'{self.base_url}/searchroot?$query={query}'
+
+        if search_from is None:
+            search_from = 0
+        url = f'{url}&$from={search_from}'
+        
+        if search_size is None:
+            search_size = 100
+        url = f'{url}&$size={search_size}'
+        
+        if select:
+            url = f'{url}&$select={select}'
+        if buckets:
+            url = f'{url}&$buckets={buckets}'
+
+        return self.callAzureApi.get_json(url, bearer)
+
 
     def get_json(self, object_id, bearer=None):
         """
@@ -102,7 +152,7 @@ class CallSumoSurfaceApi:
 
                     Return
                         string:
-                            The object_id of the newly updated object.
+                            The object_id of the newly updated object, or error message.
         """
         return self._post_objects(object_id=object_id, json=json, bearer=bearer)
 
@@ -121,9 +171,9 @@ class CallSumoSurfaceApi:
         url = f"{self.base_url}/objects('{object_id}')/blob"
         return self.callAzureApi.get_content(url, bearer)
 
-    def save_blob(self, object_id, blob, bearer=None):
+    def save_blob(self, blob, object_id=None, bearer=None, url=None):
         """
-                     Post a binary file to blob storage for the objectId.
+                     Put a binary file to blob storage for the objectId.
 
                      Parameters
                         object_id string, the id of the json object that this blob document will be attached to.
@@ -134,7 +184,7 @@ class CallSumoSurfaceApi:
                         string:
                             The object_id of the newly updated object.
         """
-        return self._post_objects(object_id=object_id, blob=blob, bearer=bearer)
+        return self._put_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
 
     def delete_object(self, object_id, bearer=None):
         """
@@ -150,6 +200,20 @@ class CallSumoSurfaceApi:
         """
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_json(url, bearer)
+    
+    def get_blob_uri(self, object_id, bearer=None):
+        """
+                   Get the redirect uri to blob storage for uploading a blob
+                   Parameters
+                        object_id string, the id of the json object that will be deleted.
+                        bearer string, Azure OAuth2 bear token Default: will create one.
+
+                    Return
+                        string:
+        """
+        url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
+        return self.callAzureApi.get_content(url, bearer)
+
 
     def _post_objects(self, object_id=None, blob=None, json=None, bearer=None):
         url = f'{self.base_url}/objects'
@@ -157,5 +221,15 @@ class CallSumoSurfaceApi:
             url = f"{url}('{object_id}')"
         if blob:
             url = f'{url}/blob'
+
         return self.callAzureApi.post(url, blob, json, bearer)
+
+    def _put_objects(self, object_id=None, blob=None, json=None, bearer=None, url=None):
+        if url is None:
+            url = f'{self.base_url}/objects'
+            if object_id:
+                url = f"{url}('{object_id}')"
+            if blob:
+                url = f'{url}/blob'
+        return self.callAzureApi.put(url, blob, json, bearer)
 
