@@ -171,7 +171,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')/blob"
         return self.callAzureApi.get_content(url, bearer)
 
-    def save_blob(self, object_id, blob, bearer=None, url=None):
+    def save_blob(self, blob, object_id=None, bearer=None, url=None):
         """
                      Put a binary file to blob storage for the objectId.
 
