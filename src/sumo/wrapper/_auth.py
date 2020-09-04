@@ -60,3 +60,6 @@ class Auth():
         self.cache = msal.SerializableTokenCache()
         if self._cache_availible():
             self._read_cache()
+
+if __name__ == '__main__':
+    auth = Auth("1826bd7c-582f-4838-880d-5b4da5c3eea2", "88d2b022-3539-4dda-9e66-853801334a86")
