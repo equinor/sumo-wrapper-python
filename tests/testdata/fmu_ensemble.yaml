@@ -7,6 +7,8 @@
 # NOTE! Not all attributes are mandatory, but some are.
 # If in doubt, refer to the schema or the documentation.
 
+# 2015-04-29T07:12:20.9100000Z
+
 class:
   class_version: '0.8'
   type: fmu_ensemble
@@ -21,7 +23,7 @@ coordinate_reference_system:
   projection: UTM
   zone: 31
 country_identifier: Norway
-datetime: '2020-06-26 09:28:32'
+datetime: '2020-06-26T09:28:32' #datetime: '2020-06-26 09:28:32'
 field_id:
   field_guid: 268281971
   field_name: JOHAN SVERDRUP
@@ -31,11 +33,11 @@ fmu_ensemble:
   iteration: iter-0
   runs:
   - configpath: /project/johan_sverdrup/resmod/...
-    datetime: '2020-06-26 09:28:32'
+    datetime: '2020-06-26T09:28:32' # datetime: '2020-06-26 09:28:32'
     runpath: /scratch/johan_sverdrup/...
     user: peesv
   - configpath: /project/johan_sverdrup/resmod/...
-    datetime: '2020-06-26 09:52:02'
+    datetime: '2020-06-26T09:52:02' # datetime: '2020-06-26 09:52:02'
     runpath: /scratch/johan_sverdrup/...
     user: someuser
 fmu_template:

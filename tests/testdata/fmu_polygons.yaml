@@ -57,7 +57,7 @@ data:
     t2: 20590125
     t2_label: MyLabel
   unit: m
-datetime: '2020-06-26 09:28:32'
+datetime: '2020-06-26T09:28:32'
 field_id:
   field_guid: 268281971
   field_name: JOHAN SVERDRUP
@@ -67,11 +67,11 @@ fmu_ensemble:
   iteration: iter-0
   runs:
   - configpath: /project/johan_sverdrup/resmod/...
-    datetime: '2020-06-26 09:28:32'
+    datetime: '2020-06-26T09:28:32'
     runpath: /scratch/johan_sverdrup/...
     user: peesv
   - configpath: /project/johan_sverdrup/resmod/...
-    datetime: '2020-06-26 09:52:02'
+    datetime: '2020-06-26T09:52:02'
     runpath: /scratch/johan_sverdrup/...
     user: someuser
 fmu_template:
