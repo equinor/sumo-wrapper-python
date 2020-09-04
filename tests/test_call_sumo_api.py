@@ -87,20 +87,68 @@ def test_upload_ensemble():
     # wait
     sleep(2)
 
-def test_search_for_ensemble():
-    """Search for the uploaded ensemble, confirm 1 hit"""
+# Adding a duplicate ensemble, both tries must return same id.
+def test_upload_duplicate_ensemble():
+    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
+        fmu_ensemble_metadata1 = yaml.safe_load(stream)
 
-    print('search for fmu_ensemble_id: {}'.format(V.fmu_ensemble_id))
-    query = f'fmu_ensemble.fmu_ensemble_id:{V.fmu_ensemble_id}'
-    search_results = C.api.searchroot(query, select='source', buckets='source')
+    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
+        fmu_ensemble_metadata2 = yaml.safe_load(stream)
 
-    hits = search_results.get('hits').get('hits')
+    # Adding fake equal ID
+    fmu_ensemble_metadata1['fmu_ensemble']['fmu_ensemble_id'] = '00000000-0000-0000-0000-000000000055'
+    fmu_ensemble_metadata2['fmu_ensemble']['fmu_ensemble_id'] = '00000000-0000-0000-0000-000000000055'
 
-    if len(hits) == 0:
-        print(query)
-        print(search_results)
+    #upload ensemble metadata, get object_id
+    response1 = _upload_parent_object(C=C, json=fmu_ensemble_metadata1)
+    
+    V.ensemble_id1 = response1.json().get('objectid')
+    V.fmu_ensemble_id1 = fmu_ensemble_metadata1.get('fmu_ensemble').get('fmu_ensemble_id')
 
-    assert len(hits) == 1
+    assert 200 <= response1.status_code <= 202, response1.status_code
+    assert isinstance(response1.json(), dict)
+
+    #upload duplicated ensemble metadata, get object_id
+    response2 = _upload_parent_object(C=C, json=fmu_ensemble_metadata2)
+
+    V.ensemble_id2 = response1.json().get('objectid')
+    V.fmu_ensemble_id2 = fmu_ensemble_metadata2.get('fmu_ensemble').get('fmu_ensemble_id')
+
+    assert 200 <= response2.status_code <= 202, response2.status_code
+    assert isinstance(response2.json(), dict)
+    
+    assert V.ensemble_id1 == V.ensemble_id2
+    assert V.ensemble_id != V.ensemble_id1
+
+# Adding a regular surface as a parent object
+def test_upload_regularsurface_as_parent():
+    with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
+        fmu_ensemble_metadata = yaml.safe_load(stream)
+
+    fmu_ensemble_metadata['fmu_ensemble']['fmu_ensemble_id'] = '11100000-0000-0000-0000-000000000055'
+
+    # upload must raise an exception
+    try:
+        response = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+    except:
+        assert True
+    else:
+        assert False
+
+# def test_search_for_ensemble():
+#     """Search for the uploaded ensemble, confirm 1 hit"""
+
+#     print('search for fmu_ensemble_id: {}'.format(V.fmu_ensemble_id))
+#     query = f'fmu_ensemble.fmu_ensemble_id:{V.fmu_ensemble_id}'
+#     search_results = C.api.searchroot(query, select='source', buckets='source')
+
+#     hits = search_results.get('hits').get('hits')
+
+#     if len(hits) == 0:
+#         print(query)
+#         print(search_results)
+
+#     assert len(hits) == 1
 
 def test_upload_regularsurface():
 
@@ -135,53 +183,84 @@ def test_upload_regularsurface():
     print(fmu_regularsurface_metadata2.get('data').get('relative_file_path'))
     assert V.regularsurface_id1 != V.regularsurface_id2
 
-def test_search_for_regularsurface():
-
-    # search for regularsurface, get one hit
-    search_results = C.api.search(query='_tests.test1:test')
-    print(search_results)
-    hits = search_results.get('hits').get('hits')
-    total = search_results.get('hits').get('total').get('value')
-
-    # confirm that search gives 1 hit only
-    assert total == 1
-    assert len(hits) == 1
-
-    # confirm that the one hit is the same as was previously uploaded
-    _id = hits[0].get('_id')
-    assert V.regularsurface_id1 == _id
-
-def test_delete_regularsurface():
-
-    # delete regularsurface
-    result = _delete_object(C=C, object_id=V.regularsurface_id1)
-    assert result == 'Accepted'
-
-    # wait
     sleep(2)
 
-def test_search_for_nonexisting_regularsurface():
-    """Search for regularsurface, get zero hits"""
-    search_results = C.api.search(query='_tests.test1:test')
-    print(search_results)
-    hits = search_results.get('hits').get('hits')
-    total = search_results.get('hits').get('total').get('value')
+# def test_search_for_regularsurface():
+#     # search for regularsurface, get one hit
+#     search_results = C.api.search(query='_tests.test1:test')
+#     print(search_results)
+#     hits = search_results.get('hits').get('hits')
+#     total = search_results.get('hits').get('total').get('value')
 
-    assert total == 0
-    assert len(hits) == 0
+#     # confirm that search gives 1 hit only
+#     assert total == 1
+#     assert len(hits) == 1
 
-def test_delete_ensemble():
+#     # confirm that the one hit is the same as was previously uploaded
+#     _id = hits[0].get('_id')
+#     assert V.regularsurface_id1 == _id
 
-    # delete parent
-    result = _delete_object(C=C, object_id=V.ensemble_id)
-    assert result == 'Accepted'
+# def test_delete_regularsurface():
 
-    # search for child1, get zero hits
-    search_results = C.api.search('_tests:test1')
-    hits = search_results.get('hits').get('hits')
-    total = search_results.get('hits').get('total').get('value')
-    assert total == 0
-    assert len(hits) == 0
+#     # delete regularsurface
+#     result = _delete_object(C=C, object_id=V.regularsurface_id1)
+#     assert result == 'Accepted'
+
+#     # wait
+#     sleep(2)
+
+# def test_search_for_nonexisting_regularsurface():
+#     """Search for regularsurface, get zero hits"""
+#     search_results = C.api.search(query='_tests.test1:test')
+#     print(search_results)
+#     hits = search_results.get('hits').get('hits')
+#     total = search_results.get('hits').get('total').get('value')
+
+#     assert total == 0
+#     assert len(hits) == 0
+
+def test_upload_polygon():
+    with open('testdata/fmu_polygons.yaml', 'r') as stream:
+        fmu_polygon_metadata = yaml.safe_load(stream)
+        fmu_polygon_metadata['_tests'] = {'test1': 'test-pol'}
+
+    # upload regularsurface child object, get child_id
+    response_json = _upload_child_level_json(C=C, parent_id=V.ensemble_id, json=fmu_polygon_metadata)
+    
+    assert response_json.status_code <= 202
+
+    V.polygon_id = response_json.json().get('objectid')
+    url = response_json.json().get('blob_url')
+    response_blob = _upload_blob(C=C, blob=b, url=url)
+    
+    assert response_blob.status_code == 201
+
+    sleep(2)
+
+# def test_delete_ensemble():
+
+#     result = _delete_object(C=C, object_id=V.ensemble_id)
+#     print(result, V.fmu_ensemble_id)
+
+#     sleep(3)
+
+#     # search for child1, get zero hits
+#     search_results = C.api.search('_test.test1:test2')
+#     hits = search_results.get('hits').get('hits')
+#     total = search_results.get('hits').get('total').get('value')
+#     assert total == 0
+#     assert len(hits) == 0
+
+#     print('search for fmu_ensemble_id: {}'.format(V.fmu_ensemble_id))
+#     query = f'fmu_ensemble.fmu_ensemble_id:{V.fmu_ensemble_id}'
+#     search_results = C.api.searchroot(query, select='source', buckets='source')
+#     hits = search_results.get('hits').get('hits')
+
+#     if len(hits) == 0:
+#         print(query)
+#         print(search_results)
+
+#     assert len(hits) == 0
 
 # download
 #    # get child1 JSON
@@ -192,3 +271,6 @@ def test_delete_ensemble():
 #        print(objects_results)
 #    else:
 #        raise Exception(f'Object not found : {found}')#
+
+# test_upload_ensemble()
+# test_search_for_ensemble()
