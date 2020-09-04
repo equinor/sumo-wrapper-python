@@ -20,7 +20,7 @@ class Auth():
         self.app = msal.PublicClientApplication(self.client_id, authority=AUTHORITY_URI,
                                                 client_credential=self.client_crediatials, token_cache=self.cache)
         self.accounts = self.app.get_accounts()
-        self._oauth_get_token_silent() if self._cache_availible() else self._oauth_device_code()
+        self._oauth_get_token_silent() if self._cache_available() else self._oauth_device_code()
 
     def get_token(self):
         self._oauth_get_token_silent()
@@ -32,7 +32,7 @@ class Auth():
         self.result = self.app.acquire_token_silent([self.scope], account=self.accounts[0])
         self._write_cache()
 
-    def _cache_availible(self):
+    def _cache_available(self):
         if os.path.isfile(self.token_path):
             return True
         return False
@@ -58,7 +58,7 @@ class Auth():
     def _get_cache(self):
 
         self.cache = msal.SerializableTokenCache()
-        if self._cache_availible():
+        if self._cache_available():
             self._read_cache()
 
 if __name__ == '__main__':
