@@ -1,4 +1,4 @@
-# sumo-surface-python
+# sumo-wrapper-python
 Development of Python wrappers for Sumo APIs
 
 
