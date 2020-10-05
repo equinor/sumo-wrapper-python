@@ -19,11 +19,8 @@ class CallSumoApi:
         self.callAzureApi = CallAzureApi(self.resource_id)
 
     def __str__(self):
-        sb = []
-        for key in self.__dict__:
-            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
-
-        return ', '.join(sb)
+        str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
+        return ', '.join(str_repr)
 
     def __repr__(self):
         return self.__str__()
@@ -46,7 +43,7 @@ class CallSumoApi:
         url = f"{self.base_url}/userprofile"
         return self.callAzureApi.get_json(url)
 
-
+    # TODO: Is this supposed to be done that way?
     def get_bear_token(self):
         """
                Generating an Azure OAuth2 bear token.
@@ -75,7 +72,6 @@ class CallSumoApi:
                         Search results.
 
         """
-
         url = f'{self.base_url}/search?$query={query}'
         
         if search_from is not None:
@@ -93,7 +89,6 @@ class CallSumoApi:
         """
                 Search for parent objects (object without parent)
         """
-
         url = f'{self.base_url}/searchroot?$query={query}'
 
         if search_from is None:
@@ -217,6 +212,7 @@ class CallSumoApi:
         return self.callAzureApi.get_content(url, bearer)
 
 
+    # TODO is blob ever used?
     def _post_objects(self, object_id=None, blob=None, json=None, bearer=None):
         url = f'{self.base_url}/objects'
         if object_id:
@@ -226,6 +222,7 @@ class CallSumoApi:
 
         return self.callAzureApi.post(url, blob, json, bearer)
 
+    # TODO is JSON ever used? What is the difference between post and put?
     def _put_objects(self, object_id=None, blob=None, json=None, bearer=None, url=None):
         if url is None:
             url = f'{self.base_url}/objects'
