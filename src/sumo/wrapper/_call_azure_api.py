@@ -19,6 +19,7 @@ class CallAzureApi:
 
     def __init__(self, resource_id):
         self.auth = Auth(self.client_id, resource_id)
+        self.bearer = "Bearer " + self.auth.get_token()
 
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
@@ -37,9 +38,7 @@ class CallAzureApi:
                         accessToken:
                             The Bearer Authorization string
         """
-
-        self.bearer = "Bearer " + self.auth.get_token()
-
+        # self.bearer = "Bearer " + self.auth.get_token()
         return self.bearer
 
     def get_json(self, url, bearer=None):
@@ -55,10 +54,7 @@ class CallAzureApi:
                         json:
                             The json respond from the entered URL
         """
-        if bearer is None:
-            if self.bearer is None:
-                self.get_bear_token()
-        else:
+        if bearer is not None:
             self.bearer = bearer
 
         headers = {"Content-Type": "application/json",
@@ -73,10 +69,14 @@ class CallAzureApi:
 
     def get_image(self, url, bearer=None):
         """Send a request, get image in return"""
+        if bearer is not None:
+            self.bearer = bearer
+
         headers = {"Content-Type": "html/text",
                    "Authorization": self.bearer}
 
         response = requests.get(url, headers=headers, stream=True)
+        
         if response.status_code == 200:
             return response.raw.read()
 
@@ -95,11 +95,7 @@ class CallAzureApi:
                         content:
                             The content respond from the entered URL
         """
-
-        if bearer is None:
-            if self.bearer is None:
-                self.get_bear_token()
-        else:
+        if bearer is not None:
             self.bearer = bearer
 
         headers = {"Content-Type": "application/json",
@@ -129,10 +125,7 @@ class CallAzureApi:
                         string:
                             The string respond from the entered URL
         """
-        if bearer is None:
-            if self.bearer is None:
-                self.get_bear_token()
-        else:
+        if bearer is not None:
             self.bearer = bearer
 
         if blob and json:
@@ -167,11 +160,7 @@ class CallAzureApi:
                         string:
                             The string respond from the entered URL
         """
-
-        if bearer is None:
-            if self.bearer is None:
-                self.get_bear_token()
-        else:
+        if bearer is not None:
             self.bearer = bearer
 
         if blob and json:
@@ -206,10 +195,7 @@ class CallAzureApi:
                         json:
                             The json respond from the entered URL
         """
-        if bearer is None:
-            if self.bearer is None:
-                self.get_bear_token()
-        else:
+        if bearer is not None:
             self.bearer = bearer
 
         headers = {"Content-Type": "application/json",
