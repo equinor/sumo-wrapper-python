@@ -12,6 +12,8 @@ class CallAzureApi:
                 resourceId:
                     Need to be an Azure resourceId
     """
+
+     # TODO: Should Client ID be hard coded?
     client_id = "1826bd7c-582f-4838-880d-5b4da5c3eea2"
     bearer = None
 
@@ -19,15 +21,13 @@ class CallAzureApi:
         self.auth = Auth(self.client_id, resource_id)
 
     def __str__(self):
-        sb = []
-        for key in self.__dict__:
-            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
-
-        return ', '.join(sb)
+        str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
+        return ', '.join(str_repr)
 
     def __repr__(self):
         return self.__str__()
 
+    # TODO: Is this supposed to be done that way? Most functions call this if bearer is None, shouldn't this be called in init instead?
     def get_bear_token(self):
         """
                 Generating an Azure OAuth2 bear token.
