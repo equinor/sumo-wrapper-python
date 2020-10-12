@@ -15,7 +15,7 @@ class Auth():
         self.scope = self.resource_id + "/.default"
         self.authority = authority
         self.client_crediatials = client_crediatials
-        self.token_path = os.path.join(HOME_DIR, ".omnia", str(self.resource_id) + ".token")
+        self.token_path = os.path.join(HOME_DIR, ".sumo", str(self.resource_id) + ".token")
         self._get_cache()
         self.app = msal.PublicClientApplication(self.client_id, authority=AUTHORITY_URI,
                                                 client_credential=self.client_crediatials, token_cache=self.cache)
