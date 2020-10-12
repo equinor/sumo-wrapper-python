@@ -44,11 +44,14 @@ class Auth():
             raise ValueError(
                 "Fail to create device flow. Err: %s" % json.dumps(flow, indent=4))
 
+        print(flow.get('message'))
         self.result = self.app.acquire_token_by_device_flow(flow)
         self._write_cache()
 
     def _write_cache(self):
-        os.makedirs(os.path.dirname(self.token_path), exist_ok=True)
+        oldmask = os.umask(000)
+        os.makedirs(os.path.dirname(self.token_path), exist_ok=True, mode=1274) # Octal for 700
+        os.umask(oldmask)
         with open(self.token_path, "w") as file:
             file.write(self.cache.serialize())
 
@@ -63,3 +66,4 @@ class Auth():
 
 if __name__ == '__main__':
     auth = Auth("1826bd7c-582f-4838-880d-5b4da5c3eea2", "88d2b022-3539-4dda-9e66-853801334a86")
+    print(auth.get_token())
