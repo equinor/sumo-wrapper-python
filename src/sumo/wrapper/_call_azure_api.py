@@ -28,7 +28,7 @@ class CallAzureApi:
     def __repr__(self):
         return self.__str__()
 
-    def get_bear_token(self):
+    def get_bearer_token(self):
         """
             Get an Azure OAuth2 bear token.
             You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the code that is printed.
@@ -47,7 +47,7 @@ class CallAzureApi:
                 url
                     Need to be a Azure rest url that returns a JSON.
                 bearer
-                    Optional, if not entered it will generate one by calling the get_bear_token method
+                    Optional, if not entered it will generate one by calling the get_bearer_token method
             
             Return
                 json:
@@ -74,7 +74,7 @@ class CallAzureApi:
                 url
                     Need to be a Azure rest url that returns a JSON.
                 bearer
-                    Optional, if not entered it will generate one by calling the get_bear_token method
+                    Optional, if not entered it will generate one by calling the get_bearer_token method
             
             Return
                 image:
@@ -101,7 +101,7 @@ class CallAzureApi:
                 url
                     Need to be a Azure rest url that returns a JSON.
                 bearer
-                    Optional, if not entered it will generate one by calling the get_bear_token method
+                    Optional, if not entered it will generate one by calling the get_bearer_token method
             
             Return
                content:
@@ -128,7 +128,7 @@ class CallAzureApi:
             url: Need to be a Azure rest url that returns a JSON.
             blob: Optional, the binary to save
             json: Optional, the json to save
-            bearer: Optional, if not entered it will generate one by calling the get_bear_token method
+            bearer: Optional, if not entered it will generate one by calling the get_bearer_token method
         
         Return
             string: The string respond from the entered URL
@@ -159,7 +159,7 @@ class CallAzureApi:
                 url: Need to be a Azure rest url that returns a JSON.
                 blob: Optional, the binary to save
                 json: Optional, the json to save
-                bearer: Optional, if not entered it will generate one by calling the get_bear_token method
+                bearer: Optional, if not entered it will generate one by calling the get_bearer_token method
             
             Return
                 string: The string respond from the entered URL
@@ -192,7 +192,7 @@ class CallAzureApi:
 
             Parameters
                 url: Need to be a Azure rest url that returns a JSON.
-                bearer: Optional, if not entered it will generate one by calling the get_bear_token method
+                bearer: Optional, if not entered it will generate one by calling the get_bearer_token method
             
             Return
                 json: The json respond from the entered URL
