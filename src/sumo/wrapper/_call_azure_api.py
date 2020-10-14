@@ -28,32 +28,31 @@ class CallAzureApi:
     def __repr__(self):
         return self.__str__()
 
-    # TODO: Is this supposed to be done that way? Most functions call this if bearer is None, shouldn't this be called in init instead?
     def get_bear_token(self):
         """
-                Generating an Azure OAuth2 bear token.
-                You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the code that is printed.
+            Get an Azure OAuth2 bear token.
+            You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the code that is printed.
 
-                Return
-                        accessToken:
-                            The Bearer Authorization string
+            Return
+                accessToken:
+                    The Bearer Authorization string
         """
-        # self.bearer = "Bearer " + self.auth.get_token()
         return self.bearer
 
     def get_json(self, url, bearer=None):
         """
-                Send an request to the url.
+            Send an request to the url.
 
-                Parameters
-                    url
-                        Need to be a Azure rest url that returns a JSON.
-                    bearer
-                        Optional, if not entered it will generate one by calling the get_bear_token method
-                Return
-                        json:
-                            The json respond from the entered URL
-        """
+            Parameters
+                url
+                    Need to be a Azure rest url that returns a JSON.
+                bearer
+                    Optional, if not entered it will generate one by calling the get_bear_token method
+            
+            Return
+                json:
+                    The json respond from the entered URL
+        """   
         if bearer is not None:
             self.bearer = bearer
 
@@ -68,7 +67,19 @@ class CallAzureApi:
         return response.json()
 
     def get_image(self, url, bearer=None):
-        """Send a request, get image in return"""
+        """
+            Send an request to the url for the image.
+
+            Parameters
+                url
+                    Need to be a Azure rest url that returns a JSON.
+                bearer
+                    Optional, if not entered it will generate one by calling the get_bear_token method
+            
+            Return
+                image:
+                    raw image
+        """
         if bearer is not None:
             self.bearer = bearer
 
@@ -84,16 +95,17 @@ class CallAzureApi:
 
     def get_content(self, url, bearer=None):
         """
-                Send an request to the url.
+            Send an request to the url.
 
-                Parameters
-                    url
-                        Need to be a Azure rest url that returns a JSON.
-                    bearer
-                        Optional, if not entered it will generate one by calling the get_bear_token method
-                Return
-                        content:
-                            The content respond from the entered URL
+            Parameters
+                url
+                    Need to be a Azure rest url that returns a JSON.
+                bearer
+                    Optional, if not entered it will generate one by calling the get_bear_token method
+            
+            Return
+               content:
+                    The content respond from the entered URL
         """
         if bearer is not None:
             self.bearer = bearer
@@ -110,20 +122,16 @@ class CallAzureApi:
 
     def post(self, url, blob=None, json=None, bearer=None):
         """
-                Post binary or json to the url and return the response as json.
+        Post binary or json to the url and return the response as json.
 
-                Parameters
-                    url
-                        Need to be a Azure rest url that returns a JSON.
-                    blob
-                        Optional, the binary to save
-                    json
-                        Optional, the json to save
-                    bearer
-                        Optional, if not entered it will generate one by calling the get_bear_token method
-                Return
-                        string:
-                            The string respond from the entered URL
+        Parameters
+            url: Need to be a Azure rest url that returns a JSON.
+            blob: Optional, the binary to save
+            json: Optional, the json to save
+            bearer: Optional, if not entered it will generate one by calling the get_bear_token method
+        
+        Return
+            string: The string respond from the entered URL
         """
         if bearer is not None:
             self.bearer = bearer
@@ -138,27 +146,23 @@ class CallAzureApi:
 
         response = requests.post(url, data=blob, json=json, headers=headers)
 
-        #if not response.ok:
-        #    raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+        if not response.ok:
+           raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
         return response
 
     def put(self, url, blob=None, json=None, bearer=None):
         """
-                Put binary to the url and return the response as json.
+            Put binary to the url and return the response as json.
 
-                Parameters
-                    url
-                        Need to be a Azure rest url that returns a JSON.
-                    blob
-                        Optional, the binary to save
-                    json
-                        Optional, the json to save
-                    bearer
-                        Optional, if not entered it will generate one by calling the get_bear_token method
-                Return
-                        string:
-                            The string respond from the entered URL
+            Parameters
+                url: Need to be a Azure rest url that returns a JSON.
+                blob: Optional, the binary to save
+                json: Optional, the json to save
+                bearer: Optional, if not entered it will generate one by calling the get_bear_token method
+            
+            Return
+                string: The string respond from the entered URL
         """
         if bearer is not None:
             self.bearer = bearer
@@ -182,18 +186,16 @@ class CallAzureApi:
         return response
 
     
-    def delete_json(self, url, bearer=None):
+    def delete_object(self, url, bearer=None):
         """
-                Send delete to the url and return the response as json.
+            Send delete to the url and return the response as json.
 
-                Parameters
-                    url
-                        Need to be a Azure rest url that returns a JSON.
-                    bearer
-                        Optional, if not entered it will generate one by calling the get_bear_token method
-                Return
-                        json:
-                            The json respond from the entered URL
+            Parameters
+                url: Need to be a Azure rest url that returns a JSON.
+                bearer: Optional, if not entered it will generate one by calling the get_bear_token method
+            
+            Return
+                json: The json respond from the entered URL
         """
         if bearer is not None:
             self.bearer = bearer
