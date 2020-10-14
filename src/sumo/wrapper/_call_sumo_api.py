@@ -178,7 +178,7 @@ class CallSumoApi:
             Return
                 string: The object id of the newly created object, or error message.
         """
-        return self._post_objects(parent_id=parent_id, json=json, bearer=bearer)
+        return self._post_objects(object_id=parent_id, json=json, bearer=bearer)
 
     def update_child_level_json(self, json, object_id=None, url=None, bearer=None):
         """
@@ -302,7 +302,7 @@ class CallSumoApi:
         if blob:
             url = f'{url}/blob'
 
-        return self.callAzureApi.post(url=url, data=blob, json=json, bearer=bearer)
+        return self.callAzureApi.post(url=url, blob=blob, json=json, bearer=bearer)
 
     def _put_objects(self, object_id=None, blob=None, json=None, bearer=None, url=None):
         """
@@ -325,5 +325,5 @@ class CallSumoApi:
             if blob:
                 url = f'{url}/blob'
         
-        return self.callAzureApi.put(url=url, data=blob, json=json, bearer=bearer)
+        return self.callAzureApi.put(url=url, blob=blob, json=json, bearer=bearer)
 
