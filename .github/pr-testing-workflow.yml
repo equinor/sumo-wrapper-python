@@ -1,0 +1,16 @@
+name: pr-testing.workflow
+on:
+  pull_request:
+    branches:
+    - dev
+    - master
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build docker image
+      env:
+        REF: ${{ github. sha }}
+      run: pytest tests/test_call_sumo_api.py
