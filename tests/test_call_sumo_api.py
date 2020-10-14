@@ -120,7 +120,7 @@ def test_upload_search_delete_ensemble_child():
     result = _delete_object(C=C, object_id=ensemble_id)
     assert result == 'Accepted'
 
-    sleep(2)
+    sleep(3)
 
     # Search for ensemble
     query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
