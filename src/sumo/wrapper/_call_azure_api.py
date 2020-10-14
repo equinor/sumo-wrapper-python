@@ -52,7 +52,7 @@ class CallAzureApi:
             Return
                 json:
                     The json respond from the entered URL
-        """
+        """   
         if bearer is not None:
             self.bearer = bearer
 
