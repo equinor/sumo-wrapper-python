@@ -17,7 +17,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install requests
+        pip install msal
         set PYTHONPATH=/src/
     - name: Run tests
       run: pytest tests/test_call_sumo_api.py
