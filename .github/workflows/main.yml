@@ -20,6 +20,7 @@ jobs:
         pip install requests
         pip install msal
         pip install pytest
-        set PYTHONPATH=src\
     - name: Run tests
-      run: pytest tests/test_call_sumo_api.py
+      run: |
+        set PYTHONPATH=/src/
+        pytest tests/test_call_sumo_api.py
