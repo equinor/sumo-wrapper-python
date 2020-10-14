@@ -50,10 +50,13 @@ class Auth():
 
     def _write_cache(self):
         oldmask = os.umask(000)
-        os.makedirs(os.path.dirname(self.token_path), exist_ok=True, mode=1274) # Octal for 700
-        os.umask(oldmask)
+
+        os.makedirs(os.path.dirname(self.token_path), exist_ok=True, mode=0o700)
         with open(self.token_path, "w") as file:
             file.write(self.cache.serialize())
+        os.chmod(self.token_path,0o600)
+
+        os.umask(oldmask)
 
     def _read_cache(self):
         self.cache.deserialize(open(self.token_path, "r").read())
