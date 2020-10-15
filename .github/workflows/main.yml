@@ -20,7 +20,7 @@ jobs:
         pip install requests
         pip install msal
         pip install pytest
-        pip install yaml
+        pip install pyyaml
     - name: Run tests
       run: |
         cd tests
