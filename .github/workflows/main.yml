@@ -23,4 +23,4 @@ jobs:
     - name: Run tests
       run: |
         cd tests
-        pytest tests/test_call_sumo_api.py
+        pytest test_call_sumo_api.py
