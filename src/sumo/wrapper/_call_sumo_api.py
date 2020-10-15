@@ -43,8 +43,8 @@ class CallSumoApi:
         url = f"{self.base_url}/userprofile"
         return self.callAzureApi.get_json(url)
 
-    # TODO: Is this supposed to be done that way?
-    def get_bear_token(self):
+    # For discussion: Do we need to print the code and expect the user to manually type it on the browser or is there a better way to do it
+    def get_bearer_token(self):
         """
             Generating an Azure OAuth2 bear token.
             You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the code that is printed.
@@ -53,7 +53,7 @@ class CallSumoApi:
                 accessToken:
                     The Bearer Authorization string
         """
-        return self.callAzureApi.get_bear_token()
+        return self.callAzureApi.get_bearer_token()
 
     def search(self, query, select=None, buckets=None, search_from=0, search_size=100, bearer=None):
         """
