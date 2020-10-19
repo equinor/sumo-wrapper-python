@@ -1,5 +1,4 @@
 import requests
-import yaml
 
 from ._auth import Auth
 from io import BytesIO, StringIO
@@ -14,15 +13,12 @@ class CallAzureApi:
                 resourceId:
                     Need to be an Azure resourceId
     """
-    def __init__(self, resource_id, outside_token=False):
+    def __init__(self, resource_id, client_id, outside_token=False):
         if outside_token:
+            self.auth = None
             self.bearer = None
         else:
-            with open('config.yaml') as f:
-                ids = yaml.safe_load(f)
-            
-            self.client_id = ids['clientid']
-            self.auth = Auth(self.client_id, resource_id)
+            self.auth = Auth(client_id, resource_id)
             self.bearer = "Bearer " + self.auth.get_token()
    
     def __str__(self):
