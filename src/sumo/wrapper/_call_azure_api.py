@@ -14,15 +14,18 @@ class CallAzureApi:
                 resourceId:
                     Need to be an Azure resourceId
     """
-    def __init__(self, resource_id):
+    def __init__(self, resource_id, outside_token=False):
         with open('config.yaml') as f:
             ids = yaml.safe_load(f)
-
+        
         self.client_id = ids['clientid']
 
-        self.auth = Auth(self.client_id, resource_id)
-        self.bearer = "Bearer " + self.auth.get_token()
-
+        if outside_token:
+            self.bearer = None
+        else:
+            self.auth = Auth(self.client_id, resource_id)
+            self.bearer = "Bearer " + self.auth.get_token()
+   
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
         return ', '.join(str_repr)
@@ -56,7 +59,7 @@ class CallAzureApi:
                     The json respond from the entered URL
         """   
         if bearer is not None:
-            self.bearer = bearer
+            self.bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer}
@@ -83,7 +86,7 @@ class CallAzureApi:
                     raw image
         """
         if bearer is not None:
-            self.bearer = bearer
+            self.bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "html/text",
                    "Authorization": self.bearer}
@@ -110,7 +113,7 @@ class CallAzureApi:
                     The content respond from the entered URL
         """
         if bearer is not None:
-            self.bearer = bearer
+            self.bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer}
@@ -136,7 +139,7 @@ class CallAzureApi:
             string: The string respond from the entered URL
         """
         if bearer is not None:
-            self.bearer = bearer
+            self.bearer = "Bearer " + bearer
 
         if blob and json:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
@@ -167,7 +170,7 @@ class CallAzureApi:
                 string: The string respond from the entered URL
         """
         if bearer is not None:
-            self.bearer = bearer
+            self.bearer = "Bearer " + bearer
 
         if blob and json:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
@@ -200,7 +203,7 @@ class CallAzureApi:
                 json: The json respond from the entered URL
         """
         if bearer is not None:
-            self.bearer = bearer
+            self.bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer,

@@ -46,7 +46,6 @@ class Auth():
         else:
             print(flow['message'])
 
-        print(flow.get('message'))
         self.result = self.app.acquire_token_by_device_flow(flow)
         self._write_cache()
 
