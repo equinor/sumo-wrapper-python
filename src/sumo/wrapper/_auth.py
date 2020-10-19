@@ -15,7 +15,7 @@ class Auth():
         self.scope = self.resource_id + "/.default"
         self.authority = authority
         self.client_crediatials = client_crediatials
-        self.token_path = os.path.join(HOME_DIR, ".omnia", str(self.resource_id) + ".token")
+        self.token_path = os.path.join(HOME_DIR, ".sumo", str(self.resource_id) + ".token")
         self._get_cache()
         self.app = msal.PublicClientApplication(self.client_id, authority=AUTHORITY_URI,
                                                 client_credential=self.client_crediatials, token_cache=self.cache)
@@ -46,13 +46,19 @@ class Auth():
         else:
             print(flow['message'])
 
+        print(flow.get('message'))
         self.result = self.app.acquire_token_by_device_flow(flow)
         self._write_cache()
 
     def _write_cache(self):
-        os.makedirs(os.path.dirname(self.token_path), exist_ok=True)
+        oldmask = os.umask(000)
+
+        os.makedirs(os.path.dirname(self.token_path), exist_ok=True, mode=0o700)
         with open(self.token_path, "w") as file:
             file.write(self.cache.serialize())
+        os.chmod(self.token_path,0o600)
+
+        os.umask(oldmask)
 
     def _read_cache(self):
         self.cache.deserialize(open(self.token_path, "r").read())
@@ -65,3 +71,4 @@ class Auth():
 
 if __name__ == '__main__':
     auth = Auth("1826bd7c-582f-4838-880d-5b4da5c3eea2", "88d2b022-3539-4dda-9e66-853801334a86")
+    print(auth.get_token())
