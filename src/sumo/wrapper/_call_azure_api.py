@@ -15,14 +15,13 @@ class CallAzureApi:
                     Need to be an Azure resourceId
     """
     def __init__(self, resource_id, outside_token=False):
-        with open('config.yaml') as f:
-            ids = yaml.safe_load(f)
-        
-        self.client_id = ids['clientid']
-
         if outside_token:
             self.bearer = None
         else:
+            with open('config.yaml') as f:
+                ids = yaml.safe_load(f)
+            
+            self.client_id = ids['clientid']
             self.auth = Auth(self.client_id, resource_id)
             self.bearer = "Bearer " + self.auth.get_token()
    

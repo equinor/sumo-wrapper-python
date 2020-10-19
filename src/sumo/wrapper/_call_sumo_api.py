@@ -16,10 +16,13 @@ class CallSumoApi:
         else:
             self.base_url = f'https://main-sumo-{env}.radix.equinor.com/api/v1'
 
-        with open('config.yaml') as f:
-            ids = yaml.safe_load(f)
+        if outside_token:
+            self.resource_id = None
+        else:
+            with open('config.yaml') as f:
+                ids = yaml.safe_load(f)
+            self.resource_id = ids['resourceid']
 
-        self.resource_id = ids['resourceid']
         self.callAzureApi = CallAzureApi(self.resource_id, outside_token)
 
     def __str__(self):
