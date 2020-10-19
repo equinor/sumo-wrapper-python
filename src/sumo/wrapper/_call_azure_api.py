@@ -1,4 +1,6 @@
 import requests
+import yaml
+
 from ._auth import Auth
 from io import BytesIO, StringIO
 
@@ -12,17 +14,18 @@ class CallAzureApi:
                 resourceId:
                     Need to be an Azure resourceId
     """
-
-     # TODO: Should Client ID be hard coded?
-    client_id = "1826bd7c-582f-4838-880d-5b4da5c3eea2"
-
     def __init__(self, resource_id, outside_token=False):
+        with open('config.yaml') as f:
+            ids = yaml.safe_load(f)
+        
+        self.client_id = ids['clientid']
+
         if outside_token:
             self.bearer = None
         else:
             self.auth = Auth(self.client_id, resource_id)
             self.bearer = "Bearer " + self.auth.get_token()
-
+   
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
         return ', '.join(str_repr)

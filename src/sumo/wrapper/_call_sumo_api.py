@@ -1,3 +1,5 @@
+import yaml
+
 from ._call_azure_api import CallAzureApi
 
 class CallSumoApi:
@@ -14,8 +16,10 @@ class CallSumoApi:
         else:
             self.base_url = f'https://main-sumo-{env}.radix.equinor.com/api/v1'
 
-        # TODO: Should Resource ID be hard coded?
-        self.resource_id = '88d2b022-3539-4dda-9e66-853801334a86'
+        with open('config.yaml') as f:
+            ids = yaml.safe_load(f)
+
+        self.resource_id = ids['resourceid']
         self.callAzureApi = CallAzureApi(self.resource_id, outside_token)
 
     def __str__(self):
