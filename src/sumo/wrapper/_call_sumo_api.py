@@ -26,19 +26,16 @@ class CallSumoApi:
     def __repr__(self):
         return self.__str__()
 
-    @property
     def userdata(self, bearer=None):
         """Get user data from Sumo endpoint /userdata"""
         url = f"{self.base_url}/userdata"
         return self.callAzureApi.get_json(url, bearer)
 
-    @property
     def userphoto(self, bearer=None):
         """Get user photo from Sumo endpoint /userphoto"""
         url = f"{self.base_url}/userphoto"
         return self.callAzureApi.get_image(url, bearer)
 
-    @property
     def userprofile(self, bearer=None):
         """Get user profile from Sumo endpoint /userprofile"""
         url = f"{self.base_url}/userprofile"
