@@ -1,7 +1,6 @@
-import yaml
 from .config import CLIENT_ID, RESOURCE_ID
-
 from ._call_azure_api import CallAzureApi
+
 
 class CallSumoApi:
     """
@@ -41,11 +40,13 @@ class CallSumoApi:
         url = f"{self.base_url}/userprofile"
         return self.callAzureApi.get_json(url, bearer)
 
-    # For discussion: Do we need to print the code and expect the user to manually type it on the browser or is there a better way to do it
+    # For discussion: Do we need to print the code and expect the user to manually
+    # type it on the browser or is there a better way to do it
     def get_bearer_token(self):
         """
             Generating an Azure OAuth2 bear token.
-            You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the code that is printed.
+            You need to open this URL in a web browser https://microsoft.com/devicelogin,
+            and enter the code that is printed.
 
             Return
                 accessToken:
@@ -117,7 +118,6 @@ class CallSumoApi:
         url = f"{self.base_url}/Objects"
         return self.callAzureApi.get_json(url, bearer)
 
-
     def get_json(self, object_id, bearer=None):
         """
             Returns the stored json-document for the given objectid.
@@ -160,7 +160,7 @@ class CallSumoApi:
         if not object_id and not url:
             raise ValueError('Error: object ID and url cannot be both null.')
 
-        return self._put_objects(json, object_id=object_id, url=url, bearer=bearer)
+        return self._put_objects(json=json, object_id=object_id, url=url, bearer=bearer)
 
     def save_child_level_json(self, parent_id, json, bearer=None):
         """
@@ -191,8 +191,7 @@ class CallSumoApi:
         if not object_id and not url:
             raise ValueError('Error: object ID and url cannot be both null.')
 
-        return self._put_objects(json, object_id=object_id, url=url, bearer=bearer)
-
+        return self._put_objects(json=json, object_id=object_id, url=url, bearer=bearer)
 
     def delete_object(self, object_id, bearer=None):
         """
@@ -209,7 +208,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_object(url, bearer)
 
-    def save_blob(self, blob, object_id=None, bearer=None, url=None):
+    def save_blob(self, blob, object_id=None, bearer=None):
         """
             Save a binary file to blob storage.
 
@@ -219,7 +218,7 @@ class CallSumoApi:
                 bearer: string, Azure OAuth2 bear token Default: will create one.
 
         """
-        return self._post_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
+        return self._post_objects(object_id=object_id, blob=blob, bearer=bearer)
 
     def update_blob(self, blob, object_id=None, bearer=None, url=None):
         """
@@ -235,7 +234,6 @@ class CallSumoApi:
                     The object_id of the newly updated object.
         """
         return self._put_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
-
 
     def get_blob(self, object_id, bearer=None):
         """
@@ -279,7 +277,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
         return self.callAzureApi.get_content(url, bearer)
 
-    def _post_objects(self, json, blob=None, object_id=None, bearer=None):
+    def _post_objects(self, json=None, blob=None, object_id=None, bearer=None):
         """
             Post a new object into sumo.
         
@@ -324,4 +322,3 @@ class CallSumoApi:
                 url = f'{url}/blob'
         
         return self.callAzureApi.put(url=url, blob=blob, json=json, bearer=bearer)
-

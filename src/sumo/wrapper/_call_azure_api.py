@@ -1,13 +1,12 @@
 import requests
 
 from ._auth import Auth
-from io import BytesIO, StringIO
+
 
 class CallAzureApi:
     """
         This class can be used for generating an Azure OAuth2 bear token and send a request to Azure JSON rest endpoint.
-        The Azure clientId "1826bd7c-582f-4838-880d-5b4da5c3eea2" need to have permissions to the resourceId that you send inn.
-
+        The Azure clientId "1826bd7c-582f-4838-880d-5b4da5c3eea2" needs to have permissions to the resourceId sent in.
 
         Parameters
                 resourceId:
@@ -31,7 +30,7 @@ class CallAzureApi:
     def get_bearer_token(self):
         """
             Get an Azure OAuth2 bear token.
-            You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the code that is printed.
+            You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the displayed code.
 
             Return
                 accessToken:
@@ -141,13 +140,13 @@ class CallAzureApi:
 
         headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
                    "Authorization": self.bearer,
-                   "Content-Length" : str(len(json) if json != None else len(blob)),
+                   "Content-Length": str(len(json) if json else len(blob)),
                    }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
-           raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
         return response
 
@@ -171,21 +170,20 @@ class CallAzureApi:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
 
         headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
-                   "Content-Length" : str(len(json) if json != None else len(blob)),
-                   "x-ms-blob-type" : "BlockBlob"
+                   "Content-Length": str(len(json) if json else len(blob)),
+                   "x-ms-blob-type": "BlockBlob"
                    }
 
-        if url.find("sig=") < 0 :
+        if url.find("sig=") < 0:
             headers["Authorization"] = self.bearer
 
         response = requests.put(url, data=blob, json=json, headers=headers)
 
-        #if not response.ok:
-        #    raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+        if not response.ok:
+            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
         return response
 
-    
     def delete_object(self, url, bearer=None):
         """
             Send delete to the url and return the response as json.
