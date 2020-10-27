@@ -104,7 +104,7 @@ class CallAzureApi:
             
             Return
                content:
-                    The content respond from the entered URL
+                    The content respond from the entered URL.
         """
         if bearer is not None:
             self.bearer = "Bearer " + bearer
