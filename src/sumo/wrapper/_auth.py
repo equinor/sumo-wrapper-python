@@ -1,5 +1,6 @@
 import msal
 import json
+import stat
 import os
 
 TENANT = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
@@ -31,6 +32,10 @@ class Auth:
     def _oauth_get_token_silent(self):
         if not self.accounts:
             self.accounts = self.app.get_accounts()
+
+        if self._check_token_security():
+            raise SystemError('The token is not stored safely.')
+
         self.result = self.app.acquire_token_silent([self.scope], account=self.accounts[0])
         self._write_cache()
 
@@ -38,6 +43,11 @@ class Auth:
         if os.path.isfile(self.token_path):
             return True
         return False
+
+    def _check_token_security(self):
+        access_stats = os.stat(self.token_path)
+
+        return not bool(access_stats.st_mode & stat.S_IRWXG)
 
     def _oauth_device_code(self):
         flow = self.app.initiate_device_flow(scopes=[self.scope])
