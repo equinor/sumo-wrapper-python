@@ -33,7 +33,7 @@ class Auth:
         if not self.accounts:
             self.accounts = self.app.get_accounts()
 
-        if self._check_token_security():
+        if not self._check_token_security():
             raise SystemError('The token is not stored safely.')
 
         self.result = self.app.acquire_token_silent([self.scope], account=self.accounts[0])
