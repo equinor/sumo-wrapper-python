@@ -13,12 +13,14 @@ class CallAzureApi:
                     Need to be an Azure resourceId
     """
     def __init__(self, resource_id, client_id, outside_token=False):
+        self.resource_id = resource_id
+        self.client_id = client_id
+
         if outside_token:
             self.auth = None
             self.bearer = None
         else:
-            self.auth = Auth(client_id, resource_id)
-            self.bearer = "Bearer " + self.auth.get_token()
+            self.authenticate()
    
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
@@ -37,6 +39,13 @@ class CallAzureApi:
                     The Bearer Authorization string
         """
         return self.bearer
+
+    def authenticate(self):
+        """
+            Authenticate the user, generating a bearer token that is valid for one hour.
+        """
+        self.auth = Auth(self.client_id, self.resource_id)
+        self.bearer = "Bearer " + self.auth.get_token()
 
     def get_json(self, url, bearer=None):
         """
@@ -59,6 +68,11 @@ class CallAzureApi:
                    "Authorization": self.bearer}
 
         response = requests.get(url, headers=headers)
+
+        if not response.ok and response.status_code == 401:
+            self.authenticate()
+            headers['Authorization'] = self.bearer
+            response = requests.get(url, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -86,9 +100,14 @@ class CallAzureApi:
                    "Authorization": self.bearer}
 
         response = requests.get(url, headers=headers, stream=True)
-        
-        if response.status_code == 200:
-            return response.raw.read()
+
+        if not response.ok and response.status_code == 401:
+            self.authenticate()
+            headers['Authorization'] = self.bearer
+            response = requests.get(url, headers=headers, stream=True)
+
+        if not response.ok:
+            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
         return None
 
@@ -113,6 +132,11 @@ class CallAzureApi:
                    "Authorization": self.bearer}
 
         response = requests.get(url, headers=headers)
+
+        if not response.ok and response.status_code == 401:
+            self.authenticate()
+            headers['Authorization'] = self.bearer
+            response = requests.get(url, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -144,6 +168,12 @@ class CallAzureApi:
                    }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
+        print(response.status_code)
+
+        if not response.ok and response.status_code == 401:
+            self.authenticate()
+            headers['Authorization'] = self.bearer
+            response = requests.post(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -179,6 +209,11 @@ class CallAzureApi:
 
         response = requests.put(url, data=blob, json=json, headers=headers)
 
+        if not response.ok and response.status_code == 401:
+            self.authenticate()
+            headers['Authorization'] = self.bearer
+            response = requests.put(url, data=blob, json=json, headers=headers)
+
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
 
@@ -203,6 +238,11 @@ class CallAzureApi:
                    }
 
         response = requests.delete(url, headers=headers)
+
+        if not response.ok and response.status_code == 401:
+            self.authenticate()
+            headers['Authorization'] = self.bearer
+            response = requests.delete(url, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
