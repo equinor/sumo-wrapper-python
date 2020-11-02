@@ -168,7 +168,6 @@ class CallAzureApi:
                    }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
-        print(response.status_code)
 
         if not response.ok and response.status_code == 401:
             self.authenticate()
