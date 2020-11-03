@@ -1,4 +1,5 @@
 import requests
+import datetime
 
 from ._auth import Auth
 
@@ -20,7 +21,9 @@ class CallAzureApi:
             self.auth = None
             self.bearer = None
         else:
-            self.authenticate()
+            self._authenticate()
+
+        self._reset_timestamp()
    
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
@@ -40,12 +43,30 @@ class CallAzureApi:
         """
         return self.bearer
 
-    def authenticate(self):
+    def _authenticate(self):
         """
             Authenticate the user, generating a bearer token that is valid for one hour.
         """
         self.auth = Auth(self.client_id, self.resource_id)
+        self._generate_bearer_token()
+
+    def _generate_bearer_token(self):
+        """
+            Generate the access token through the authentication object.
+        """
         self.bearer = "Bearer " + self.auth.get_token()
+
+    def _reset_timestamp(self):
+        """
+            Creates a timestamp to check when the token must be refreshed.
+        """
+        self.timestamp = datetime.datetime.now()
+
+    def _is_token_expired(self):
+        """
+            Checks if one hour (with five secs tolerance) has passed since last authentication
+        """
+        return (datetime.datetime.now() - self.timestamp).total_seconds() > 3590
 
     def get_json(self, url, bearer=None):
         """
@@ -63,16 +84,14 @@ class CallAzureApi:
         """   
         if bearer is not None:
             self.bearer = "Bearer " + bearer
+        elif self._is_token_expired():
+            self._generate_bearer_token()
+            self._reset_timestamp()
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer}
 
         response = requests.get(url, headers=headers)
-
-        if not response.ok and response.status_code == 401:
-            self.authenticate()
-            headers['Authorization'] = self.bearer
-            response = requests.get(url, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -95,16 +114,14 @@ class CallAzureApi:
         """
         if bearer is not None:
             self.bearer = "Bearer " + bearer
+        elif self._is_token_expired():
+            self._generate_bearer_token()
+            self._reset_timestamp()
 
         headers = {"Content-Type": "html/text",
                    "Authorization": self.bearer}
 
         response = requests.get(url, headers=headers, stream=True)
-
-        if not response.ok and response.status_code == 401:
-            self.authenticate()
-            headers['Authorization'] = self.bearer
-            response = requests.get(url, headers=headers, stream=True)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -127,16 +144,14 @@ class CallAzureApi:
         """
         if bearer is not None:
             self.bearer = "Bearer " + bearer
+        elif self._is_token_expired():
+            self._generate_bearer_token()
+            self._reset_timestamp()
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer}
 
         response = requests.get(url, headers=headers)
-
-        if not response.ok and response.status_code == 401:
-            self.authenticate()
-            headers['Authorization'] = self.bearer
-            response = requests.get(url, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -158,6 +173,9 @@ class CallAzureApi:
         """
         if bearer is not None:
             self.bearer = "Bearer " + bearer
+        elif self._is_token_expired():
+            self._generate_bearer_token()
+            self._reset_timestamp()
 
         if blob and json:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
@@ -168,11 +186,7 @@ class CallAzureApi:
                    }
 
         response = requests.post(url, data=blob, json=json, headers=headers)
-
-        if not response.ok and response.status_code == 401:
-            self.authenticate()
-            headers['Authorization'] = self.bearer
-            response = requests.post(url, data=blob, json=json, headers=headers)
+        print(response.status_code)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -194,6 +208,9 @@ class CallAzureApi:
         """
         if bearer is not None:
             self.bearer = "Bearer " + bearer
+        elif self._is_token_expired():
+            self._generate_bearer_token()
+            self._reset_timestamp()
 
         if blob and json:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
@@ -207,11 +224,6 @@ class CallAzureApi:
             headers["Authorization"] = self.bearer
 
         response = requests.put(url, data=blob, json=json, headers=headers)
-
-        if not response.ok and response.status_code == 401:
-            self.authenticate()
-            headers['Authorization'] = self.bearer
-            response = requests.put(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
@@ -231,17 +243,15 @@ class CallAzureApi:
         """
         if bearer is not None:
             self.bearer = "Bearer " + bearer
+        elif self._is_token_expired():
+            self._generate_bearer_token()
+            self._reset_timestamp()
 
         headers = {"Content-Type": "application/json",
                    "Authorization": self.bearer,
                    }
 
         response = requests.delete(url, headers=headers)
-
-        if not response.ok and response.status_code == 401:
-            self.authenticate()
-            headers['Authorization'] = self.bearer
-            response = requests.delete(url, headers=headers)
 
         if not response.ok:
             raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
