@@ -209,7 +209,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_object(url, bearer)
 
-    def save_blob(self, blob, object_id=None, bearer=None, url=None):
+    def save_blob(self, blob, json=None, object_id=None, bearer=None, url=None):
         """
             Save a binary file to blob storage.
 
@@ -219,7 +219,7 @@ class CallSumoApi:
                 bearer: string, Azure OAuth2 bear token Default: will create one.
 
         """
-        return self._post_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
+        return self._post_objects(object_id=object_id, json=json, blob=blob, bearer=bearer, url=url)
 
     def update_blob(self, blob, object_id=None, bearer=None, url=None):
         """
@@ -279,7 +279,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
         return self.callAzureApi.get_content(url, bearer)
 
-    def _post_objects(self, json, blob=None, object_id=None, bearer=None):
+    def _post_objects(self, json, blob=None, object_id=None, bearer=None, url=None):
         """
             Post a new object into sumo.
         
@@ -292,13 +292,16 @@ class CallSumoApi:
             Return
                 The object_id of the newly uploaded object, or error message.
         """
-        url = f'{self.base_url}/objects'
 
-        if object_id:
-            url = f"{url}('{object_id}')"
+        if not url:
 
-        if blob:
-            url = f'{url}/blob'
+            url = f'{self.base_url}/objects'
+
+            if object_id:
+                url = f"{url}('{object_id}')"
+
+            if blob:
+                url = f'{url}/blob'
 
         return self.callAzureApi.post(url=url, blob=blob, json=json, bearer=bearer)
 
