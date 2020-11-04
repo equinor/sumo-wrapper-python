@@ -7,7 +7,7 @@ class CallSumoApi:
         This class can be used for calling the Sumo APi.
     """
 
-    def __init__(self, env='dev', outside_token=False):
+    def __init__(self, env='dev', resource_id=None, outside_token=False):
         """ Initialize the wrapper. Chooses among multiple environments."""
         if env == 'exp':
             self.base_url = 'https://main-sumo-experiment-dev.playground.radix.equinor.com/api/v1'
@@ -16,7 +16,9 @@ class CallSumoApi:
         else:
             self.base_url = f'https://main-sumo-{env}.radix.equinor.com/api/v1'
 
-        self.callAzureApi = CallAzureApi(RESOURCE_ID, CLIENT_ID, outside_token)
+        resource_id = resource_id if resource_id else RESOURCE_ID
+
+        self.callAzureApi = CallAzureApi(resource_id, CLIENT_ID, outside_token)
 
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
