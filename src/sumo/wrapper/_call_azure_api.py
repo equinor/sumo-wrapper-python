@@ -3,6 +3,13 @@ import requests
 from ._auth import Auth
 
 
+class RequestError(Exception):
+    def __init__(self, code, message):
+        super().__init__(f'Request Error with status code {code} and text {message}')
+        self.code = code
+        self.message = message
+
+
 class CallAzureApi:
     """
         This class can be used for generating an Azure OAuth2 bear token and send a request to Azure JSON rest endpoint.
@@ -84,7 +91,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers)
 
         if not response.ok:
-            return response.status_code, response.text
+            raise RequestError(response.status_code, response.text)
 
         return response.json()
 
@@ -113,7 +120,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers, stream=True)
 
         if not response.ok:
-            return response.status_code, response.text
+            raise RequestError(response.status_code, response.text)
 
         return None
 
@@ -142,7 +149,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers)
 
         if not response.ok:
-            return response.status_code, response.text
+            raise RequestError(response.status_code, response.text)
 
         return response.content
 
@@ -175,7 +182,7 @@ class CallAzureApi:
         response = requests.post(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
-            return response.status_code, response.text
+            raise RequestError(response.status_code, response.text)
 
         return response
 
@@ -211,7 +218,7 @@ class CallAzureApi:
         response = requests.put(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
-            return response.status_code, response.text
+            raise RequestError(response.status_code, response.text)
 
         return response
 
@@ -238,6 +245,6 @@ class CallAzureApi:
         response = requests.delete(url, headers=headers)
 
         if not response.ok:
-            return response.status_code, response.text
+            raise RequestError(response.status_code, response.text)
 
         return response.json()
