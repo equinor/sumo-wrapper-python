@@ -84,7 +84,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers)
 
         if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+            return response.status_code, response.text
 
         return response.json()
 
@@ -113,7 +113,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers, stream=True)
 
         if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+            return response.status_code, response.text
 
         return None
 
@@ -142,7 +142,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers)
 
         if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+            return response.status_code, response.text
 
         return response.content
 
@@ -175,7 +175,7 @@ class CallAzureApi:
         response = requests.post(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+            return response.status_code, response.text
 
         return response
 
@@ -211,7 +211,7 @@ class CallAzureApi:
         response = requests.put(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+            return response.status_code, response.text
 
         return response
 
@@ -238,6 +238,6 @@ class CallAzureApi:
         response = requests.delete(url, headers=headers)
 
         if not response.ok:
-            raise Exception(f'Status code: {response.status_code}, Text: {response.text}')
+            return response.status_code, response.text
 
         return response.json()
