@@ -1,13 +1,19 @@
 import requests
 
 from ._auth import Auth
+from ._request_error import AuthenticationError, TransientError, FatalError
 
 
-class RequestError(Exception):
-    def __init__(self, code, message):
-        super().__init__(f'Request Error with status code {code} and text {message}')
-        self.code = code
-        self.message = message
+def _raise_request_error_exception(code, message):
+    """
+        Raise the proper authentication error according to the code received from sumo.
+    """
+    if 503 <= code <= 504 or code == 404:
+        raise TransientError(code, message)
+    elif 401 <= code <= 403:
+        raise AuthenticationError(code, message)
+    else:
+        raise FatalError
 
 
 class CallAzureApi:
@@ -91,7 +97,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers)
 
         if not response.ok:
-            raise RequestError(response.status_code, response.text)
+            _raise_request_error_exception(response.status_code, response.text)
 
         return response.json()
 
@@ -120,7 +126,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers, stream=True)
 
         if not response.ok:
-            raise RequestError(response.status_code, response.text)
+            _raise_request_error_exception(response.status_code, response.text)
 
         return None
 
@@ -149,7 +155,7 @@ class CallAzureApi:
         response = requests.get(url, headers=headers)
 
         if not response.ok:
-            raise RequestError(response.status_code, response.text)
+            _raise_request_error_exception(response.status_code, response.text)
 
         return response.content
 
@@ -182,7 +188,7 @@ class CallAzureApi:
         response = requests.post(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
-            raise RequestError(response.status_code, response.text)
+            _raise_request_error_exception(response.status_code, response.text)
 
         return response
 
@@ -218,7 +224,7 @@ class CallAzureApi:
         response = requests.put(url, data=blob, json=json, headers=headers)
 
         if not response.ok:
-            raise RequestError(response.status_code, response.text)
+            _raise_request_error_exception(response.status_code, response.text)
 
         return response
 
@@ -245,6 +251,6 @@ class CallAzureApi:
         response = requests.delete(url, headers=headers)
 
         if not response.ok:
-            raise RequestError(response.status_code, response.text)
+            _raise_request_error_exception(response.status_code, response.text)
 
         return response.json()
