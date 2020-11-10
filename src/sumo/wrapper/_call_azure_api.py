@@ -1,7 +1,7 @@
 import requests
 
 from ._auth import Auth
-from ._request_error import AuthenticationError, TransientError, FatalError
+from ._request_error import AuthenticationError, TransientError, PermanentError
 
 
 def _raise_request_error_exception(code, message):
@@ -13,7 +13,7 @@ def _raise_request_error_exception(code, message):
     elif 401 <= code <= 403:
         raise AuthenticationError(code, message)
     else:
-        raise FatalError
+        raise PermanentError(code, message)
 
 
 class CallAzureApi:

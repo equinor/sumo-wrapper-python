@@ -23,7 +23,7 @@ class TransientError(RequestError):
         return f'Transient Error with status code {self.code} and text {self.message}.'
 
 
-class FatalError(RequestError):
+class PermanentError(RequestError):
     def __init__(self, code, message):
         super().__init__(code, message)
 
