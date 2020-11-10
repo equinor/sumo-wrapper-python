@@ -1,14 +1,13 @@
-import yaml
 from .config import CLIENT_ID, RESOURCE_ID
-
 from ._call_azure_api import CallAzureApi
+
 
 class CallSumoApi:
     """
         This class can be used for calling the Sumo APi.
     """
 
-    def __init__(self, env='dev', outside_token=False):
+    def __init__(self, env='dev', resource_id=None, outside_token=False):
         """ Initialize the wrapper. Chooses among multiple environments."""
         if env == 'exp':
             self.base_url = 'https://main-sumo-experiment-dev.playground.radix.equinor.com/api/v1'
@@ -17,7 +16,9 @@ class CallSumoApi:
         else:
             self.base_url = f'https://main-sumo-{env}.radix.equinor.com/api/v1'
 
-        self.callAzureApi = CallAzureApi(RESOURCE_ID, CLIENT_ID, outside_token)
+        resource_id = resource_id if resource_id else RESOURCE_ID
+
+        self.callAzureApi = CallAzureApi(resource_id, CLIENT_ID, outside_token)
 
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
@@ -41,11 +42,13 @@ class CallSumoApi:
         url = f"{self.base_url}/userprofile"
         return self.callAzureApi.get_json(url, bearer)
 
-    # For discussion: Do we need to print the code and expect the user to manually type it on the browser or is there a better way to do it
+    # For discussion: Do we need to print the code and expect the user to manually
+    # type it on the browser or is there a better way to do it
     def get_bearer_token(self):
         """
             Generating an Azure OAuth2 bear token.
-            You need to open this URL in a web browser https://microsoft.com/devicelogin, and enter the code that is printed.
+            You need to open this URL in a web browser https://microsoft.com/devicelogin,
+            and enter the code that is printed.
 
             Return
                 accessToken:
@@ -117,7 +120,6 @@ class CallSumoApi:
         url = f"{self.base_url}/Objects"
         return self.callAzureApi.get_json(url, bearer)
 
-
     def get_json(self, object_id, bearer=None):
         """
             Returns the stored json-document for the given objectid.
@@ -160,7 +162,7 @@ class CallSumoApi:
         if not object_id and not url:
             raise ValueError('Error: object ID and url cannot be both null.')
 
-        return self._put_objects(json, object_id=object_id, url=url, bearer=bearer)
+        return self._put_objects(json=json, object_id=object_id, url=url, bearer=bearer)
 
     def save_child_level_json(self, parent_id, json, bearer=None):
         """
@@ -191,8 +193,7 @@ class CallSumoApi:
         if not object_id and not url:
             raise ValueError('Error: object ID and url cannot be both null.')
 
-        return self._put_objects(json, object_id=object_id, url=url, bearer=bearer)
-
+        return self._put_objects(json=json, object_id=object_id, url=url, bearer=bearer)
 
     def delete_object(self, object_id, bearer=None):
         """
@@ -235,7 +236,6 @@ class CallSumoApi:
                     The object_id of the newly updated object.
         """
         return self._put_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
-
 
     def get_blob(self, object_id, bearer=None):
         """
@@ -327,4 +327,3 @@ class CallSumoApi:
                 url = f'{url}/blob'
         
         return self.callAzureApi.put(url=url, blob=blob, json=json, bearer=bearer)
-

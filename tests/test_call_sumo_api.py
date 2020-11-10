@@ -2,19 +2,21 @@
 import sys
 
 try:
-    sys.path.index('../src') # Or os.getcwd() for this directory
+    sys.path.index('../src')  # Or os.getcwd() for this directory
 except ValueError:
-    sys.path.append('../src') # Or os.getcwd() for this directory
+    sys.path.append('../src')  # Or os.getcwd() for this directory
 
-import json
 import pytest
-from sumo.wrapper import CallSumoApi
 import yaml
+
 from time import sleep
+from sumo.wrapper import CallSumoApi
+
 
 class Connection:
     def __init__(self):
         self.api = CallSumoApi() 
+
 
 def _upload_parent_object(C, json):
     response = C.api.save_top_level_json(json=json)
@@ -22,16 +24,18 @@ def _upload_parent_object(C, json):
         raise Exception(f'code: {response.status_code}, text: {response.text}')
     return response
 
+
 def _upload_blob(C, blob, url=None, object_id=None):
     response = C.api.update_blob(object_id=object_id, blob=blob, url=url)
-    print("Blob save " + str(response.status_code), flush=True);
+    print("Blob save " + str(response.status_code), flush=True)
     if not 200 <= response.status_code < 202:
         raise Exception(f'blob upload to object_id {object_id} returned {response.text} {response.status_code}')    
     return response
 
-def _get_blob_uri(C, objectid, url=None):
+
+def _get_blob_uri(C, object_id):
     response = C.api.get_blob_uri(object_id=object_id)
-    print("Blob save " + str(response.status_code), flush=True);
+    print("Blob save " + str(response.status_code), flush=True)
     if not 200 <= response.status_code < 202:
         raise Exception(f'get blob uri for {object_id} returned {response.text} {response.status_code}')    
     return response
@@ -41,11 +45,13 @@ def _download_object(C, object_id):
     json = C.api.get_json(object_id=object_id)
     return json
 
+
 def _upload_child_level_json(C, parent_id, json):
     response = C.api.save_child_level_json(parent_id=parent_id, json=json)
     if not 200 <= response.status_code < 202:
         raise Exception(f'Response: {response.status_code}, Text: {response.text}')
     return response
+
 
 def _delete_object(C, object_id):
     response = C.api.delete_object(object_id=object_id)
@@ -56,11 +62,9 @@ class ValueKeeper:
     """Class for keeping/passing values between tests"""
     pass
 
-# V = ValueKeeper()
-# C = Connection()
-# b = b'123456789'
 
-##### TESTS #####
+""" TESTS """
+
 
 def test_upload_search_delete_ensemble_child():
     """
@@ -111,7 +115,6 @@ def test_upload_search_delete_ensemble_child():
 
     # Search for child object
     search_results = C.api.search(query='_tests.test1:test')
-    hits = search_results.get('hits').get('hits')
     total = search_results.get('hits').get('total').get('value')
     assert total == 1
 
@@ -137,9 +140,9 @@ def test_upload_search_delete_ensemble_child():
 
     # Search for child object
     search_results = C.api.search(query='_tests.test1:test')
-    hits = search_results.get('hits').get('hits')
     total = search_results.get('hits').get('total').get('value')
     assert total == 0
+
 
 def test_fail_on_wrong_metadata():
     """
@@ -148,6 +151,7 @@ def test_fail_on_wrong_metadata():
     C = Connection()
     with pytest.raises(Exception):
         assert _upload_parent_object(C=C, json={"some field": "some value"})
+
 
 def test_upload_regularsurface_as_parent():
     """ 
@@ -163,6 +167,7 @@ def test_upload_regularsurface_as_parent():
     # upload must raise an exception
     with pytest.raises(Exception):
         assert _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+
 
 def test_upload_duplicate_ensemble():
     """
@@ -180,16 +185,14 @@ def test_upload_duplicate_ensemble():
     fmu_ensemble_metadata1['fmu_ensemble']['fmu_ensemble_id'] = '00000000-0000-0000-0000-000000000055'
     fmu_ensemble_metadata2['fmu_ensemble']['fmu_ensemble_id'] = '00000000-0000-0000-0000-000000000055'
 
-    #upload ensemble metadata, get object_id
+    # upload ensemble metadata, get object_id
     response1 = _upload_parent_object(C=C, json=fmu_ensemble_metadata1)
     ensemble_id1 = response1.json().get('objectid')
-    fmu_ensemble_id1 = fmu_ensemble_metadata1.get('fmu_ensemble').get('fmu_ensemble_id')
     assert 200 <= response1.status_code <= 202
 
-    #upload duplicated ensemble metadata, get object_id
+    # upload duplicated ensemble metadata, get object_id
     response2 = _upload_parent_object(C=C, json=fmu_ensemble_metadata2)
     ensemble_id2 = response2.json().get('objectid')
-    fmu_ensemble_id2 = fmu_ensemble_metadata2.get('fmu_ensemble').get('fmu_ensemble_id')
     assert 200 <= response2.status_code <= 202
     
     assert ensemble_id1 == ensemble_id2
