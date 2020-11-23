@@ -7,7 +7,7 @@ class CallSumoApi:
         This class can be used for calling the Sumo APi.
     """
 
-    def __init__(self, env='dev', outside_token=False):
+    def __init__(self, env='dev', resource_id=None, outside_token=False):
         """ Initialize the wrapper. Chooses among multiple environments."""
         if env == 'exp':
             self.base_url = 'https://main-sumo-experiment-dev.playground.radix.equinor.com/api/v1'
@@ -16,7 +16,9 @@ class CallSumoApi:
         else:
             self.base_url = f'https://main-sumo-{env}.radix.equinor.com/api/v1'
 
-        self.callAzureApi = CallAzureApi(RESOURCE_ID, CLIENT_ID, outside_token)
+        resource_id = resource_id if resource_id else RESOURCE_ID
+
+        self.callAzureApi = CallAzureApi(resource_id, CLIENT_ID, outside_token)
 
     def __str__(self):
         str_repr = ["{key}='{value}'".format(key=k, value=v) for k, v in self.__dict__.items()]
@@ -218,22 +220,7 @@ class CallSumoApi:
                 bearer: string, Azure OAuth2 bear token Default: will create one.
 
         """
-        return self._post_objects(object_id=object_id, blob=blob, bearer=bearer)
-
-    def update_blob(self, blob, object_id=None, bearer=None, url=None):
-        """
-            Put a binary file to blob storage for the objectId.
-
-            Parameters
-                object_id string, the id of the json object that this blob document will be attached to.
-                blob binary, the binary to save
-                bearer string, Azure OAuth2 bear token Default: will create one.
-
-            Return
-                string:
-                    The object_id of the newly updated object.
-        """
-        return self._put_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
+        return self._put_objects(object_id=object_id, json=None, blob=blob, bearer=bearer, url=url)
 
     def get_blob(self, object_id, bearer=None):
         """
@@ -277,7 +264,8 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
         return self.callAzureApi.get_content(url, bearer)
 
-    def _post_objects(self, json=None, blob=None, object_id=None, bearer=None):
+
+    def _post_objects(self, json, blob=None, object_id=None, bearer=None, url=None):
         """
             Post a new object into sumo.
         
@@ -290,13 +278,16 @@ class CallSumoApi:
             Return
                 The object_id of the newly uploaded object, or error message.
         """
-        url = f'{self.base_url}/objects'
 
-        if object_id:
-            url = f"{url}('{object_id}')"
+        if not url:
 
-        if blob:
-            url = f'{url}/blob'
+            url = f'{self.base_url}/objects'
+
+            if object_id:
+                url = f"{url}('{object_id}')"
+
+            if blob:
+                url = f'{url}/blob'
 
         return self.callAzureApi.post(url=url, blob=blob, json=json, bearer=bearer)
 

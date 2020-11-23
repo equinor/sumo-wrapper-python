@@ -1,3 +1,4 @@
+import datetime
 import msal
 import json
 import stat
@@ -26,8 +27,16 @@ class Auth:
         self._oauth_get_token_silent() if self._cache_available() else self._oauth_device_code()
 
     def get_token(self):
-        self._oauth_get_token_silent()
+        if self.is_token_expired():
+            self._oauth_get_token_silent()
+
         return self.result["access_token"]
+
+    def is_token_expired(self):
+        """
+            Check if token is expired or about to expire.
+        """
+        return datetime.datetime.now() > self.expiring_date
 
     def _oauth_get_token_silent(self):
         if not self.accounts:
@@ -37,7 +46,18 @@ class Auth:
             raise SystemError('The token is not stored safely.')
 
         self.result = self.app.acquire_token_silent([self.scope], account=self.accounts[0])
+        self._set_expiring_date(int(self.result['expires_in']))
         self._write_cache()
+
+    def _set_expiring_date(self, time_left, threshold=60):
+        """
+            Defines the access token expiring date. Sets a threshold to update the token before it expires
+
+            Parameter
+                time_left: time, in seconds, until the token expires.
+                threshold: how many seconds before expiration the token is allowed to be updated.
+        """
+        self.expiring_date = datetime.datetime.now() + datetime.timedelta(seconds=time_left - threshold)
 
     def _cache_available(self):
         if os.path.isfile(self.token_path):
@@ -59,6 +79,7 @@ class Auth:
             print(flow['message'])
 
         self.result = self.app.acquire_token_by_device_flow(flow)
+        self._set_expiring_date(int(self.result['expires_in']))
         self._write_cache()
 
     def _write_cache(self):
