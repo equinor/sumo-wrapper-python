@@ -210,7 +210,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_object(url, bearer)
 
-    def save_blob(self, blob, json=None, object_id=None, bearer=None, url=None):
+    def save_blob(self, blob, object_id=None, bearer=None, url=None):
         """
             Save a binary file to blob storage.
 
@@ -220,22 +220,7 @@ class CallSumoApi:
                 bearer: string, Azure OAuth2 bear token Default: will create one.
 
         """
-        return self._post_objects(object_id=object_id, json=json, blob=blob, bearer=bearer, url=url)
-
-    def update_blob(self, blob, object_id=None, bearer=None, url=None):
-        """
-            Put a binary file to blob storage for the objectId.
-
-            Parameters
-                object_id string, the id of the json object that this blob document will be attached to.
-                blob binary, the binary to save
-                bearer string, Azure OAuth2 bear token Default: will create one.
-
-            Return
-                string:
-                    The object_id of the newly updated object.
-        """
-        return self._put_objects(object_id=object_id, blob=blob, bearer=bearer, url=url)
+        return self._put_objects(object_id=object_id, json=None, blob=blob, bearer=bearer, url=url)
 
     def get_blob(self, object_id, bearer=None):
         """
