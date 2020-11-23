@@ -210,7 +210,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')"
         return self.callAzureApi.delete_object(url, bearer)
 
-    def save_blob(self, blob, object_id=None, bearer=None, url=None):
+    def save_blob(self, blob, object_id=None, bearer=None):
         """
             Save a binary file to blob storage.
 
@@ -263,6 +263,7 @@ class CallSumoApi:
         """
         url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
         return self.callAzureApi.get_content(url, bearer)
+
 
     def _post_objects(self, json, blob=None, object_id=None, bearer=None, url=None):
         """
