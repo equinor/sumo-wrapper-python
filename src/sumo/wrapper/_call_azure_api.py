@@ -211,7 +211,7 @@ class CallAzureApi:
             self._generate_bearer_token()
 
         if blob and json:
-            raise ValueError('Both blob and json given to post - can only have one at the time.')
+            raise ValueError('Both blob and json given to put - can only have one at the time.')
 
         headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
                    "Content-Length": str(len(json) if json else len(blob)),
