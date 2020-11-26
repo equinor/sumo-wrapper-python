@@ -85,14 +85,17 @@ class CallAzureApi:
             Return
                 json:
                     The json respond from the entered URL
-        """   
-        if bearer is not None:
-            self.bearer = "Bearer " + bearer
-        elif self._is_token_expired():
-            self._generate_bearer_token()
+        """
+        if bearer is None:
+            if self._is_token_expired():
+                self._generate_bearer_token()
+
+            bearer = self.bearer
+        else:
+            bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "application/json",
-                   "Authorization": self.bearer}
+                   "Authorization": bearer}
 
         response = requests.get(url, headers=headers)
 
@@ -115,13 +118,16 @@ class CallAzureApi:
                 image:
                     raw image
         """
-        if bearer is not None:
-            self.bearer = "Bearer " + bearer
-        elif self._is_token_expired():
-            self._generate_bearer_token()
+        if bearer is None:
+            if self._is_token_expired():
+                self._generate_bearer_token()
+
+            bearer = self.bearer
+        else:
+            bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "html/text",
-                   "Authorization": self.bearer}
+                   "Authorization": bearer}
 
         response = requests.get(url, headers=headers, stream=True)
 
@@ -144,13 +150,16 @@ class CallAzureApi:
                content:
                     The content respond from the entered URL.
         """
-        if bearer is not None:
-            self.bearer = "Bearer " + bearer
-        elif self._is_token_expired():
-            self._generate_bearer_token()
+        if bearer is None:
+            if self._is_token_expired():
+                self._generate_bearer_token()
+
+            bearer = self.bearer
+        else:
+            bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "application/json",
-                   "Authorization": self.bearer}
+                   "Authorization": bearer}
 
         response = requests.get(url, headers=headers)
 
@@ -172,16 +181,19 @@ class CallAzureApi:
         Return
             string: The string respond from the entered URL
         """
-        if bearer is not None:
-            self.bearer = "Bearer " + bearer
-        elif self._is_token_expired():
-            self._generate_bearer_token()
+        if bearer is None:
+            if self._is_token_expired():
+                self._generate_bearer_token()
+
+            bearer = self.bearer
+        else:
+            bearer = "Bearer " + bearer
 
         if blob and json:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
 
         headers = {"Content-Type": "application/json" if json is not None else "application/octet-stream",
-                   "Authorization": self.bearer,
+                   "Authorization": bearer,
                    "Content-Length": str(len(json) if json else len(blob)),
                    }
 
@@ -205,10 +217,13 @@ class CallAzureApi:
             Return
                 string: The string respond from the entered URL
         """
-        if bearer is not None:
-            self.bearer = "Bearer " + bearer
-        elif self._is_token_expired():
-            self._generate_bearer_token()
+        if bearer is None:
+            if self._is_token_expired():
+                self._generate_bearer_token()
+
+            bearer = self.bearer
+        else:
+            bearer = "Bearer " + bearer
 
         if blob and json:
             raise ValueError('Both blob and json given to put - can only have one at the time.')
@@ -219,7 +234,7 @@ class CallAzureApi:
                    }
 
         if url.find("sig=") < 0:
-            headers["Authorization"] = self.bearer
+            headers["Authorization"] = bearer
 
         response = requests.put(url, data=blob, json=json, headers=headers)
 
@@ -239,13 +254,16 @@ class CallAzureApi:
             Return
                 json: The json respond from the entered URL
         """
-        if bearer is not None:
-            self.bearer = "Bearer " + bearer
-        elif self._is_token_expired():
-            self._generate_bearer_token()
+        if bearer is None:
+            if self._is_token_expired():
+                self._generate_bearer_token()
+
+            bearer = self.bearer
+        else:
+            bearer = "Bearer " + bearer
 
         headers = {"Content-Type": "application/json",
-                   "Authorization": self.bearer,
+                   "Authorization": bearer,
                    }
 
         response = requests.delete(url, headers=headers)
