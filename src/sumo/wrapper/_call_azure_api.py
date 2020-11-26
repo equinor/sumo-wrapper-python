@@ -72,6 +72,15 @@ class CallAzureApi:
         """
         return self.auth.is_token_expired()
 
+    def _process_token(self, bearer):
+        if bearer:
+            return "Bearer " + bearer
+
+        if self._is_token_expired():
+            self._generate_bearer_token()
+
+        return self.bearer
+
     def get_json(self, url, bearer=None):
         """
             Send an request to the url.
@@ -86,13 +95,7 @@ class CallAzureApi:
                 json:
                     The json respond from the entered URL
         """
-        if bearer is None:
-            if self._is_token_expired():
-                self._generate_bearer_token()
-
-            bearer = self.bearer
-        else:
-            bearer = "Bearer " + bearer
+        bearer = self._process_token(bearer)
 
         headers = {"Content-Type": "application/json",
                    "Authorization": bearer}
@@ -118,13 +121,7 @@ class CallAzureApi:
                 image:
                     raw image
         """
-        if bearer is None:
-            if self._is_token_expired():
-                self._generate_bearer_token()
-
-            bearer = self.bearer
-        else:
-            bearer = "Bearer " + bearer
+        bearer = self._process_token(bearer)
 
         headers = {"Content-Type": "html/text",
                    "Authorization": bearer}
@@ -150,13 +147,7 @@ class CallAzureApi:
                content:
                     The content respond from the entered URL.
         """
-        if bearer is None:
-            if self._is_token_expired():
-                self._generate_bearer_token()
-
-            bearer = self.bearer
-        else:
-            bearer = "Bearer " + bearer
+        bearer = self._process_token(bearer)
 
         headers = {"Content-Type": "application/json",
                    "Authorization": bearer}
@@ -181,13 +172,7 @@ class CallAzureApi:
         Return
             string: The string respond from the entered URL
         """
-        if bearer is None:
-            if self._is_token_expired():
-                self._generate_bearer_token()
-
-            bearer = self.bearer
-        else:
-            bearer = "Bearer " + bearer
+        bearer = self._process_token(bearer)
 
         if blob and json:
             raise ValueError('Both blob and json given to post - can only have one at the time.')
@@ -217,13 +202,7 @@ class CallAzureApi:
             Return
                 string: The string respond from the entered URL
         """
-        if bearer is None:
-            if self._is_token_expired():
-                self._generate_bearer_token()
-
-            bearer = self.bearer
-        else:
-            bearer = "Bearer " + bearer
+        bearer = self._process_token(bearer)
 
         if blob and json:
             raise ValueError('Both blob and json given to put - can only have one at the time.')
@@ -254,13 +233,7 @@ class CallAzureApi:
             Return
                 json: The json respond from the entered URL
         """
-        if bearer is None:
-            if self._is_token_expired():
-                self._generate_bearer_token()
-
-            bearer = self.bearer
-        else:
-            bearer = "Bearer " + bearer
+        bearer = self._process_token(bearer)
 
         headers = {"Content-Type": "application/json",
                    "Authorization": bearer,
