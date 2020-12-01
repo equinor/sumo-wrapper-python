@@ -264,6 +264,23 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
         return self.callAzureApi.get_content(url, bearer)
 
+    def save_blob_and_json(self, parent_id, metadata_json, blob, bearer=None):
+        """
+            Uploads a regular surface metadata and its blob object.
+
+            Parameters
+                parent_id string, the id of the parent ensemble.
+                metadata_json json, the regular surface metadata.
+                blob binary, binary data to be uploaded
+                bearer string, Azure OAuth2 bear token Default: will create one.
+
+            Return
+                response object from metadata upload.
+        """
+        response_json = self.save_child_level_json(parent_id, metadata_json, bearer)
+        blob_url = response_json.json().get('blob_url')
+        _ = self.save_blob(blob, url=blob_url, bearer=bearer)
+        return response_json
 
     def _post_objects(self, json, blob=None, object_id=None, bearer=None, url=None):
         """
