@@ -264,7 +264,7 @@ class CallSumoApi:
         url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
         return self.callAzureApi.get_content(url, bearer)
 
-    def save_regular_surface(self, parent_id, metadata_json, blob, bearer=None):
+    def save_blob_and_json(self, parent_id, metadata_json, blob, bearer=None):
         """
             Uploads a regular surface metadata and its blob object.
 

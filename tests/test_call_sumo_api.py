@@ -248,7 +248,7 @@ def test_direct_blob_store_upload_single_operation():
         fmu_regularsurface_metadata = yaml.safe_load(stream)
         fmu_regularsurface_metadata['_tests'] = {'test1': 'test'}
 
-    response_surface = C.api.save_regular_surface(ensemble_id, fmu_regularsurface_metadata, B)
+    response_surface = C.api.save_blob_and_json(ensemble_id, fmu_regularsurface_metadata, B)
     regular_surface_id = response_surface.json().get('objectid')
 
     assert 200 <= response_surface.status_code <= 202
