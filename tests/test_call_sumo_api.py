@@ -290,6 +290,7 @@ def test_direct_blob_store_upload_single_operation():
     # Search for ensemble
     query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
     search_results = C.api.searchroot(query, select='source', buckets='source')
+
     hits = search_results.get('hits').get('hits')
     assert len(hits) == 0
 
