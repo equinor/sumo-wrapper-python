@@ -82,11 +82,12 @@ def test_upload_search_delete_ensemble_child():
         fmu_ensemble_metadata = yaml.safe_load(stream)
 
     response_ensemble = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
-    ensemble_id = response_ensemble.json().get('objectid')
-    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
     assert 200 <= response_ensemble.status_code <= 202
     assert isinstance(response_ensemble.json(), dict)
+
+    ensemble_id = response_ensemble.json().get('objectid')
+    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
     # Upload Regular Surface
     with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
@@ -94,10 +95,11 @@ def test_upload_search_delete_ensemble_child():
         fmu_regularsurface_metadata['_tests'] = {'test1': 'test'}
 
     response_surface = _upload_child_level_json(C=C, parent_id=ensemble_id, json=fmu_regularsurface_metadata)
-    regularsurface_id = response_surface.json().get('objectid')
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
+
+    regularsurface_id = response_surface.json().get('objectid')
     
     # Upload BLOB
     response_blob = _upload_blob(C=C, blob=B, object_id=regularsurface_id)
@@ -159,11 +161,12 @@ def test_direct_blob_store_upload():
         fmu_ensemble_metadata = yaml.safe_load(stream)
 
     response_ensemble = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
-    ensemble_id = response_ensemble.json().get('objectid')
-    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
     assert 200 <= response_ensemble.status_code <= 202
     assert isinstance(response_ensemble.json(), dict)
+
+    ensemble_id = response_ensemble.json().get('objectid')
+    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
     # Upload Regular Surface
     with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
@@ -171,10 +174,11 @@ def test_direct_blob_store_upload():
         fmu_regularsurface_metadata['_tests'] = {'test1': 'test'}
 
     response_surface = _upload_child_level_json(C=C, parent_id=ensemble_id, json=fmu_regularsurface_metadata)
-    regularsurface_id = response_surface.json().get('objectid')
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
+
+    regularsurface_id = response_surface.json().get('objectid')
 
     # Upload BLOB
     blob_url = response_surface.json().get('blob_url')
@@ -237,11 +241,12 @@ def test_direct_blob_store_upload_single_operation():
         fmu_ensemble_metadata = yaml.safe_load(stream)
 
     response_ensemble = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
-    ensemble_id = response_ensemble.json().get('objectid')
-    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
     assert 200 <= response_ensemble.status_code <= 202
     assert isinstance(response_ensemble.json(), dict)
+
+    ensemble_id = response_ensemble.json().get('objectid')
+    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
 
     # Upload Regular Surface plus BLOB
     with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
@@ -249,10 +254,11 @@ def test_direct_blob_store_upload_single_operation():
         fmu_regularsurface_metadata['_tests'] = {'test1': 'test'}
 
     response_surface = C.api.save_blob_and_json(ensemble_id, fmu_regularsurface_metadata, B)
-    regular_surface_id = response_surface.json().get('objectid')
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
+
+    regular_surface_id = response_surface.json().get('objectid')
 
     sleep(2)
 
@@ -337,14 +343,14 @@ def test_upload_duplicate_ensemble():
 
     # upload ensemble metadata, get object_id
     response1 = _upload_parent_object(C=C, json=fmu_ensemble_metadata1)
-    ensemble_id1 = response1.json().get('objectid')
     assert 200 <= response1.status_code <= 202
 
     # upload duplicated ensemble metadata, get object_id
     response2 = _upload_parent_object(C=C, json=fmu_ensemble_metadata2)
-    ensemble_id2 = response2.json().get('objectid')
     assert 200 <= response2.status_code <= 202
-    
+
+    ensemble_id1 = response1.json().get('objectid')
+    ensemble_id2 = response2.json().get('objectid')
     assert ensemble_id1 == ensemble_id2
 
     get_result = _download_object(C, object_id=ensemble_id1)
