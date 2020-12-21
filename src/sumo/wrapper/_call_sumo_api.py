@@ -278,7 +278,10 @@ class CallSumoApi:
             Return
                 response object from metadata upload.
         """
-        response_json = self.save_child_level_json(parent_id, metadata_json, bearer)
+        if parent_id:
+            response_json = self.save_child_level_json(parent_id, metadata_json, bearer)
+        else:
+            response_json = self.save_top_level_json(metadata_json, bearer)
         blob_url = response_json.json().get('blob_url')
         _ = self.save_blob(blob, url=blob_url, bearer=bearer)
         return response_json
