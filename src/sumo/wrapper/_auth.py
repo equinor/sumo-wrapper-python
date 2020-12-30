@@ -93,7 +93,8 @@ class Auth:
         os.umask(old_mask)
 
     def _read_cache(self):
-        self.cache.deserialize(open(self.token_path, "r").read())
+        with open(self.token_path, "r") as file:
+            self.cache.deserialize(file.read())
 
     def _get_cache(self):
 
