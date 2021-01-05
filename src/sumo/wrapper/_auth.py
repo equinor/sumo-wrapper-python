@@ -2,6 +2,7 @@ import datetime
 import msal
 import json
 import stat
+import sys
 import os
 
 TENANT = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
@@ -65,9 +66,12 @@ class Auth:
         return False
 
     def _check_token_security(self):
+        if sys.platform.lower().startswith('win'):
+            return True
+
         access_stats = os.stat(self.token_path)
 
-        return not bool(access_stats.st_mode & stat.S_IRWXG)
+        return not bool(access_stats.st_mode & (stat.S_IRWXG | stat.S_IRWXO))
 
     def _oauth_device_code(self):
         flow = self.app.initiate_device_flow(scopes=[self.scope])
@@ -83,12 +87,17 @@ class Auth:
         self._write_cache()
 
     def _write_cache(self):
-        old_mask = os.umask(000)
+        old_mask = os.umask(0o077)
 
-        os.makedirs(os.path.dirname(self.token_path), exist_ok=True, mode=0o700)
+        dir_path = os.path.dirname(self.token_path)
+        os.makedirs(dir_path, exist_ok=True)
+
         with open(self.token_path, "w") as file:
             file.write(self.cache.serialize())
-        os.chmod(self.token_path, 0o600)
+
+        if not sys.platform.lower().startswith('win'):
+            os.chmod(self.token_path, 0o600)
+            os.chmod(dir_path, 0o700)
 
         os.umask(old_mask)
 
