@@ -87,6 +87,8 @@ class Auth:
         self._write_cache()
 
     def _write_cache(self):
+        old_mask = os.umask(0o077)
+
         dir_path = os.path.dirname(self.token_path)
         os.makedirs(dir_path, exist_ok=True)
 
@@ -94,10 +96,10 @@ class Auth:
             file.write(self.cache.serialize())
 
         if not sys.platform.lower().startswith('win'):
-            old_mask = os.umask(0o077)
             os.chmod(self.token_path, 0o600)
             os.chmod(dir_path, 0o700)
-            os.umask(old_mask)
+
+        os.umask(old_mask)
 
     def _read_cache(self):
         with open(self.token_path, "r") as file:
