@@ -20,7 +20,8 @@ setup(
     install_requires=[
                     'requests',
                     'msal',
-                    'pyaml',
+                    'PyYAML',
+                    'setuptools'
                     ],
     python_requires=">=3.4",
     packages=find_packages("src"),
