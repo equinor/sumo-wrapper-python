@@ -283,7 +283,7 @@ class CallSumoApi:
         _ = self.save_blob(blob, url=blob_url, bearer=bearer)
         return response_json
 
-    def aggregate(self, operation, object_ids, bearer=None):
+    def aggregate_sufraces(self, operation, object_ids, bearer=None):
         """
             Perform an aggregation on surfaces described by the operation parameter for 
             the objects in the object_ids list. A new surface object is returned.
