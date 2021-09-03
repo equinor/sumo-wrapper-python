@@ -25,10 +25,21 @@ class Auth:
         self.app = msal.PublicClientApplication(self.client_id, authority=AUTHORITY_URI,
                                                 client_credential=self.client_credentials, token_cache=self.cache)
         self.accounts = self.app.get_accounts()
-        self._oauth_get_token_silent() if self._cache_available() else self._oauth_device_code()
 
+        if self._cache_available():
+            if not self.accounts:
+                print("Token cache found but have no accounts")
+            else:
+                print("Get token and maybe refresh")
+                self._oauth_get_token_silent()
+        else:
+            print("No token cache found, reauthenticate")
+            self._oauth_device_code()
+
+        
     def get_token(self):
         if self.is_token_expired():
+            print("Token expired, get new token")
             self._oauth_get_token_silent()
 
         return self.result["access_token"]
@@ -41,12 +52,21 @@ class Auth:
 
     def _oauth_get_token_silent(self):
         if not self.accounts:
+            print("Get accounts")
             self.accounts = self.app.get_accounts()
 
         if not self._check_token_security():
             raise SystemError('The token is not stored safely.')
 
-        self.result = self.app.acquire_token_silent([self.scope], account=self.accounts[0])
+        self.result = self.app.acquire_token_silent_with_error([self.scope], account=self.accounts[0])
+
+        if "access_token" in self.result:
+            print("Token found")
+        elif "error" in self.result:
+            print("Error getting access token" + self.result["error"])
+        else:
+            print("Acuire token failed")
+                  
         self._set_expiring_date(int(self.result['expires_in']))
         self._write_cache()
 
