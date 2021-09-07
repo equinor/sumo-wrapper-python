@@ -1,4 +1,4 @@
-from .config import CLIENT_ID, RESOURCE_ID
+from .config import APP_REGISTRATION
 from ._call_azure_api import CallAzureApi
 
 
@@ -16,8 +16,8 @@ class CallSumoApi:
         else:
             self.base_url = f'https://main-sumo-{env}.radix.equinor.com/api/v1'
 
-        resource_id = resource_id if resource_id else RESOURCE_ID
-        client_id = client_id if client_id else CLIENT_ID
+        resource_id = resource_id if resource_id else APP_REGISTRATION[env]["RESOURCE_ID"]
+        client_id = client_id if client_id else APP_REGISTRATION[env]["CLIENT_ID"]
         
         self.callAzureApi = CallAzureApi(resource_id, client_id, outside_token)
 

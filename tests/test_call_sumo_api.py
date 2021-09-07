@@ -15,7 +15,7 @@ from sumo.wrapper import CallSumoApi
 
 class Connection:
     def __init__(self):
-        self.api = CallSumoApi() 
+        self.api = CallSumoApi(env='dev') 
 
 
 def _upload_parent_object(C, json):
@@ -78,69 +78,72 @@ def test_upload_search_delete_ensemble_child():
     B = b'123456789'
 
     # Upload Ensemble
-    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
-        fmu_ensemble_metadata = yaml.safe_load(stream)
+    with open('tests/testdata/case.yml', 'r') as stream:
+        fmu_case_metadata = yaml.safe_load(stream)
 
-    response_ensemble = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+    response_case = _upload_parent_object(C=C, json=fmu_case_metadata)
 
-    assert 200 <= response_ensemble.status_code <= 202
-    assert isinstance(response_ensemble.json(), dict)
+    assert 200 <= response_case.status_code <= 202
+    assert isinstance(response_case.json(), dict)
 
-    ensemble_id = response_ensemble.json().get('objectid')
-    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
+    case_id = response_case.json().get('objectid')
+    fmu_case_id = fmu_case_metadata.get("fmu").get("case").get("uuid")
 
     # Upload Regular Surface
-    with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
-        fmu_regularsurface_metadata = yaml.safe_load(stream)
-        fmu_regularsurface_metadata['_tests'] = {'test1': 'test'}
+    with open('tests/testdata/surface.yml', 'r') as stream:
+        fmu_surface_metadata = yaml.safe_load(stream)
 
-    response_surface = _upload_child_level_json(C=C, parent_id=ensemble_id, json=fmu_regularsurface_metadata)
+    fmu_surface_id = fmu_surface_metadata.get('fmu').get('realization').get('id')
+    response_surface = _upload_child_level_json(C=C, parent_id=case_id, json=fmu_surface_metadata)
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
 
-    regularsurface_id = response_surface.json().get('objectid')
+    surface_id = response_surface.json().get('objectid')
     
     # Upload BLOB
-    response_blob = _upload_blob(C=C, blob=B, object_id=regularsurface_id)
+    response_blob = _upload_blob(C=C, blob=B, object_id=surface_id)
     assert 200 <= response_blob.status_code <= 202
 
     sleep(2)
 
     # Search for ensemble
-    query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
-    search_results = C.api.searchroot(query, select='source', buckets='source')
+    query = f'{fmu_case_id}'
+    search_results = C.api.searchroot(query, select='_source')
+    
     hits = search_results.get('hits').get('hits')
     assert len(hits) == 1
-    assert hits[0].get('_id') == ensemble_id
+    assert hits[0].get('_id') == case_id
 
     # Search for child object
-    search_results = C.api.search(query='_tests.test1:test')
-    total = search_results.get('hits').get('total').get('value')
-    assert total == 1
 
-    get_result = _download_object(C, object_id=regularsurface_id)
-    assert get_result["_id"] == regularsurface_id
+    search_results = C.api.search(query, select='_source')
+
+    total = search_results.get('hits').get('total').get('value')
+    assert total == 2
+
+    get_result = _download_object(C, object_id=surface_id)
+    assert get_result["_id"] == surface_id
 
     # Search for blob
-    bin_obj = C.api.get_blob(object_id=regularsurface_id)
+    bin_obj = C.api.get_blob(object_id=surface_id)
     assert bin_obj == B
 
     # Delete Ensemble
-    result = _delete_object(C=C, object_id=ensemble_id)
+    result = _delete_object(C=C, object_id=case_id)
     assert result == 'Accepted'
 
     sleep(3)
 
     # Search for ensemble
-    query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
-    search_results = C.api.searchroot(query, select='source', buckets='source')
+    search_results = C.api.searchroot(query, select='_source')
 
     hits = search_results.get('hits').get('hits')
+
     assert len(hits) == 0
 
     # Search for child object
-    search_results = C.api.search(query='_tests.test1:test')
+    search_results = C.api.search(query, select='source')
     total = search_results.get('hits').get('total').get('value')
     assert total == 0
 
@@ -157,29 +160,29 @@ def test_direct_blob_store_upload():
     B = b'123456789'
 
     # Upload Ensemble
-    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
-        fmu_ensemble_metadata = yaml.safe_load(stream)
+    with open('tests/testdata/case.yml', 'r') as stream:
+        fmu_case_metadata = yaml.safe_load(stream)
 
-    response_ensemble = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+    response_case = _upload_parent_object(C=C, json=fmu_case_metadata)
 
-    assert 200 <= response_ensemble.status_code <= 202
-    assert isinstance(response_ensemble.json(), dict)
+    assert 200 <= response_case.status_code <= 202
+    assert isinstance(response_case.json(), dict)
 
-    ensemble_id = response_ensemble.json().get('objectid')
-    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
+    case_id = response_case.json().get('objectid')
+    fmu_case_id = fmu_case_metadata.get("fmu").get("case").get("uuid")
 
     # Upload Regular Surface
-    with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
-        fmu_regularsurface_metadata = yaml.safe_load(stream)
-        fmu_regularsurface_metadata['_tests'] = {'test1': 'test'}
+    with open('tests/testdata/surface.yml', 'r') as stream:
+        fmu_surface_metadata = yaml.safe_load(stream)
 
-    response_surface = _upload_child_level_json(C=C, parent_id=ensemble_id, json=fmu_regularsurface_metadata)
+    fmu_surface_id = fmu_surface_metadata.get('fmu').get('realization').get('id')
+    response_surface = _upload_child_level_json(C=C, parent_id=case_id, json=fmu_surface_metadata)
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
 
-    regularsurface_id = response_surface.json().get('objectid')
-
+    surface_id = response_surface.json().get('objectid')
+    
     # Upload BLOB
     blob_url = response_surface.json().get('blob_url')
     response_blob = _upload_blob(C=C, blob=B, url=blob_url)
@@ -188,42 +191,44 @@ def test_direct_blob_store_upload():
     sleep(2)
 
     # Search for ensemble
-    query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
-    search_results = C.api.searchroot(query, select='source', buckets='source')
+    query = f'{fmu_case_id}'
+    search_results = C.api.searchroot(query, select='_source')
+    
     hits = search_results.get('hits').get('hits')
     assert len(hits) == 1
-    assert hits[0].get('_id') == ensemble_id
+    assert hits[0].get('_id') == case_id
 
     # Search for child object
-    search_results = C.api.search(query='_tests.test1:test')
-    total = search_results.get('hits').get('total').get('value')
-    assert total == 1
 
-    get_result = _download_object(C, object_id=regularsurface_id)
-    assert get_result["_id"] == regularsurface_id
+    search_results = C.api.search(query, select='_source')
+
+    total = search_results.get('hits').get('total').get('value')
+    assert total == 2
+
+    get_result = _download_object(C, object_id=surface_id)
+    assert get_result["_id"] == surface_id
 
     # Search for blob
-    bin_obj = C.api.get_blob(object_id=regularsurface_id)
+    bin_obj = C.api.get_blob(object_id=surface_id)
     assert bin_obj == B
 
     # Delete Ensemble
-    result = _delete_object(C=C, object_id=ensemble_id)
+    result = _delete_object(C=C, object_id=case_id)
     assert result == 'Accepted'
 
     sleep(3)
 
     # Search for ensemble
-    query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
-    search_results = C.api.searchroot(query, select='source', buckets='source')
+    search_results = C.api.searchroot(query, select='_source')
 
     hits = search_results.get('hits').get('hits')
+
     assert len(hits) == 0
 
     # Search for child object
-    search_results = C.api.search(query='_tests.test1:test')
+    search_results = C.api.search(query, select='source')
     total = search_results.get('hits').get('total').get('value')
     assert total == 0
-
 
 def test_direct_blob_store_upload_single_operation():
     """
@@ -233,71 +238,78 @@ def test_direct_blob_store_upload_single_operation():
         those objects to make sure they are available to the user. We then delete
         them and repeat the search to check if they were properly removed from sumo.
     """
+
     C = Connection()
     B = b'123456789'
 
     # Upload Ensemble
-    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
-        fmu_ensemble_metadata = yaml.safe_load(stream)
+    with open('tests/testdata/case.yml', 'r') as stream:
+        fmu_case_metadata = yaml.safe_load(stream)
 
-    response_ensemble = _upload_parent_object(C=C, json=fmu_ensemble_metadata)
+    response_case = _upload_parent_object(C=C, json=fmu_case_metadata)
 
-    assert 200 <= response_ensemble.status_code <= 202
-    assert isinstance(response_ensemble.json(), dict)
+    assert 200 <= response_case.status_code <= 202
+    assert isinstance(response_case.json(), dict)
 
-    ensemble_id = response_ensemble.json().get('objectid')
-    fmu_ensemble_id = fmu_ensemble_metadata.get('fmu_ensemble').get('fmu_ensemble_id')
+    case_id = response_case.json().get('objectid')
+    fmu_case_id = fmu_case_metadata.get("fmu").get("case").get("uuid")
 
-    # Upload Regular Surface plus BLOB
-    with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
-        fmu_regularsurface_metadata = yaml.safe_load(stream)
-        fmu_regularsurface_metadata['_tests'] = {'test1': 'test'}
+    # Upload Regular Surface
+    with open('tests/testdata/surface.yml', 'r') as stream:
+        fmu_surface_metadata = yaml.safe_load(stream)
 
-    response_surface = C.api.save_blob_and_json(ensemble_id, fmu_regularsurface_metadata, B)
+    fmu_surface_id = fmu_surface_metadata.get('fmu').get('realization').get('id')
+
+        
+    response_surface = C.api.save_blob_and_json(case_id, fmu_surface_metadata, B)
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
 
-    regular_surface_id = response_surface.json().get('objectid')
+    surface_id = response_surface.json().get('objectid')
 
     sleep(2)
 
     # Search for ensemble
-    query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
-    search_results = C.api.searchroot(query, select='source', buckets='source')
+    query = f'{fmu_case_id}'
+    search_results = C.api.searchroot(query, select='_source')
+    
     hits = search_results.get('hits').get('hits')
     assert len(hits) == 1
-    assert hits[0].get('_id') == ensemble_id
+    assert hits[0].get('_id') == case_id
 
     # Search for child object
-    search_results = C.api.search(query='_tests.test1:test')
-    total = search_results.get('hits').get('total').get('value')
-    assert total == 1
 
-    get_result = _download_object(C, object_id=regular_surface_id)
-    assert get_result["_id"] == regular_surface_id
+    search_results = C.api.search(query, select='_source')
+
+    total = search_results.get('hits').get('total').get('value')
+    assert total == 2
+
+    get_result = _download_object(C, object_id=surface_id)
+    assert get_result["_id"] == surface_id
 
     # Search for blob
-    bin_obj = C.api.get_blob(object_id=regular_surface_id)
+    bin_obj = C.api.get_blob(object_id=surface_id)
     assert bin_obj == B
 
     # Delete Ensemble
-    result = _delete_object(C=C, object_id=ensemble_id)
+    result = _delete_object(C=C, object_id=case_id)
     assert result == 'Accepted'
 
     sleep(3)
 
     # Search for ensemble
-    query = f'fmu_ensemble.fmu_ensemble_id:{fmu_ensemble_id}'
-    search_results = C.api.searchroot(query, select='source', buckets='source')
+    search_results = C.api.searchroot(query, select='_source')
 
     hits = search_results.get('hits').get('hits')
+
     assert len(hits) == 0
 
     # Search for child object
-    search_results = C.api.search(query='_tests.test1:test')
+    search_results = C.api.search(query, select='source')
     total = search_results.get('hits').get('total').get('value')
-    assert total == 0
+    assert total == 0    
+ 
 
 
 def test_fail_on_wrong_metadata():
@@ -309,21 +321,6 @@ def test_fail_on_wrong_metadata():
         assert _upload_parent_object(C=C, json={"some field": "some value"})
 
 
-def test_upload_regularsurface_as_parent():
-    """ 
-        Adding a regular surface as a parent object
-    """
-    C = Connection()
-    
-    with open('testdata/fmu_regularsurface.yaml', 'r') as stream:
-        fmu_ensemble_metadata = yaml.safe_load(stream)
-
-    fmu_ensemble_metadata['fmu_ensemble']['fmu_ensemble_id'] = '11100000-0000-0000-0000-000000000055'
-
-    # upload must raise an exception
-    with pytest.raises(Exception):
-        assert _upload_parent_object(C=C, json=fmu_ensemble_metadata)
-
 
 def test_upload_duplicate_ensemble():
     """
@@ -331,35 +328,31 @@ def test_upload_duplicate_ensemble():
     """
     C = Connection()
 
-    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
-        fmu_ensemble_metadata1 = yaml.safe_load(stream)
+    with open('tests/testdata/case.yml', 'r') as stream:
+        fmu_metadata1 = yaml.safe_load(stream)
 
-    with open('testdata/fmu_ensemble.yaml', 'r') as stream:
-        fmu_ensemble_metadata2 = yaml.safe_load(stream)
+    with open('tests/testdata/case.yml', 'r') as stream:
+        fmu_metadata2 = yaml.safe_load(stream)
 
-    # Adding fake equal ID
-    fmu_ensemble_metadata1['fmu_ensemble']['fmu_ensemble_id'] = '00000000-0000-0000-0000-000000000055'
-    fmu_ensemble_metadata2['fmu_ensemble']['fmu_ensemble_id'] = '00000000-0000-0000-0000-000000000055'
-
-    # upload ensemble metadata, get object_id
-    response1 = _upload_parent_object(C=C, json=fmu_ensemble_metadata1)
+    # upload case metadata, get object_id
+    response1 = _upload_parent_object(C=C, json=fmu_metadata1)
     assert 200 <= response1.status_code <= 202
 
-    # upload duplicated ensemble metadata, get object_id
-    response2 = _upload_parent_object(C=C, json=fmu_ensemble_metadata2)
+    # upload duplicated case metadata, get object_id
+    response2 = _upload_parent_object(C=C, json=fmu_metadata2)
     assert 200 <= response2.status_code <= 202
 
-    ensemble_id1 = response1.json().get('objectid')
-    ensemble_id2 = response2.json().get('objectid')
-    assert ensemble_id1 == ensemble_id2
+    case_id1 = response1.json().get('objectid')
+    case_id2 = response2.json().get('objectid')
+    assert case_id1 == case_id2
 
-    get_result = _download_object(C, object_id=ensemble_id1)
-    assert get_result["_id"] == ensemble_id1
+    get_result = _download_object(C, object_id=case_id1)
+    assert get_result["_id"] == case_id1
 
     # Delete Ensemble
-    result = _delete_object(C=C, object_id=ensemble_id1)
+    result = _delete_object(C=C, object_id=case_id1)
     assert result == 'Accepted'
 
     # Search for ensemble
     with pytest.raises(Exception):
-        assert _download_object(C, object_id=ensemble_id1)
+        assert _download_object(C, object_id=case_id2)
