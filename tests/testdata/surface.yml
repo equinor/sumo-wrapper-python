@@ -5,11 +5,11 @@ source: fmu  # always included, and always this value if FMU made it. For quick 
 tracklog:
   - datetime: '2020-10-28T14:28:02'
     user:
-      id: peesv
+      id: testuser
     event: created
   - datetime: '2020-10-28T14:46:14'
     user: 
-      id: peesv
+      id: testuser
     event: updated
 
 class: surface
@@ -32,7 +32,7 @@ fmu:
     name: TestCase from fmu.sumo
     uuid: 8bb56d60-8758-481a-89a4-6bac8561d38e # (pseudo-)random valid uuid4
     user:
-      id: jriv # $USER from ERT
+      id: testdata # $USER from ERT
     description:
       - yet other detailed description
       - optional
