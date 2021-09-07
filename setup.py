@@ -14,7 +14,7 @@ setup(
         'Programming Language :: Python :: 3.7'
         'Programming Language :: Python :: 3.8'
         ],
-    version='0.1',
+    version='0.1.1',
     author='Lindvar Lagran',
     author_email='llag@equinor.com',
     install_requires=[
