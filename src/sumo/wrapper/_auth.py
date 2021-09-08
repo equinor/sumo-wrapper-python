@@ -29,6 +29,7 @@ class Auth:
         if self._cache_available():
             if not self.accounts:
                 print("Token cache found but have no accounts")
+                self._oauth_device_code()
             else:
                 print("Get token and maybe refresh")
                 self._oauth_get_token_silent()

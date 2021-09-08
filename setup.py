@@ -15,7 +15,7 @@ setup(
         'Programming Language :: Python :: 3.8'
         ],
     version='0.1.1',
-    author='Lindvar Lagran',
+    author='Equinor ASA',
     author_email='llag@equinor.com',
     install_requires=[
                     'requests',
@@ -28,4 +28,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     zip_safe=False,
+    entry_points={
+        "console_scripts": ["sumologin = sumo.wrapper.login:main"]
+        }
 )
