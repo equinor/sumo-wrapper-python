@@ -31,7 +31,6 @@ class Auth:
                 print("Token cache found but have no accounts")
                 self._oauth_device_code()
             else:
-                print("Get token and maybe refresh")
                 self._oauth_get_token_silent()
         else:
             print("No token cache found, reauthenticate")
@@ -40,7 +39,6 @@ class Auth:
         
     def get_token(self):
         if self.is_token_expired():
-            print("Token expired, get new token")
             self._oauth_get_token_silent()
 
         return self.result["access_token"]

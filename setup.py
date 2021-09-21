@@ -14,7 +14,7 @@ setup(
         'Programming Language :: Python :: 3.7'
         'Programming Language :: Python :: 3.8'
         ],
-    version='0.1.1',
+    version='0.1.2',
     author='Equinor ASA',
     author_email='llag@equinor.com',
     install_requires=[
@@ -29,6 +29,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points={
-        "console_scripts": ["sumologin = sumo.wrapper.login:main"]
+        "console_scripts": ["sumo_login = sumo.wrapper.login:main"]
         }
 )
