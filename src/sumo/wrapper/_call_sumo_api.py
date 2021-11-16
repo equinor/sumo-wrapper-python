@@ -264,7 +264,7 @@ class CallSumoApi:
             Return
                 string:
         """
-        url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
+        url = f"{self.base_url}/objects('{object_id}')/blob/authuri"
         return self.callAzureApi.get_content(url, bearer)
 
     def save_blob_and_json(self, parent_id, metadata_json, blob, bearer=None):
