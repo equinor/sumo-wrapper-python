@@ -57,7 +57,7 @@ class CallSumoApi:
         """
         return self.callAzureApi.get_bearer_token()
 
-    def search(self, query, select=None, buckets=None, search_from=0, search_size="100", search_after= None, bearer=None):
+    def search(self, query, select=None, buckets=None, search_from=0, search_size="100", search_after=None, bearer=None):
         """
             Search for specific objects.
 
@@ -264,7 +264,7 @@ class CallSumoApi:
             Return
                 string:
         """
-        url = f"{self.base_url}/objects('{object_id}')/blob/authuri"
+        url = f"{self.base_url}/objects('{object_id}')/blob/$puturi"
         return self.callAzureApi.get_content(url, bearer)
 
     def save_blob_and_json(self, parent_id, metadata_json, blob, bearer=None):
