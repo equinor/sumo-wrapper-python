@@ -15,7 +15,7 @@ from sumo.wrapper import CallSumoApi
 
 class Connection:
     def __init__(self):
-        self.api = CallSumoApi(env='dev') 
+        self.api = CallSumoApi(env='localhost') 
 
 
 def _upload_parent_object(C, json):
@@ -105,7 +105,7 @@ def test_upload_search_delete_ensemble_child():
     response_blob = _upload_blob(C=C, blob=B, object_id=surface_id)
     assert 200 <= response_blob.status_code <= 202
 
-    sleep(2)
+    sleep(4)
 
     # Search for ensemble
     query = f'{fmu_case_id}'
@@ -133,7 +133,7 @@ def test_upload_search_delete_ensemble_child():
     result = _delete_object(C=C, object_id=case_id)
     assert result == 'Accepted'
 
-    sleep(3)
+    sleep(4)
 
     # Search for ensemble
     search_results = C.api.searchroot(query, select='_source')
@@ -188,7 +188,7 @@ def test_direct_blob_store_upload():
     response_blob = _upload_blob(C=C, blob=B, url=blob_url)
     assert 200 <= response_blob.status_code <= 202
 
-    sleep(2)
+    sleep(4)
 
     # Search for ensemble
     query = f'{fmu_case_id}'
@@ -216,7 +216,7 @@ def test_direct_blob_store_upload():
     result = _delete_object(C=C, object_id=case_id)
     assert result == 'Accepted'
 
-    sleep(3)
+    sleep(4)
 
     # Search for ensemble
     search_results = C.api.searchroot(query, select='_source')
@@ -268,7 +268,7 @@ def test_direct_blob_store_upload_single_operation():
 
     surface_id = response_surface.json().get('objectid')
 
-    sleep(2)
+    sleep(4)
 
     # Search for ensemble
     query = f'{fmu_case_id}'
@@ -296,7 +296,7 @@ def test_direct_blob_store_upload_single_operation():
     result = _delete_object(C=C, object_id=case_id)
     assert result == 'Accepted'
 
-    sleep(3)
+    sleep(4)
 
     # Search for ensemble
     search_results = C.api.searchroot(query, select='_source')
