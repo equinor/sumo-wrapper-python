@@ -310,6 +310,81 @@ def test_direct_blob_store_upload_single_operation():
     total = search_results.get('hits').get('total').get('value')
     assert total == 0    
  
+def test_search_after():
+    """
+        Testing the wrapper functionalities.
+
+        We upload an ensemble object along with a child. After that, we search for
+        those objects to make sure they are available to the user. We then delete
+        them and repeat the search to check if they were properly removed from sumo.
+    """
+
+    C = Connection()
+    B = b'123456789'
+
+    # Upload Ensemble
+    with open('tests/testdata/case.yml', 'r') as stream:
+        fmu_case_metadata = yaml.safe_load(stream)
+
+    response_case = _upload_parent_object(C=C, json=fmu_case_metadata)
+
+    assert 200 <= response_case.status_code <= 202
+    assert isinstance(response_case.json(), dict)
+
+    case_id = response_case.json().get('objectid')
+    fmu_case_id = fmu_case_metadata.get("fmu").get("case").get("uuid")
+
+    # Upload Regular Surface
+    with open('tests/testdata/surface.yml', 'r') as stream:
+        fmu_surface_metadata = yaml.safe_load(stream)
+
+    fmu_surface_id = fmu_surface_metadata.get('fmu').get('realization').get('id')
+
+        
+    response_surface = C.api.save_blob_and_json(case_id, fmu_surface_metadata, B)
+
+    assert 200 <= response_surface.status_code <= 202
+    assert isinstance(response_surface.json(), dict)
+
+    surface_id = response_surface.json().get('objectid')
+
+    sleep(2)
+
+
+    # Search for child object
+    
+    query = f'{fmu_case_id}'
+    search_results = C.api.search(query, search_size="1", select='_source')
+
+
+    num_results = len(search_results.get('hits').get('hits'))
+    search_after = search_results.get('hits').get('hits')[num_results-1].get('sort')
+
+    assert num_results == 1
+
+    search_results = C.api.search(query, search_after=search_after, select='_source')
+    num_results = len(search_results.get('hits').get('hits'))
+
+    #assert num_results == 1
+
+
+    # Delete Ensemble
+    result = _delete_object(C=C, object_id=case_id)
+    assert result == 'Accepted'
+
+    sleep(3)
+
+    # Search for ensemble
+    search_results = C.api.searchroot(query, select='_source')
+
+    hits = search_results.get('hits').get('hits')
+
+    assert len(hits) == 0
+
+    # Search for child object
+    search_results = C.api.search(query, select='source')
+    total = search_results.get('hits').get('total').get('value')
+    assert total == 0    
 
 
 def test_fail_on_wrong_metadata():
