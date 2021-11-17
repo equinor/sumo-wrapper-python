@@ -57,7 +57,7 @@ class CallSumoApi:
         """
         return self.callAzureApi.get_bearer_token()
 
-    def search(self, query, select=None, buckets=None, search_from=0, search_size="100", search_after= None, bearer=None):
+    def search(self, query, select=None, buckets=None, search_from=0, search_size="100", search_after=None, bearer=None):
         """
             Search for specific objects.
 
