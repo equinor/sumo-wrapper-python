@@ -1,13 +1,21 @@
 import requests
+import logging
 
 from ._auth import Auth
 from ._request_error import AuthenticationError, TransientError, PermanentError
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level="DEBUG")
 
 
 def _raise_request_error_exception(code, message):
     """
     Raise the proper authentication error according to the code received from sumo.
     """
+
+    logger.debug("code: %s", code)
+    logger.debug("message: %s", message)
+
     if 503 <= code <= 504 or code == 404 or code == 500:
         raise TransientError(code, message)
     elif 401 <= code <= 403:
@@ -26,14 +34,23 @@ class CallAzureApi:
                 Need to be an Azure resourceId
     """
 
-    def __init__(self, resource_id, client_id, outside_token=False):
+    def __init__(self, resource_id, client_id, outside_token=False, writeback=False):
         self.resource_id = resource_id
         self.client_id = client_id
+        self.writeback = writeback
+        logger.debug("self.writeback is %s", self.writeback)
+
+        logger.debug("CallAzureApi is initializing")
+
+        logger.debug("resource_id is %s", resource_id)
+        logger.debug("client_id is %s", client_id)
+        logger.debug("outside_token is %s", outside_token)
 
         if outside_token:
             self.auth = None
             self.bearer = None
         else:
+            logger.debug("outside_token is false, calling self._authenticate")
             self._authenticate()
 
     def __str__(self):
@@ -54,33 +71,53 @@ class CallAzureApi:
             accessToken:
                 The Bearer Authorization string
         """
+        logger.debug("Getting bearer token")
         return self.bearer
 
     def _authenticate(self):
         """
         Authenticate the user, generating a bearer token that is valid for one hour.
         """
-        self.auth = Auth(self.client_id, self.resource_id)
+        logger.debug("Running _authenticate")
+        self.auth = Auth(self.client_id, self.resource_id, self.writeback)
         self._generate_bearer_token()
 
     def _generate_bearer_token(self):
         """
         Generate the access token through the authentication object.
         """
+        logger.debug("Running _generate_bearer_token()")
+
         self.bearer = "Bearer " + self.auth.get_token()
+
+        logger.debug(
+            "Setting self.bearer. Length of self.bearer is %s", str(len(self.bearer))
+        )
+        logger.debug("_generate_bearer_token is finished.")
 
     def _is_token_expired(self):
         """
         Checks if one hour (with five secs tolerance) has passed since last authentication
         """
-        return self.auth.is_token_expired()
+        logger.debug("Checking if token has expired")
+
+        is_expired = self.auth.is_token_expired()
+
+        logger.debug("Answer from self.auth.is_token_expired() was %s", str(is_expired))
+
+        return is_expired
 
     def _process_token(self, bearer):
         if bearer:
+            logger.debug("Bearer exist, returning bearer")
             return "Bearer " + bearer
 
         if self._is_token_expired():
+            logger.debug("Token is expired, calling for generating it.")
             self._generate_bearer_token()
+
+        logger.debug("self.bearer is being returned from _process_token()")
+        logger.debug("Length of self.bearer is %s", str(len(self.bearer)))
 
         return self.bearer
 
@@ -98,6 +135,9 @@ class CallAzureApi:
             json:
                 The json respond from the entered URL
         """
+
+        logger.debug("get_json() is starting")
+
         bearer = self._process_token(bearer)
 
         headers = {"Content-Type": "application/json", "Authorization": bearer}
@@ -123,6 +163,9 @@ class CallAzureApi:
             image:
                 raw image
         """
+
+        logger.debug("get_image() is starting")
+
         bearer = self._process_token(bearer)
 
         headers = {"Content-Type": "html/text", "Authorization": bearer}
@@ -148,6 +191,9 @@ class CallAzureApi:
            content:
                 The content respond from the entered URL.
         """
+
+        logger.debug("get_content() is starting")
+
         bearer = self._process_token(bearer)
 
         headers = {"Content-Type": "application/json", "Authorization": bearer}
@@ -172,6 +218,9 @@ class CallAzureApi:
         Return
             string: The string respond from the entered URL
         """
+
+        logger.debug("post() is starting")
+
         bearer = self._process_token(bearer)
 
         if blob and json:
@@ -210,6 +259,9 @@ class CallAzureApi:
         Return
             string: The string respond from the entered URL
         """
+
+        logger.debug("put() is starting")
+
         bearer = self._process_token(bearer)
 
         if blob and json:
@@ -249,6 +301,7 @@ class CallAzureApi:
         Return
             json: The json respond from the entered URL
         """
+        logger.debug("delete_object is starting")
         bearer = self._process_token(bearer)
 
         headers = {

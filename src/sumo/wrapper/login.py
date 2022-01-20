@@ -5,11 +5,13 @@ from sumo.wrapper import CallSumoApi
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(
-        description="Login to Sumo on azure"
-    )
+    parser = ArgumentParser(description="Login to Sumo on azure")
     parser.add_argument(
-        "--env", dest="env", action='store', default="prod", help="Environment to log into"
+        "--env",
+        dest="env",
+        action="store",
+        default="prod",
+        help="Environment to log into",
     )
     return parser
 
@@ -21,7 +23,8 @@ def main():
 
     print("Login to Sumo environment: " + env)
 
-    id = CallSumoApi(env=env)
+    CallSumoApi(env=env, writeback=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

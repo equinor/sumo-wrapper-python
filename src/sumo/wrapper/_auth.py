@@ -4,6 +4,16 @@ import json
 import stat
 import sys
 import os
+import logging
+
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level="DEBUG")
 
 TENANT = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 
@@ -14,13 +24,24 @@ HOME_DIR = os.path.expanduser("~")
 
 class Auth:
     def __init__(
-        self, client_id, resource_id, authority=AUTHORITY_URI, client_credentials=None
+        self,
+        client_id,
+        resource_id,
+        authority=AUTHORITY_URI,
+        client_credentials=None,
+        writeback=False,
     ):
+
+        logger.debug("Initialize Auth")
         self.client_id = client_id
+        logger.debug("client_id is %s", self.client_id)
         self.resource_id = resource_id
+        logger.debug("client_id is %s", self.client_id)
         self.scope = self.resource_id + "/.default"
         self.authority = authority
         self.client_credentials = client_credentials
+        self.writeback = writeback
+        logger.debug("self.writeback is %s", self.writeback)
         self.token_path = os.path.join(
             HOME_DIR, ".sumo", str(self.resource_id) + ".token"
         )
@@ -31,33 +52,57 @@ class Auth:
             client_credential=self.client_credentials,
             token_cache=self.cache,
         )
+
+        logger.debug("self.app has been initialized")
+        logger.debug("Getting accounts")
         self.accounts = self.app.get_accounts()
+
+        logger.debug("self.accounts is %s", self.accounts)
 
         if self._cache_available():
             if not self.accounts:
-                print("Token cache found but have no accounts")
-                self._oauth_device_code()
+                logger.debug("Token cache found but have no accounts")
+                raise RuntimeError(
+                    "The locally stored token has no accounts. "
+                    "Please check your access or run 'sumo_login' to re-create your token."
+                )
             else:
+                logger.debug("There are accounts. Calling _oauth_get_token_silent()")
                 self._oauth_get_token_silent()
         else:
-            print("No token cache found, reauthenticate")
+            logger.debug("No token cache found, reauthenticate")
             self._oauth_device_code()
 
     def get_token(self):
-        if self.is_token_expired():
+        logger.debug("Starting get_token")
+
+        is_expired = self.is_token_expired()
+
+        logger.debug("self.is_token_expired is %s", str(is_expired))
+
+        if is_expired:
             self._oauth_get_token_silent()
 
+        logger.debug(
+            "Returning access_token. Length of access token is %s",
+            len(self.result["access_token"]),
+        )
         return self.result["access_token"]
 
     def is_token_expired(self):
         """
         Check if token is expired or about to expire.
         """
-        return datetime.datetime.now() > self.expiring_date
+        logger.debug("is_token_expired() is starting")
+        is_expired = datetime.datetime.now() > self.expiring_date
+        logger.debug("is_expired: %s", str(is_expired))
+        return is_expired
 
     def _oauth_get_token_silent(self):
+        logger.debug("_oauth_get_token_silent starting")
+        logger.info("Getting access token")
         if not self.accounts:
-            print("Get accounts")
+            logger.debug("Get accounts")
             self.accounts = self.app.get_accounts()
 
         if not self._check_token_security():
@@ -68,14 +113,19 @@ class Auth:
         )
 
         if "access_token" in self.result:
-            print("Token found")
+            logger.info("Access token found")
         elif "error" in self.result:
-            print("Error getting access token" + self.result["error"])
+            logger.info("Error getting access token")
+            logger.debug(self.result["error"])
         else:
-            print("Acuire token failed")
+            logger.info("Failed getting access token")
 
         self._set_expiring_date(int(self.result["expires_in"]))
-        self._write_cache()
+
+        if self.writeback:
+            self._write_cache()
+
+        logger.debug("_oauth_get_token_silent() has finished")
 
     def _set_expiring_date(self, time_left, threshold=60):
         """
@@ -88,10 +138,13 @@ class Auth:
         self.expiring_date = datetime.datetime.now() + datetime.timedelta(
             seconds=time_left - threshold
         )
+        logger.debug("self.expiring_date set to %s", self.expiring_date)
 
     def _cache_available(self):
         if os.path.isfile(self.token_path):
+            logger.debug("cache is available")
             return True
+        logger.debug("cache is not available")
         return False
 
     def _check_token_security(self):
@@ -110,22 +163,24 @@ class Auth:
                 "Fail to create device flow. Err: %s" % json.dumps(flow, indent=4)
             )
         else:
-            print(flow["message"])
+            logger.debug("flow[message] is %s", flow["message"])
 
         self.result = self.app.acquire_token_by_device_flow(flow)
         try:
             self._set_expiring_date(int(self.result["expires_in"]))
         except KeyError:
-            print(self.result)
+            logger.debug(self.result)
         self._write_cache()
 
     def _write_cache(self):
+        logger.debug("Writing cache")
         old_mask = os.umask(0o077)
 
         dir_path = os.path.dirname(self.token_path)
         os.makedirs(dir_path, exist_ok=True)
 
         with open(self.token_path, "w") as file:
+            logger.debug("Writing to %s", self.token_path)
             file.write(self.cache.serialize())
 
         if not sys.platform.lower().startswith("win"):
@@ -136,12 +191,16 @@ class Auth:
 
     def _read_cache(self):
         with open(self.token_path, "r") as file:
+            logger.debug("Reading from %s", self.token_path)
             self.cache.deserialize(file.read())
 
     def _get_cache(self):
 
+        logger.debug("_get_cache")
         self.cache = msal.SerializableTokenCache()
+
         if self._cache_available():
+            logger.debug("cache is available, reading it")
             self._read_cache()
 
 
@@ -149,4 +208,4 @@ if __name__ == "__main__":
     auth = Auth(
         "1826bd7c-582f-4838-880d-5b4da5c3eea2", "88d2b022-3539-4dda-9e66-853801334a86"
     )
-    print(auth.get_token())
+    logger.debug(auth.get_token())
