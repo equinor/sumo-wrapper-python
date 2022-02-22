@@ -13,7 +13,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3.7" "Programming Language :: Python :: 3.8",
     ],
-    version="0.1.5",
+    version="0.1.6",
     author="Equinor ASA",
     install_requires=["requests", "msal", "PyYAML", "setuptools"],
     python_requires=">=3.4",
