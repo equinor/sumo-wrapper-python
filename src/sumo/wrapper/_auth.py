@@ -12,8 +12,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-logger = logging.getLogger(__name__)
-logger.setLevel(level="DEBUG")
+logger = logging.getLogger("sumo.wrapper")
 
 TENANT = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 
@@ -30,6 +29,7 @@ class Auth:
         authority=AUTHORITY_URI,
         client_credentials=None,
         writeback=False,
+        verbosity="CRITICAL",
     ):
 
         logger.debug("Initialize Auth")

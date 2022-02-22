@@ -1,5 +1,9 @@
+import logging
+
 from .config import APP_REGISTRATION
 from ._call_azure_api import CallAzureApi
+
+logger = logging.getLogger("sumo.wrapper")
 
 
 class CallSumoApi:
@@ -14,8 +18,12 @@ class CallSumoApi:
         client_id=None,
         outside_token=False,
         writeback=False,
+        verbosity="CRITICAL",
     ):
         """Initialize the wrapper. Chooses among multiple environments."""
+
+        logger.setLevel(level=verbosity)
+
         if env == "exp":
             self.base_url = (
                 "https://main-sumo-experiment-dev.playground.radix.equinor.com/api/v1"

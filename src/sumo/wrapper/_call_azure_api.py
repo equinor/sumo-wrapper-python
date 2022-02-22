@@ -4,8 +4,7 @@ import logging
 from ._auth import Auth
 from ._request_error import AuthenticationError, TransientError, PermanentError
 
-logger = logging.getLogger(__name__)
-logger.setLevel(level="DEBUG")
+logger = logging.getLogger("sumo.wrapper")
 
 
 def _raise_request_error_exception(code, message):
@@ -34,7 +33,17 @@ class CallAzureApi:
                 Need to be an Azure resourceId
     """
 
-    def __init__(self, resource_id, client_id, outside_token=False, writeback=False):
+    def __init__(
+        self,
+        resource_id,
+        client_id,
+        outside_token=False,
+        writeback=False,
+        verbosity="CRITICAL",
+    ):
+
+        logger.setLevel(level=verbosity)
+
         self.resource_id = resource_id
         self.client_id = client_id
         self.writeback = writeback
