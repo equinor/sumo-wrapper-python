@@ -163,7 +163,7 @@ class Auth:
                 "Fail to create device flow. Err: %s" % json.dumps(flow, indent=4)
             )
         else:
-            logger.debug("flow[message] is %s", flow["message"])
+            print(flow["message"])
 
         self.result = self.app.acquire_token_by_device_flow(flow)
         try:
