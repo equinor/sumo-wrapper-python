@@ -62,13 +62,22 @@ class Auth:
         if self._cache_available():
             if not self.accounts:
                 logger.debug("Token cache found but have no accounts")
-                raise RuntimeError(
-                    "The locally stored token has no accounts. "
-                    "Please check your access or run 'sumo_login' to re-create your token."
-                )
+                if self.writeback:
+                    logger.debug("Writeback is True, running device_code")
+                    self._oauth_device_code()
+                else:
+                    raise RuntimeError(
+                        "The locally stored token has no accounts. "
+                        "Please check your access or run 'sumo_login' to re-create your token."
+                    )
             else:
                 logger.debug("There are accounts. Calling _oauth_get_token_silent()")
-                self._oauth_get_token_silent()
+                if not self._oauth_get_token_silent():
+                    logger.debug("self._oauth_get_token_silent returned False")
+                    if self.writeback:
+                        logger.debug("self.writeback is True, calling device_code")
+                        self._oauth_device_code()
+
         else:
             logger.debug("No token cache found, reauthenticate")
             self._oauth_device_code()
@@ -117,8 +126,10 @@ class Auth:
         elif "error" in self.result:
             logger.info("Error getting access token")
             logger.debug(self.result["error"])
+            return False
         else:
             logger.info("Failed getting access token")
+            return False
 
         self._set_expiring_date(int(self.result["expires_in"]))
 
@@ -126,6 +137,8 @@ class Auth:
             self._write_cache()
 
         logger.debug("_oauth_get_token_silent() has finished")
+
+        return True
 
     def _set_expiring_date(self, time_left, threshold=60):
         """
