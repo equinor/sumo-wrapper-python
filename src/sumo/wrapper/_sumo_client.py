@@ -15,13 +15,12 @@ class SumoClient:
     def __init__(
         self,
         env,
-        access_token=None,
+        authentication_enabled=False,
         logging_level='INFO',
         write_back=False
     ):
         self.env = env
-        self.user_provided_access_token = access_token
-
+        self.authentication_enabled = authentication_enabled
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(level=logging_level)
 
@@ -32,7 +31,7 @@ class SumoClient:
         self.resource_id = APP_REGISTRATION[env]['RESOURCE_ID']
         self.authority_uri = AUTHORITY_HOST_URI + '/' + TENANT_ID
 
-        if not self.user_provided_access_token:
+        if self.authentication_enabled:
             self.auth = Auth(
                 client_id=self.client_id,
                 resource_id=self.resource_id,
@@ -47,14 +46,17 @@ class SumoClient:
         else:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
 
-    def _retrieve_token(self):
-        if self.user_provided_access_token:
+    def _retrieve_token(self, user_provided_access_token=None):
+        if user_provided_access_token:
             self.logger.debug("User provided token exists, returning token")
-            return self.user_provided_access_token
-        else:
+            return user_provided_access_token
+
+        if self.authentication_enabled:
             if self.auth.is_token_expired():
                 self.logger.debug("Token is expired, regenerating")
                 self.access_token = self.auth.get_token()
+        else:
+            raise Exception("Provide an access_token or enable authentication: SumoClient(authentication_enabled=True")
 
         self.logger.debug("returning self.access_token from _retrieve_token")
         return self.access_token
@@ -68,8 +70,8 @@ class SumoClient:
         return None if prefixed_params == {} else prefixed_params
 
 
-    def get(self, path, **params):
-        token = self._retrieve_token()
+    def get(self, path, access_token=None, **params):
+        token = self._retrieve_token(access_token)
 
         headers = {
             "Content-Type": "application/json",
@@ -91,8 +93,8 @@ class SumoClient:
 
         return response.json()
 
-    def post(self, path, blob=None, json=None):
-        token = self._retrieve_token()
+    def post(self, path, blob=None, json=None, access_token=None):
+        token = self._retrieve_token(access_token)
 
         if blob and json:
             raise ValueError(
@@ -122,8 +124,8 @@ class SumoClient:
 
         return response
 
-    def put(self, path, blob=None, json=None):
-        token = self._retrieve_token()
+    def put(self, path, blob=None, json=None, access_token=None):
+        token = self._retrieve_token(access_token)
 
         if blob and json:
             raise ValueError(
@@ -153,8 +155,8 @@ class SumoClient:
 
         return response
 
-    def delete(self, path):
-        token = self._retrieve_token()
+    def delete(self, path, access_token=None):
+        token = self._retrieve_token(access_token)
 
         headers = {
             "Content-Type": "application/json",
