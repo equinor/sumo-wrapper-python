@@ -4,12 +4,15 @@ import os
 import sys
 import json
 import logging
+
+from msal_extensions import build_encrypted_persistence
+from msal_extensions.token_cache import PersistedTokenCache
+
 from .config import AUTHORITY_HOST_URI
 
 HOME_DIR = os.path.expanduser("~")
 
 logger = logging.getLogger("sumo.wrapper")
-
 
 class NewAuth:
     """Sumo connection
@@ -40,20 +43,18 @@ class NewAuth:
         self.scope = resource_id + "/.default"
         self.refresh_token = refresh_token
 
-        self.token_path = os.path.join(
+        token_path = os.path.join(
             HOME_DIR, ".sumo", str(resource_id) + ".token"
         )
 
-        self.cache = None
+        persistence = build_encrypted_persistence(token_path)
 
-        if not self.refresh_token:
-            self.cache = self.__load_cache()
-            atexit.register(self.__save_cache)
+        cache = PersistedTokenCache(persistence)
 
         self.msal = msal.PublicClientApplication(
             client_id=client_id,
             authority=f"{AUTHORITY_HOST_URI}/{tenant_id}",
-            token_cache=self.cache,
+            token_cache=cache,
         )
 
     def get_token(self):
@@ -118,39 +119,14 @@ class NewAuth:
                             % json.dumps(result, indent=4)
                         )
 
-        self.__save_cache()
-
         return result["access_token"]
 
-    def __load_cache(self):
-        """Load token cache from file.
+if __name__ == "__main__":
+    auth = NewAuth(
+        "1826bd7c-582f-4838-880d-5b4da5c3eea2",
+        "88d2b022-3539-4dda-9e66-853801334a86",
+        "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+        interactive=True
+    )
+    print(auth.get_token())
 
-        Returns:
-            A msal friendly token cache object
-        """
-
-        cache = msal.SerializableTokenCache()
-
-        if os.path.isfile(self.token_path):
-            with open(self.token_path, "r") as file:
-                cache.deserialize(file.read())
-
-        return cache
-
-    def __save_cache(self):
-        """Write token cache to file."""
-
-        if self.cache.has_state_changed:
-            old_mask = os.umask(0o077)
-
-            dir_path = os.path.dirname(self.token_path)
-            os.makedirs(dir_path, exist_ok=True)
-
-            with open(self.token_path, "w") as file:
-                file.write(self.cache.serialize())
-
-            if not sys.platform.lower().startswith("win"):
-                os.chmod(self.token_path, 0o600)
-                os.chmod(dir_path, 0o700)
-
-            os.umask(old_mask)
