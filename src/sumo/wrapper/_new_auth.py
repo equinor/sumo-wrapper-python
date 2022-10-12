@@ -6,8 +6,8 @@ import json
 import logging
 
 from msal_extensions import build_encrypted_persistence
+from msal_extensions.persistence import FilePersistenceWithDataProtection, FilePersistence, PersistenceDecryptionError
 from msal_extensions.token_cache import PersistedTokenCache
-
 from .config import AUTHORITY_HOST_URI
 
 HOME_DIR = os.path.expanduser("~")
@@ -46,6 +46,16 @@ class NewAuth:
         token_path = os.path.join(
             HOME_DIR, ".sumo", str(resource_id) + ".token"
         )
+
+        if os.path.exists(token_path):
+            encrypted_persistence = FilePersistenceWithDataProtection(token_path)
+            try:
+                token = encrypted_persistence.load()
+            except PersistenceDecryptionError:
+                token = FilePersistence(token_path).load()
+                encrypted_persistence.save(token)    
+                pass
+            pass            
 
         persistence = build_encrypted_persistence(token_path)
 
