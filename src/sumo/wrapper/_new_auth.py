@@ -9,7 +9,7 @@ from msal_extensions.token_cache import PersistedTokenCache
 if not sys.platform.startswith('linux'):
     from msal_extensions import build_encrypted_persistence
     from msal_extensions.persistence import FilePersistenceWithDataProtection,\
-    PersistenceDecryptionError
+        PersistenceDecryptionError
 
 HOME_DIR = os.path.expanduser("~")
 
@@ -48,7 +48,7 @@ class NewAuth:
         token_path = os.path.join(
             HOME_DIR, ".sumo", str(resource_id) + ".token"
         )
-        
+
         # https://github.com/AzureAD/microsoft-authentication-extensions-\
         # for-python
         # Encryption not supported on linux servers like rgs, and
@@ -65,11 +65,11 @@ class NewAuth:
                 try:
                     token = encrypted_persistence.load()
                 except PersistenceDecryptionError:
-                    # This code will encrypt an unencrypted existing file 
+                    # This code will encrypt an unencrypted existing file
                     token = FilePersistence(token_path).load()
-                    encrypted_persistence.save(token)    
+                    encrypted_persistence.save(token)
                     pass
-                pass            
+                pass
 
             persistence = build_encrypted_persistence(token_path)
             cache = PersistedTokenCache(persistence)
