@@ -1,4 +1,3 @@
-import atexit
 import msal
 import os
 import sys
@@ -9,11 +8,13 @@ from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
 if not sys.platform.startswith('linux'):
     from msal_extensions import build_encrypted_persistence
-    from msal_extensions.persistence import FilePersistenceWithDataProtection, PersistenceDecryptionError
+    from msal_extensions.persistence import FilePersistenceWithDataProtection,\
+    PersistenceDecryptionError
 
 HOME_DIR = os.path.expanduser("~")
 
 logger = logging.getLogger("sumo.wrapper")
+
 
 class NewAuth:
     """Sumo connection
@@ -48,17 +49,19 @@ class NewAuth:
             HOME_DIR, ".sumo", str(resource_id) + ".token"
         )
         
-        # https://github.com/AzureAD/microsoft-authentication-extensions-for-python
-        # Encryption not supported on linux servers like rgs, and 
+        # https://github.com/AzureAD/microsoft-authentication-extensions-\
+        # for-python
+        # Encryption not supported on linux servers like rgs, and
         # neither is common usage from many cluster nodes.
-        # Encryption is supported on Windows and Mac. 
+        # Encryption is supported on Windows and Mac.
 
         if sys.platform.startswith('linux'):
             persistence = FilePersistence(token_path)
             cache = PersistedTokenCache(persistence)
         else:
             if os.path.exists(token_path):
-                encrypted_persistence = FilePersistenceWithDataProtection(token_path)
+                encrypted_persistence = FilePersistenceWithDataProtection(
+                    token_path)
                 try:
                     token = encrypted_persistence.load()
                 except PersistenceDecryptionError:
@@ -141,6 +144,7 @@ class NewAuth:
 
         return result["access_token"]
 
+
 if __name__ == "__main__":
     auth = NewAuth(
         "1826bd7c-582f-4838-880d-5b4da5c3eea2",
@@ -149,4 +153,3 @@ if __name__ == "__main__":
         interactive=True
     )
     print(auth.get_token())
-
