@@ -48,6 +48,7 @@ class NewAuth:
         token_path = os.path.join(
             HOME_DIR, ".sumo", str(resource_id) + ".token"
         )
+        self.token_path = token_path
 
         # https://github.com/AzureAD/microsoft-authentication-extensions-\
         # for-python
@@ -73,10 +74,6 @@ class NewAuth:
 
             persistence = build_encrypted_persistence(token_path)
             cache = PersistedTokenCache(persistence)
-
-        if not sys.platform.lower().startswith("win"):
-            os.chmod(token_path, 0o600)
-            os.chmod(os.path.dirname(token_path), 0o700)
 
         self.msal = msal.PublicClientApplication(
             client_id=client_id,
@@ -145,6 +142,9 @@ class NewAuth:
                             "Failed to acquire token by device flow. Err: %s"
                             % json.dumps(result, indent=4)
                         )
+        if not sys.platform.lower().startswith("win"):
+            os.chmod(self.token_path, 0o600)
+            os.chmod(os.path.dirname(self.token_path), 0o700)
 
         return result["access_token"]
 
