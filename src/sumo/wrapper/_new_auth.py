@@ -74,6 +74,10 @@ class NewAuth:
             persistence = build_encrypted_persistence(token_path)
             cache = PersistedTokenCache(persistence)
 
+        if not sys.platform.lower().startswith("win"):
+            os.chmod(token_path, 0o600)
+            os.chmod(os.path.dirname(token_path), 0o700)
+
         self.msal = msal.PublicClientApplication(
             client_id=client_id,
             authority=f"{AUTHORITY_HOST_URI}/{tenant_id}",
