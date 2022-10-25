@@ -8,8 +8,8 @@ from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
 if not sys.platform.startswith('linux'):
     from msal_extensions import build_encrypted_persistence
-    from msal_extensions.persistence import FilePersistenceWithDataProtection,\
-        PersistenceDecryptionError
+    from msal_extensions.persistence import PersistenceDecryptionError, \
+        PersistenceNotFound
 
 HOME_DIR = os.path.expanduser("~")
 
@@ -59,14 +59,17 @@ class NewAuth:
             persistence = FilePersistence(token_path)
             cache = PersistedTokenCache(persistence)
         else:
-            if os.path.exists(token_path):
-                encrypted_persistence = FilePersistenceWithDataProtection(
-                    token_path)
-                try:
-                    token = encrypted_persistence.load()
-                except PersistenceDecryptionError:
-                    # This code will encrypt an unencrypted existing file
+            encrypted_persistence = build_encrypted_persistence(
+                token_path)
+            try:
+                token = encrypted_persistence.load()
+            except:
+                # This code will encrypt an unencrypted existing file
+                if os.path.exists(token_path):
                     token = FilePersistence(token_path).load()
+                    with open(token_path, "w") as f:
+                        f.truncate()
+                        pass
                     encrypted_persistence.save(token)
                     pass
                 pass
@@ -74,7 +77,7 @@ class NewAuth:
             persistence = build_encrypted_persistence(token_path)
             cache = PersistedTokenCache(persistence)
 
-        if not sys.platform.lower().startswith("win"):
+        if sys.platform.startswith('linux'):
             os.chmod(token_path, 0o600)
             os.chmod(os.path.dirname(token_path), 0o700)
 
