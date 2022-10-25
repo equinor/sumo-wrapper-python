@@ -9,8 +9,7 @@ from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
 if not sys.platform.startswith('linux'):
     from msal_extensions import build_encrypted_persistence
-    from msal_extensions.persistence import PersistenceDecryptionError, \
-        PersistenceNotFound
+    from msal_extensions.persistence import PersistenceDecryptionError
 
 HOME_DIR = os.path.expanduser("~")
 
@@ -65,7 +64,7 @@ class NewAuth:
                 token_path)
             try:
                 token = encrypted_persistence.load()
-            except:
+            except PersistenceDecryptionError:
                 # This code will encrypt an unencrypted existing file
                 if os.path.exists(token_path):
                     token = FilePersistence(token_path).load()
@@ -148,9 +147,12 @@ class NewAuth:
                         )
 
         if sys.platform.startswith('linux'):
-            if stat.filemode(os.stat(self.token_path).st_mode) != "-rw-------":
+            filemode = stat.filemode(os.stat(self.token_path).st_mode)
+            if filemode != "-rw-------":
                 os.chmod(self.token_path, 0o600)
-            if stat.filemode(os.stat(os.path.dirname(self.token_path)).st_mode) != "drwx------":
+            folder = os.path.dirname(self.token_path)
+            foldermode = stat.filemode(os.stat(folder).st_mode)
+            if foldermode != "drwx------":
                 os.chmod(os.path.dirname(self.token_path), 0o700)
 
         return result["access_token"]
