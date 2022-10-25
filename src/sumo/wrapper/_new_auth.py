@@ -1,5 +1,6 @@
 import msal
 import os
+import stat
 import sys
 import json
 import logging
@@ -48,6 +49,7 @@ class NewAuth:
         token_path = os.path.join(
             HOME_DIR, ".sumo", str(resource_id) + ".token"
         )
+        self.token_path = token_path
 
         # https://github.com/AzureAD/microsoft-authentication-extensions-\
         # for-python
@@ -144,6 +146,12 @@ class NewAuth:
                             "Failed to acquire token by device flow. Err: %s"
                             % json.dumps(result, indent=4)
                         )
+
+        if sys.platform.startswith('linux'):
+            if stat.filemode(os.stat(self.token_path).st_mode) != "-rw-------":
+                os.chmod(self.token_path, 0o600)
+            if stat.filemode(os.stat(os.path.dirname(self.token_path)).st_mode) != "drwx------":
+                os.chmod(os.path.dirname(self.token_path), 0o700)
 
         return result["access_token"]
 

@@ -109,7 +109,8 @@ def test_upload_search_delete_ensemble_child():
     surface_id = response_surface.json().get("objectid")
 
     # Upload BLOB
-    response_blob = _upload_blob(C=C, blob=B, object_id=surface_id)
+    url = response_surface.json().get("blob_url")
+    response_blob = _upload_blob(C=C, blob=B, object_id=surface_id, url=url)
     assert 200 <= response_blob.status_code <= 202
 
     sleep(4)
