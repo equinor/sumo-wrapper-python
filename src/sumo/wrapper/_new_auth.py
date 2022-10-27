@@ -60,13 +60,12 @@ class NewAuth:
             persistence = FilePersistence(token_path)
             cache = PersistedTokenCache(persistence)
         else:
-            encrypted_persistence = build_encrypted_persistence(
-                token_path)
-            try:
-                token = encrypted_persistence.load()
-            except PersistenceDecryptionError:
-                # This code will encrypt an unencrypted existing file
-                if os.path.exists(token_path):
+            if os.path.exists(token_path):
+                encrypted_persistence = build_encrypted_persistence(token_path)
+                try:
+                    token = encrypted_persistence.load()
+                except PersistenceDecryptionError:
+                    # This code will encrypt an unencrypted existing file
                     token = FilePersistence(token_path).load()
                     with open(token_path, "w") as f:
                         f.truncate()
