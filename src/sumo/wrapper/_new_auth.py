@@ -10,7 +10,6 @@ from msal_extensions.token_cache import PersistedTokenCache
 
 if not sys.platform.startswith("linux"):
     from msal_extensions import build_encrypted_persistence
-    from msal_extensions.persistence import PersistenceDecryptionError
 
 HOME_DIR = os.path.expanduser("~")
 
@@ -61,7 +60,7 @@ class NewAuth:
             persistence = FilePersistence(token_path)
             cache = PersistedTokenCache(persistence)
         else:
-            print("RROWHH")
+            print("ROWH22")
             if os.path.exists(token_path):
                 encrypted_persistence = build_encrypted_persistence(token_path)
                 try:
