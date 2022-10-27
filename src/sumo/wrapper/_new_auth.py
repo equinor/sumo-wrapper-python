@@ -60,7 +60,6 @@ class NewAuth:
             persistence = FilePersistence(token_path)
             cache = PersistedTokenCache(persistence)
         else:
-            print("ROWH22")
             if os.path.exists(token_path):
                 encrypted_persistence = build_encrypted_persistence(token_path)
                 try:
