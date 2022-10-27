@@ -1,10 +1,15 @@
-import atexit
 import msal
 import os
+import stat
 import sys
 import json
 import logging
 from .config import AUTHORITY_HOST_URI
+from msal_extensions.persistence import FilePersistence
+from msal_extensions.token_cache import PersistedTokenCache
+
+if not sys.platform.startswith("linux"):
+    from msal_extensions import build_encrypted_persistence
 
 HOME_DIR = os.path.expanduser("~")
 
@@ -40,20 +45,42 @@ class NewAuth:
         self.scope = resource_id + "/.default"
         self.refresh_token = refresh_token
 
-        self.token_path = os.path.join(
+        token_path = os.path.join(
             HOME_DIR, ".sumo", str(resource_id) + ".token"
         )
+        self.token_path = token_path
 
-        self.cache = None
+        # https://github.com/AzureAD/microsoft-authentication-extensions-\
+        # for-python
+        # Encryption not supported on linux servers like rgs, and
+        # neither is common usage from many cluster nodes.
+        # Encryption is supported on Windows and Mac.
 
-        if not self.refresh_token:
-            self.cache = self.__load_cache()
-            atexit.register(self.__save_cache)
+        if sys.platform.startswith("linux"):
+            persistence = FilePersistence(token_path)
+            cache = PersistedTokenCache(persistence)
+        else:
+            if os.path.exists(token_path):
+                encrypted_persistence = build_encrypted_persistence(token_path)
+                try:
+                    token = encrypted_persistence.load()
+                except Exception:
+                    # This code will encrypt an unencrypted existing file
+                    token = FilePersistence(token_path).load()
+                    with open(token_path, "w") as f:
+                        f.truncate()
+                        pass
+                    encrypted_persistence.save(token)
+                    pass
+                pass
+
+            persistence = build_encrypted_persistence(token_path)
+            cache = PersistedTokenCache(persistence)
 
         self.msal = msal.PublicClientApplication(
             client_id=client_id,
             authority=f"{AUTHORITY_HOST_URI}/{tenant_id}",
-            token_cache=self.cache,
+            token_cache=cache,
         )
 
     def get_token(self):
@@ -118,39 +145,23 @@ class NewAuth:
                             % json.dumps(result, indent=4)
                         )
 
-        self.__save_cache()
+        if sys.platform.startswith("linux"):
+            filemode = stat.filemode(os.stat(self.token_path).st_mode)
+            if filemode != "-rw-------":
+                os.chmod(self.token_path, 0o600)
+            folder = os.path.dirname(self.token_path)
+            foldermode = stat.filemode(os.stat(folder).st_mode)
+            if foldermode != "drwx------":
+                os.chmod(os.path.dirname(self.token_path), 0o700)
 
         return result["access_token"]
 
-    def __load_cache(self):
-        """Load token cache from file.
 
-        Returns:
-            A msal friendly token cache object
-        """
-
-        cache = msal.SerializableTokenCache()
-
-        if os.path.isfile(self.token_path):
-            with open(self.token_path, "r") as file:
-                cache.deserialize(file.read())
-
-        return cache
-
-    def __save_cache(self):
-        """Write token cache to file."""
-
-        if self.cache.has_state_changed:
-            old_mask = os.umask(0o077)
-
-            dir_path = os.path.dirname(self.token_path)
-            os.makedirs(dir_path, exist_ok=True)
-
-            with open(self.token_path, "w") as file:
-                file.write(self.cache.serialize())
-
-            if not sys.platform.lower().startswith("win"):
-                os.chmod(self.token_path, 0o600)
-                os.chmod(dir_path, 0o700)
-
-            os.umask(old_mask)
+if __name__ == "__main__":
+    auth = NewAuth(
+        "1826bd7c-582f-4838-880d-5b4da5c3eea2",
+        "88d2b022-3539-4dda-9e66-853801334a86",
+        "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+        interactive=True,
+    )
+    print(auth.get_token())
