@@ -7,7 +7,8 @@ import logging
 from .config import AUTHORITY_HOST_URI
 from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
-if not sys.platform.startswith('linux'):
+
+if not sys.platform.startswith("linux"):
     from msal_extensions import build_encrypted_persistence
     from msal_extensions.persistence import PersistenceDecryptionError
 
@@ -45,9 +46,7 @@ class NewAuth:
         self.scope = resource_id + "/.default"
         self.refresh_token = refresh_token
 
-        token_path = os.path.join(
-            HOME_DIR, ".sumo", str(resource_id) + ".token"
-        )
+        token_path = os.path.join(HOME_DIR, ".sumo", str(resource_id) + ".token")
         self.token_path = token_path
 
         # https://github.com/AzureAD/microsoft-authentication-extensions-\
@@ -56,10 +55,11 @@ class NewAuth:
         # neither is common usage from many cluster nodes.
         # Encryption is supported on Windows and Mac.
 
-        if sys.platform.startswith('linux'):
+        if sys.platform.startswith("linux"):
             persistence = FilePersistence(token_path)
             cache = PersistedTokenCache(persistence)
         else:
+            print("RROWHH")
             if os.path.exists(token_path):
                 encrypted_persistence = build_encrypted_persistence(token_path)
                 try:
@@ -103,9 +103,7 @@ class NewAuth:
         result = None
 
         if accounts:
-            result = self.msal.acquire_token_silent(
-                [self.scope], account=accounts[0]
-            )
+            result = self.msal.acquire_token_silent([self.scope], account=accounts[0])
 
         if not result:
             if self.refresh_token:
@@ -145,7 +143,7 @@ class NewAuth:
                             % json.dumps(result, indent=4)
                         )
 
-        if sys.platform.startswith('linux'):
+        if sys.platform.startswith("linux"):
             filemode = stat.filemode(os.stat(self.token_path).st_mode)
             if filemode != "-rw-------":
                 os.chmod(self.token_path, 0o600)
@@ -162,6 +160,6 @@ if __name__ == "__main__":
         "1826bd7c-582f-4838-880d-5b4da5c3eea2",
         "88d2b022-3539-4dda-9e66-853801334a86",
         "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
-        interactive=True
+        interactive=True,
     )
     print(auth.get_token())
