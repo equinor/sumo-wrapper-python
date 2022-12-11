@@ -40,4 +40,4 @@ jobs:
           access_token=$(az account get-access-token --scope api://88d2b022-3539-4dda-9e66-853801334a86/.default --query accessToken --output tsv)
           echo ${#access_token}
           
-          pytest -q -s --token $access_token tests/test_sumo_thin_client.py
+          pytest -q -s -x --disable-warnings --token $access_token tests/test_sumo_thin_client.py
