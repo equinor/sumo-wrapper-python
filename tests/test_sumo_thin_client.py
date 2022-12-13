@@ -6,7 +6,7 @@ from time import sleep
 import sys
 import os
 
-# sys.path.append(os.path.abspath(os.path.join('src')))
+sys.path.append(os.path.abspath(os.path.join('src')))
 
 from sumo.wrapper import SumoClient
 
