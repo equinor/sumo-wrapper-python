@@ -42,4 +42,4 @@ jobs:
 
           export ACCESS_TOKEN=$access_token
           
-          pytest -q -s -x --disable-warnings --token $access_token tests/test_sumo_thin_client.py
+          pytest -q -s -x --disable-warnings tests/test_sumo_thin_client.py
