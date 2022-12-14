@@ -6,7 +6,7 @@ from time import sleep
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join('src')))
+sys.path.append(os.path.abspath(os.path.join("src")))
 
 from sumo.wrapper import SumoClient
 
@@ -56,8 +56,7 @@ def _upload_child_level_json(C, parent_id, json):
     response = C.api.post(f"/objects('{parent_id}')", json=json)
 
     if not 200 <= response.status_code < 202:
-        raise Exception(
-            f"Response: {response.status_code}, Text: {response.text}")
+        raise Exception(f"Response: {response.status_code}, Text: {response.text}")
     return response
 
 
@@ -76,6 +75,7 @@ class ValueKeeper:
 """ TESTS """
 
 import uuid
+
 
 def test_upload_search_delete_ensemble_child(token):
     """
@@ -101,7 +101,7 @@ def test_upload_search_delete_ensemble_child(token):
     assert isinstance(response_case.json(), dict)
 
     case_id = response_case.json().get("objectid")
-    assert(case_id == case_uuid)
+    assert case_id == case_uuid
 
     sleep(5)
 
@@ -111,8 +111,7 @@ def test_upload_search_delete_ensemble_child(token):
 
     fmu_surface_metadata["fmu"]["case"]["uuid"] = case_uuid
 
-    fmu_surface_id = fmu_surface_metadata.get(
-        "fmu").get("realization").get("id")
+    fmu_surface_id = fmu_surface_metadata.get("fmu").get("realization").get("id")
     response_surface = _upload_child_level_json(
         C=C, parent_id=case_id, json=fmu_surface_metadata
     )
