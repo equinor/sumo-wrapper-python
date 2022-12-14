@@ -43,7 +43,7 @@ setup(
     use_scm_version={"write_to": "src/sumo/wrapper/version.py"},
     author="Equinor ASA",
     install_requires=REQUIREMENTS,
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
