@@ -24,8 +24,9 @@ def parse_requirements(fname):
 
 REQUIREMENTS = parse_requirements("requirements/requirements.txt")
 REQUIREMENTS_DOCS = parse_requirements("requirements/requirements_docs.txt")
+REQUIREMENTS_TEST = parse_requirements("requirements/requirements_test.txt")
 
-EXTRAS_REQUIRE = {"docs": REQUIREMENTS_DOCS}
+EXTRAS_REQUIRE = {"docs": REQUIREMENTS_DOCS, "test": REQUIREMENTS_TEST}
 
 
 setup(

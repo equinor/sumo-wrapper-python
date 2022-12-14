@@ -1,7 +1,6 @@
 msal>=1.18.0
 msal-extensions>=1.0.0
 requests>=2.24.0
-pytest>=6.1.1
 PyYAML>=5.4
 setuptools>=49.2.1
 pyjwt>=2.4.0
