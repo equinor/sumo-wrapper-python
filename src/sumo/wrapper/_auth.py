@@ -6,13 +6,9 @@ import sys
 import os
 import logging
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 
 logger = logging.getLogger("sumo.wrapper")
+logger.confi
 
 TENANT = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 
