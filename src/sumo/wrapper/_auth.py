@@ -26,7 +26,6 @@ class Auth:
         writeback=False,
         verbosity="CRITICAL",
     ):
-
         logger.debug("Initialize Auth")
         self.client_id = client_id
         logger.debug("client_id is %s", self.client_id)
@@ -208,7 +207,6 @@ class Auth:
             self.cache.deserialize(file.read())
 
     def _get_cache(self):
-
         logger.debug("_get_cache")
         self.cache = msal.SerializableTokenCache()
 
