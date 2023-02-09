@@ -206,10 +206,11 @@ def test_upload_duplicate_ensemble(token):
     assert get_result["_id"] == case_id1
 
     # Delete Ensemble
+    sleep(5)
     result = _delete_object(C=C, object_id=case_id1)
     assert result == "Accepted"
 
-    sleep(5)
+    sleep(50)
 
     # Search for ensemble
     with pytest.raises(Exception):
