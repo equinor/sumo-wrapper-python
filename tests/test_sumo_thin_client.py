@@ -154,7 +154,7 @@ def test_upload_search_delete_ensemble_child(token):
     result = _delete_object(C=C, object_id=case_id)
     assert result == "Accepted"
 
-    sleep(4)
+    sleep(40)
 
     # Search for ensemble
     search_results = C.api.get("/searchroot", query=query, select=["_source"])
@@ -189,6 +189,11 @@ def test_upload_duplicate_ensemble(token):
 
     with open("tests/testdata/case.yml", "r") as stream:
         fmu_metadata2 = yaml.safe_load(stream)
+    
+    case_uuid = str(uuid.uuid4())
+    fmu_metadata1["fmu"]["case"]["uuid"] = case_uuid
+    fmu_metadata2["fmu"]["case"]["uuid"] = case_uuid
+
 
     # upload case metadata, get object_id
     response1 = _upload_parent_object(C=C, json=fmu_metadata1)
