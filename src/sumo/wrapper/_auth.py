@@ -8,7 +8,6 @@ import logging
 
 
 logger = logging.getLogger("sumo.wrapper")
-logger.confi
 
 TENANT = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 
