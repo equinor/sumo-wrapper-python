@@ -378,7 +378,6 @@ class CallSumoApi:
         """
 
         if not url:
-
             url = f"{self.base_url}/objects"
 
             if object_id:

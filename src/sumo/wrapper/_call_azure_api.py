@@ -41,7 +41,6 @@ class CallAzureApi:
         writeback=False,
         verbosity="CRITICAL",
     ):
-
         logger.setLevel(level=verbosity)
 
         self.resource_id = resource_id
