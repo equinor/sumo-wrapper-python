@@ -66,11 +66,15 @@ class Auth:
                         "Please check your access or run 'sumo_login' to re-create your token."
                     )
             else:
-                logger.debug("There are accounts. Calling _oauth_get_token_silent()")
+                logger.debug(
+                    "There are accounts. Calling _oauth_get_token_silent()"
+                )
                 if not self._oauth_get_token_silent():
                     logger.debug("self._oauth_get_token_silent returned False")
                     if self.writeback:
-                        logger.debug("self.writeback is True, calling device_code")
+                        logger.debug(
+                            "self.writeback is True, calling device_code"
+                        )
                         self._oauth_device_code()
 
         else:
@@ -168,7 +172,8 @@ class Auth:
 
         if "user_code" not in flow:
             raise ValueError(
-                "Fail to create device flow. Err: %s" % json.dumps(flow, indent=4)
+                "Fail to create device flow. Err: %s"
+                % json.dumps(flow, indent=4)
             )
         else:
             print(flow["message"])
