@@ -26,6 +26,7 @@ class Auth:
         writeback=False,
         verbosity="CRITICAL",
     ):
+        logger.setLevel(verbosity)
         logger.debug("Initialize Auth")
         self.client_id = client_id
         logger.debug("client_id is %s", self.client_id)
