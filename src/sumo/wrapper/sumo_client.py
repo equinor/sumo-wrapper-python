@@ -1,13 +1,14 @@
-import requests
-import jwt
-import time
 import logging
+import time
 
-from .config import APP_REGISTRATION, TENANT_ID
+import requests
+
+from ._blob_client import BlobClient
 from ._new_auth import NewAuth
 from ._request_error import raise_request_error_exception
-from ._blob_client import BlobClient
 from ._sumo_aggregation_client import SumoAggregationClient
+from .config import APP_REGISTRATION, TENANT_ID
+from .utils import decode_jwt_token
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -45,7 +46,7 @@ class SumoClient:
 
         if token:
             logger.debug("Token provided")
-            payload = self.__decode_token(token)
+            payload = decode_jwt_token(token)
 
             if payload:
                 logger.debug(f"Token decoded as JWT, payload: {payload}")
@@ -116,23 +117,6 @@ class SumoClient:
         """
 
         return self._blob_client
-
-    def __decode_token(self, token: str) -> dict:
-        """
-        Decodes a Json Web Token, returns the payload as a dictionary.
-
-        Args:
-            token: Token to decode
-
-        Returns:
-            Decoded Json Web Token (None if token can't be decoded)
-        """
-
-        try:
-            payload = jwt.decode(token, options={"verify_signature": False})
-            return payload
-        except jwt.InvalidTokenError:
-            return None
 
     def _retrieve_token(self) -> str:
         """Retrieve a token for the Sumo API.

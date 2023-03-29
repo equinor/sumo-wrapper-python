@@ -1,12 +1,12 @@
 import logging
 import time
 
-import jwt
 import requests
 
 from ._new_auth import NewAuth
 from ._request_error import raise_request_error_exception
 from .config import AGG_APP_REGISTRATION, TENANT_ID
+from .utils import decode_jwt_token
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -37,7 +37,7 @@ class SumoAggregationClient:
         self.access_token_expires = None
         if token:
             logger.debug("Token provided")
-            payload = self.__decode_token(token)
+            payload = decode_jwt_token(token)
 
             if payload:
                 logger.debug(f"Token decoded as JWT, payload: {payload}")
@@ -65,25 +65,8 @@ class SumoAggregationClient:
                 + ".radix.equinor.com"
             )
 
-    def __decode_token(self, token: str) -> dict:
-        """
-        Decodes a Json Web Token, returns the payload as a dictionary.
-
-        Args:
-            token: Token to decode
-
-        Returns:
-            Decoded Json Web Token (None if token can't be decoded)
-        """
-
-        try:
-            payload = jwt.decode(token, options={"verify_signature": False})
-            return payload
-        except jwt.InvalidTokenError:
-            return None
-
     def _retrieve_token(self) -> str:
-        """Retrieve a token for the Sumo API.
+        """Retrieve a token for the Sumo Surface Aggregation service.
 
         Returns:
             A Json Web Token
