@@ -20,7 +20,6 @@ class SumoClient:
         env: str,
         token: str = None,
         aggregation_token: str = None,
-        enable_aggregation: bool = True,
         interactive: bool = False,
         verbosity: str = "CRITICAL",
     ):
@@ -73,13 +72,19 @@ class SumoClient:
         else:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
 
-        if enable_aggregation:
-            self.aggregation_enabled = enable_aggregation
+        self.aggregation_enabled = False
+        try:
             self.agg_client = SumoAggregationClient(
                 env=env,
                 token=aggregation_token,
                 interactive=interactive,
                 verbosity=verbosity,
+            )
+            self.aggregation_enabled = True
+        except Exception as e:
+            logger.error(
+                "Failed setting up Sumo aggregation client."
+                + f"Aggregation methods will not work: {e}"
             )
 
     def authenticate(self) -> str:
