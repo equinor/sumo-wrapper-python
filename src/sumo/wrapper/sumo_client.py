@@ -19,6 +19,8 @@ class SumoClient:
         self,
         env: str,
         token: str = None,
+        aggregation_token: str = None,
+        enable_aggregation: bool = True,
         interactive: bool = False,
         verbosity: str = "CRITICAL",
     ):
@@ -71,9 +73,14 @@ class SumoClient:
         else:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
 
-        self.agg_client = SumoAggregationClient(
-            env=env, interactive=interactive, verbosity=verbosity
-        )
+        if enable_aggregation:
+            self.aggregation_enabled = enable_aggregation
+            self.agg_client = SumoAggregationClient(
+                env=env,
+                token=aggregation_token,
+                interactive=interactive,
+                verbosity=verbosity,
+            )
 
     def authenticate(self) -> str:
         """Authenticate to Sumo.
@@ -377,4 +384,6 @@ class SumoClient:
         Returns:
             Sumo aggregate response object
         """
-        return self.agg_client.get_aggregate(json)
+        if self.aggregation_enabled:
+            return self.agg_client.get_aggregate(json)
+        logger.debug("Aggregation not enabled.")
