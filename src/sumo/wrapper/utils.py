@@ -1,7 +1,7 @@
 import jwt
 
 
-def decode_jwt_token(self, token: str) -> dict:
+def decode_jwt_token(token: str) -> dict:
     """
     Decodes a Json Web Token, returns the payload as a dictionary.
 
