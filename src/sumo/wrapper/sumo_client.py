@@ -8,6 +8,7 @@ from ._new_auth import NewAuth
 from ._request_error import raise_request_error_exception
 from ._blob_client import BlobClient
 from ._sumo_aggregation_client import SumoAggregationClient
+from ._logging import LogHandlerSumo
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -378,3 +379,19 @@ class SumoClient:
             Sumo aggregate response object
         """
         return self.agg_client.get_aggregate(json)
+
+    def getLogger(self, name):
+        """Gets a logger object that sends log objects into the message_log
+        index for the Sumo instance.
+
+        Args:
+            name: string naming the logger instance
+
+        Returns:
+            logger instance (see Python documentation for logging.Logger for details).
+        """
+
+        logger = logging.getLogger(name)
+        handler = LogHandlerSumo(self)
+        logger.addHandler(handler)
+        return logger
