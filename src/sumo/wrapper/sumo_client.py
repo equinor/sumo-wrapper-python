@@ -388,7 +388,9 @@ class SumoClient:
             name: string naming the logger instance
 
         Returns:
-            logger instance (see Python documentation for logging.Logger for details).
+            logger instance
+
+        See Python documentation for logging.Logger for details.
         """
 
         logger = logging.getLogger(name)
