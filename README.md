@@ -4,7 +4,7 @@ Python wrappers for Sumo APIs
 
 ## Install:
 
-    pip install git+ssh://git@github.com/equinor/sumo-wrapper-python.git@master
+    pip install git+ssh://git@github.com/equinor/sumo-wrapper-python.git@main
 
 For internal Equinor users, this package is available through the Komodo
 distribution.
