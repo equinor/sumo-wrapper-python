@@ -4,3 +4,4 @@ requests>=2.24.0
 PyYAML>=5.4
 setuptools>=49.2.1
 pyjwt>=2.4.0
+httpx>=0.24.1
