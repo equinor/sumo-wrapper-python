@@ -198,6 +198,7 @@ class SumoClient:
             f"{self.base_url}{path}",
             params=self._process_params(params),
             headers=headers,
+            follow_redirects=True
         )
 
         if response.is_error:
