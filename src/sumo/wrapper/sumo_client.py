@@ -1,13 +1,14 @@
-import jwt
-import time
 import logging
-import httpx
+import time
 
-from .config import APP_REGISTRATION, TENANT_ID
-from ._new_auth import NewAuth
-from ._request_error import raise_request_error_exception
+import httpx
+import jwt
+
 from ._blob_client import BlobClient
 from ._logging import LogHandlerSumo
+from ._new_auth import NewAuth
+from ._request_error import raise_request_error_exception
+from .config import APP_REGISTRATION, TENANT_ID
 
 logger = logging.getLogger("sumo.wrapper")
 
