@@ -1,4 +1,4 @@
-import requests
+import httpx
 import logging
 
 from ._auth import Auth
@@ -154,40 +154,40 @@ class CallAzureApi:
 
         headers = {"Content-Type": "application/json", "Authorization": bearer}
 
-        response = requests.get(url, headers=headers)
+        response = httpx.get(url, headers=headers)
 
-        if not response.ok:
+        if response.is_error:
             _raise_request_error_exception(response.status_code, response.text)
 
         return response.json()
 
-    def get_image(self, url, bearer=None):
-        """
-        Send an request to the url for the image.
+    # def get_image(self, url, bearer=None):
+    #     """
+    #     Send an request to the url for the image.
 
-        Parameters
-            url
-                Need to be a Azure rest url that returns a JSON.
-            bearer
-                Optional, if not entered it will generate one by calling the get_bearer_token method
+    #     Parameters
+    #         url
+    #             Need to be a Azure rest url that returns a JSON.
+    #         bearer
+    #             Optional, if not entered it will generate one by calling the get_bearer_token method
 
-        Return
-            image:
-                raw image
-        """
+    #     Return
+    #         image:
+    #             raw image
+    #     """
 
-        logger.debug("get_image() is starting")
+    #     logger.debug("get_image() is starting")
 
-        bearer = self._process_token(bearer)
+    #     bearer = self._process_token(bearer)
 
-        headers = {"Content-Type": "html/text", "Authorization": bearer}
+    #     headers = {"Content-Type": "html/text", "Authorization": bearer}
 
-        response = requests.get(url, headers=headers, stream=True)
+    #     response = requests.get(url, headers=headers, stream=True)
 
-        if not response.ok:
-            _raise_request_error_exception(response.status_code, response.text)
+    #     if not response.ok:
+    #         _raise_request_error_exception(response.status_code, response.text)
 
-        return None
+    #     return None
 
     def get_content(self, url, bearer=None):
         """
@@ -210,9 +210,9 @@ class CallAzureApi:
 
         headers = {"Content-Type": "application/json", "Authorization": bearer}
 
-        response = requests.get(url, headers=headers)
+        response = httpx.get(url, headers=headers)
 
-        if not response.ok:
+        if response.is_error:
             _raise_request_error_exception(response.status_code, response.text)
 
         return response.content
@@ -249,11 +249,11 @@ class CallAzureApi:
         }
 
         try:
-            response = requests.post(url, data=blob, json=json, headers=headers)
-        except requests.exceptions.ProxyError as err:
+            response = httpx.post(url, data=blob, json=json, headers=headers)
+        except httpx.ProxyError as err:
             _raise_request_error_exception(503, err)
 
-        if not response.ok:
+        if response.is_error:
             _raise_request_error_exception(response.status_code, response.text)
 
         return response
@@ -293,11 +293,11 @@ class CallAzureApi:
             headers["Authorization"] = bearer
 
         try:
-            response = requests.put(url, data=blob, json=json, headers=headers)
-        except requests.exceptions.ProxyError as err:
+            response = httpx.put(url, data=blob, json=json, headers=headers)
+        except httpx.ProxyError as err:
             _raise_request_error_exception(503, err)
 
-        if not response.ok:
+        if response.is_error:
             _raise_request_error_exception(response.status_code, response.text)
 
         return response
@@ -321,9 +321,9 @@ class CallAzureApi:
             "Authorization": bearer,
         }
 
-        response = requests.delete(url, headers=headers)
+        response = httpx.delete(url, headers=headers)
 
-        if not response.ok:
+        if response.is_error:
             _raise_request_error_exception(response.status_code, response.text)
 
         return response.json()

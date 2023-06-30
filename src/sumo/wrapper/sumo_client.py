@@ -1,4 +1,3 @@
-import requests
 import jwt
 import time
 import logging
@@ -195,13 +194,13 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        response = requests.get(
+        response = httpx.get(
             f"{self.base_url}{path}",
             params=self._process_params(params),
             headers=headers,
         )
 
-        if not response.ok:
+        if response.is_error:
             raise_request_error_exception(response.status_code, response.text)
 
         if "/blob" in path:
@@ -215,7 +214,7 @@ class SumoClient:
         blob: bytes = None,
         json: dict = None,
         params: dict = None,
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """Performs a POST-request to the Sumo API.
 
         Takes either blob or json as a payload,
@@ -276,24 +275,24 @@ class SumoClient:
         }
 
         try:
-            response = requests.post(
+            response = httpx.post(
                 f"{self.base_url}{path}",
                 data=blob,
                 json=json,
                 headers=headers,
                 params=params,
             )
-        except requests.exceptions.ProxyError as err:
+        except httpx.ProxyError as err:
             raise_request_error_exception(503, err)
 
-        if not response.ok:
+        if response.is_error:
             raise_request_error_exception(response.status_code, response.text)
 
         return response
 
     def put(
         self, path: str, blob: bytes = None, json: dict = None
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """Performs a PUT-request to the Sumo API.
 
         Takes either blob or json as a payload,
@@ -326,13 +325,13 @@ class SumoClient:
         }
 
         try:
-            response = requests.put(
+            response = httpx.put(
                 f"{self.base_url}{path}", data=blob, json=json, headers=headers
             )
-        except requests.exceptions.ProxyError as err:
+        except httpx.ProxyError as err:
             raise_request_error_exception(503, err)
 
-        if not response.ok:
+        if response.is_error:
             raise_request_error_exception(response.status_code, response.text)
 
         return response
@@ -362,9 +361,9 @@ class SumoClient:
             "Authorization": f"Bearer {token}",
         }
 
-        response = requests.delete(f"{self.base_url}{path}", headers=headers)
+        response = httpx.delete(f"{self.base_url}{path}", headers=headers)
 
-        if not response.ok:
+        if response.is_error:
             raise_request_error_exception(response.status_code, response.text)
 
         return response.json()

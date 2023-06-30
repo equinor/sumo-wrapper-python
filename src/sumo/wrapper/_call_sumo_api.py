@@ -55,10 +55,10 @@ class CallSumoApi:
         url = f"{self.base_url}/userdata"
         return self.callAzureApi.get_json(url, bearer)
 
-    def userphoto(self, bearer=None):
-        """Get user photo from Sumo endpoint /userphoto"""
-        url = f"{self.base_url}/userphoto"
-        return self.callAzureApi.get_image(url, bearer)
+    # def userphoto(self, bearer=None):
+    #     """Get user photo from Sumo endpoint /userphoto"""
+    #     url = f"{self.base_url}/userphoto"
+    #     return self.callAzureApi.get_image(url, bearer)
 
     def userprofile(self, bearer=None):
         """Get user profile from Sumo endpoint /userprofile"""

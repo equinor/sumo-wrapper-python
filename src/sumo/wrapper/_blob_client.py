@@ -1,5 +1,4 @@
 import httpx
-import requests
 from ._request_error import raise_request_error_exception
 
 
@@ -21,11 +20,11 @@ class BlobClient:
         }
 
         try:
-            response = requests.put(url, data=blob, headers=headers)
-        except requests.exceptions.ProxyError as err:
+            response = httpx.put(url, data=blob, headers=headers)
+        except httpx.ProxyError as err:
             raise_request_error_exception(503, err)
 
-        if not response.ok:
+        if response.is_error:
             raise_request_error_exception(response.status_code, response.text)
 
         return response
@@ -46,9 +45,7 @@ class BlobClient:
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.put(
-                    url=url, data=blob, headers=headers
-                )
+                response = await client.put(url=url, data=blob, headers=headers)
         except httpx.ProxyError as err:
             raise_request_error_exception(503, err)
 
