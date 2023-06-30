@@ -161,33 +161,33 @@ class CallAzureApi:
 
         return response.json()
 
-    # def get_image(self, url, bearer=None):
-    #     """
-    #     Send an request to the url for the image.
+    def get_image(self, url, bearer=None):
+        """
+        Send an request to the url for the image.
 
-    #     Parameters
-    #         url
-    #             Need to be a Azure rest url that returns a JSON.
-    #         bearer
-    #             Optional, if not entered it will generate one by calling the get_bearer_token method
+        Parameters
+            url
+                Need to be a Azure rest url that returns a JSON.
+            bearer
+                Optional, if not entered it will generate one by calling the get_bearer_token method
 
-    #     Return
-    #         image:
-    #             raw image
-    #     """
+        Return
+            image:
+                raw image
+        """
 
-    #     logger.debug("get_image() is starting")
+        logger.debug("get_image() is starting")
 
-    #     bearer = self._process_token(bearer)
+        bearer = self._process_token(bearer)
 
-    #     headers = {"Content-Type": "html/text", "Authorization": bearer}
+        headers = {"Content-Type": "html/text", "Authorization": bearer}
 
-    #     response = requests.get(url, headers=headers, stream=True)
+        response = httpx.get(url, headers=headers)
 
-    #     if not response.ok:
-    #         _raise_request_error_exception(response.status_code, response.text)
+        if response.is_error:
+            _raise_request_error_exception(response.status_code, response.text)
 
-    #     return None
+        return None
 
     def get_content(self, url, bearer=None):
         """
