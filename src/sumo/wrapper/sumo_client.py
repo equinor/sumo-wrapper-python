@@ -387,7 +387,7 @@ class SumoClient:
         logger.addHandler(handler)
         return logger
 
-    async def getAsync(self, path: str, **params):
+    async def get_async(self, path: str, **params):
         """Performs an async GET-request to the Sumo API.
 
         Args:
@@ -436,7 +436,7 @@ class SumoClient:
 
         return response.json()
 
-    async def postAsync(
+    async def post_async(
         self,
         path: str,
         blob: bytes = None,
@@ -519,7 +519,7 @@ class SumoClient:
 
         return response
 
-    async def putAsync(
+    async def put_async(
         self, path: str, blob: bytes = None, json: dict = None
     ) -> httpx.Response:
         """Performs an async PUT-request to the Sumo API.
@@ -569,7 +569,7 @@ class SumoClient:
 
         return response
 
-    async def deleteAsync(self, path: str) -> dict:
+    async def delete_async(self, path: str) -> dict:
         """Performs an async DELETE-request to the Sumo API.
 
         Args:
