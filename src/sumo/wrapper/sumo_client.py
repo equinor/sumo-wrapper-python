@@ -266,7 +266,7 @@ class SumoClient:
         content_length = 0
 
         if blob or json:
-            content_length = len(json) if json else len(blob)
+            content_length = len(str(json)) if json else len(blob)
 
         headers = {
             "Content-Type": content_type,
@@ -321,7 +321,7 @@ class SumoClient:
         headers = {
             "Content-Type": content_type,
             "authorization": f"Bearer {token}",
-            "Content-Length": str(len(json) if json else len(blob)),
+            "Content-Length": str(len(str(json)) if json else len(blob)),
         }
 
         try:
