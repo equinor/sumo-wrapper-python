@@ -30,7 +30,9 @@ class CallSumoApi:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
 
         resource_id = (
-            resource_id if resource_id else APP_REGISTRATION[env]["RESOURCE_ID"]
+            resource_id
+            if resource_id
+            else APP_REGISTRATION[env]["RESOURCE_ID"]
         )
         client_id = (
             client_id if client_id else APP_REGISTRATION[env]["CLIENT_ID"]
@@ -224,7 +226,9 @@ class CallSumoApi:
         Return
             string: The object id of the newly created object, or error message.
         """
-        return self._post_objects(object_id=parent_id, json=json, bearer=bearer)
+        return self._post_objects(
+            object_id=parent_id, json=json, bearer=bearer
+        )
 
     def update_child_level_json(
         self, json, object_id=None, url=None, bearer=None
