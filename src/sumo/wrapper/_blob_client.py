@@ -45,7 +45,9 @@ class BlobClient:
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.put(url=url, data=blob, headers=headers)
+                response = await client.put(
+                    url=url, data=blob, headers=headers
+                )
         except httpx.ProxyError as err:
             raise_request_error_exception(503, err)
 
