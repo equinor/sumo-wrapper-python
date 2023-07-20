@@ -283,6 +283,7 @@ class SumoClient:
                 json=json,
                 headers=headers,
                 params=params,
+                timeout=None,
             )
         except httpx.ProxyError as err:
             raise_request_error_exception(503, err)
