@@ -429,7 +429,7 @@ class SumoClient:
                 f"{self.base_url}{path}",
                 params=self._process_params(params),
                 headers=headers,
-                timeout=None
+                timeout=None,
             )
 
         if response.is_error:
