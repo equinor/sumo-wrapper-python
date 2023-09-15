@@ -15,7 +15,7 @@ def _raise_request_error_exception(code, message):
     logger.debug("code: %s", code)
     logger.debug("message: %s", message)
 
-    if 503 <= code <= 504 or code == 404 or code == 500:
+    if 502 <= code <= 504 or code == 404 or code == 500:
         raise TransientError(code, message)
     elif 401 <= code <= 403:
         raise AuthenticationError(code, message)

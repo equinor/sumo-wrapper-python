@@ -49,7 +49,7 @@ def raise_request_error_exception(code, message):
     according to the code received from sumo.
     """
 
-    if 503 <= code <= 504 or code == 404 or code == 500:
+    if 502 <= code <= 504 or code == 404 or code == 500:
         raise TransientError(code, message)
     elif 401 <= code <= 403:
         raise AuthenticationError(code, message)
