@@ -254,7 +254,7 @@ class SumoClient:
                 object_metadata = {...}
                 sumo = SumoClient("dev")
 
-                new_objet = sumo.post(
+                new_object = sumo.post(
                     path=f"/objects('{new_case_id}')",
                     json=object_metadata
                 )
@@ -491,7 +491,7 @@ class SumoClient:
                 object_metadata = {...}
                 sumo = SumoClient("dev")
 
-                new_objet = await sumo.post_async(
+                new_object = await sumo.post_async(
                     path=f"/objects('{new_case_id}')",
                     json=object_metadata
                 )
