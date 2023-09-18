@@ -415,13 +415,13 @@ class SumoClient:
 
                 sumo = SumoClient("dev")
 
-                userdata = await sumo.getAsync(path="/userdata")
+                userdata = await sumo.get_async(path="/userdata")
 
             Searching for cases::
 
                 sumo = SuomClient("dev")
 
-                cases = await sumo.getAsync(
+                cases = await sumo.get_async(
                     path="/search",
                     query="class:case",
                     size=3
@@ -479,7 +479,7 @@ class SumoClient:
                 case_metadata = {...}
                 sumo = SumoClient("dev")
 
-                new_case = await sumo.postAsync(
+                new_case = await sumo.post_async(
                     path="/objects",
                     json=case_metadata
                 )
@@ -491,7 +491,7 @@ class SumoClient:
                 object_metadata = {...}
                 sumo = SumoClient("dev")
 
-                new_objet = await sumo.postAsync(
+                new_objet = await sumo.post_async(
                     path=f"/objects('{new_case_id}')",
                     json=object_metadata
                 )
@@ -600,7 +600,7 @@ class SumoClient:
                 object_id = ...
                 sumo = SumoClient("dev")
 
-                await sumo.deleteAsync(path=f"/objects('{object_id}')")
+                await sumo.delete_async(path=f"/objects('{object_id}')")
         """
 
         token = self._retrieve_token()
