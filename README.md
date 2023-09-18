@@ -4,7 +4,7 @@ Python wrappers for Sumo APIs
 
 ## Install:
 
-    pip install git+ssh://git@github.com/equinor/sumo-wrapper-python.git@main
+    pip install sumo-wrapper-python
 
 For internal Equinor users, this package is available through the Komodo
 distribution.
@@ -13,20 +13,29 @@ distribution.
 
 # Table of contents
 
-- [SumoClient](#SumoClient)
-  - [Initialization](#initialization)
-  - [Parameters](#parameters)
+- [sumo-wrapper-python](#sumo-wrapper-python)
+  - [Install:](#install)
+- [Table of contents](#table-of-contents)
+- [SumoClient](#sumoclient)
+    - [Initialization](#initialization)
+    - [Parameters](#parameters)
+          - [`token` logic](#token-logic)
   - [Methods](#methods)
     - [get(path, \*\*params)](#getpath-params)
     - [post(path, json, blob)](#postpath-json-blob)
     - [put(path, json, blob)](#putpath-json-blob)
     - [delete(path)](#deletepath)
-- [CallSumoApi (deprecated)](#callsumoapi)
-  - [Initialization](#initialization)
-  - [Parameters](#parameters)
+  - [Async methods](#async-methods)
+- [CallSumoApi (deprecated)](#callsumoapi-deprecated)
+    - [Initialization](#initialization-1)
+    - [Parameters](#parameters-1)
   - [Examples](#examples)
     - [search()](#search)
+      - [Parameters](#parameters-2)
+      - [Usage](#usage)
     - [searchroot()](#searchroot)
+      - [Parameters](#parameters-3)
+      - [Usage](#usage-1)
 
 # SumoClient
 
@@ -146,6 +155,16 @@ sumo.delete(f"/objects('{child_id}')")
 
 # Delete parent object
 sumo.delete(f"/objects('{parent_id}')")
+```
+
+## Async methods
+
+`SumoClient` also has *async* alternatives `get_async`, `post_async`, `put_async` and `delete_async`.
+These accept the same parameters as their synchronous counterparts, but have to be *awaited*.
+
+```python
+# Retrieve userdata
+user_data = await sumo.get_async("/userdata")
 ```
 
 # CallSumoApi (deprecated)
