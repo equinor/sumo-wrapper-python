@@ -24,7 +24,7 @@ class LogHandlerSumo(logging.Handler):
         except Exception:
             # Never fail on logging
             pass
-        
+
         return
 
     pass
