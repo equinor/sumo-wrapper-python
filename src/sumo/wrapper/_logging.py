@@ -21,7 +21,7 @@ class LogHandlerSumo(logging.Handler):
         }
         try:
             self._sumoClient.post("/message-log/new", json=json)
-        except Exception as err:
+        except Exception:
             # Never fail on logging
             pass
         
