@@ -19,7 +19,12 @@ class LogHandlerSumo(logging.Handler):
             "funcname": record.funcName,
             "linenumber": record.lineno,
         }
-        self._sumoClient.post("/message-log/new", json=json)
+        try:
+            self._sumoClient.post("/message-log/new", json=json)
+        except Exception as err:
+            # Never fail on logging
+            pass
+        
         return
 
     pass
