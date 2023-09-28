@@ -2,7 +2,6 @@ import logging
 import time
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_random_exponential, wait_exponential_jitter, retry_if_exception, retry_if_result
 
 import jwt
 
@@ -12,39 +11,12 @@ from ._new_auth import NewAuth
 from ._request_error import raise_request_error_exception
 from .config import APP_REGISTRATION, TENANT_ID
 
+from .decorators import http_unpack, raise_for_status, http_retry
+
 logger = logging.getLogger("sumo.wrapper")
 
 DEFAULT_TIMEOUT = httpx.Timeout(20.0)
 
-def raise_on_status(func):
-    def wrapper(*args, **kwargs):
-        # FIXME: in newer versions of httpx, raise_for_status() is chainable,
-        # so we could simply write
-        # return func(*args, **kwargs).raise_for_status()
-        response = func(*args, **kwargs)
-        response.raise_for_status()
-        return response
-    return wrapper
-
-def http_unpack(func):
-    def wrapper(*args, **kwargs):
-        response = func(*args, **kwargs)
-        ct = response.headers['Content-Type']
-        if ct.startswith('application/octet-stream'):
-            return response.content
-        if ct.startswith('application/json'):
-            return response.json()
-        # ELSE:
-        return response.text
-    return wrapper
-
-# Define the conditions for retrying based on exception types
-def is_retryable_exception(exception):
-    return isinstance(exception, (httpx.TimeoutException, httpx.ConnectError))
-
-# Define the conditions for retrying based on HTTP status codes
-def is_retryable_status_code(response):
-    return response.status_code in [502, 503, 504]
 
 class SumoClient:
     """Authenticate and perform requests to the Sumo API."""
@@ -194,11 +166,8 @@ class SumoClient:
         return None if prefixed_params == {} else prefixed_params
 
     @http_unpack
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     def get(self, path: str, **params) -> dict:
         """Performs a GET-request to the Sumo API.
 
@@ -244,11 +213,8 @@ class SumoClient:
 
         return response
 
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     def post(
         self,
         path: str,
@@ -311,7 +277,7 @@ class SumoClient:
 
         response = httpx.post(
             f"{self.base_url}{path}",
-            data=blob,
+            content=blob,
             json=json,
             headers=headers,
             params=params,
@@ -319,11 +285,8 @@ class SumoClient:
         )
         return response
 
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     def put(
         self, path: str, blob: bytes = None, json: dict = None
     ) -> httpx.Response:
@@ -359,7 +322,7 @@ class SumoClient:
 
         response = httpx.put(
             f"{self.base_url}{path}",
-            data=blob,
+            content=blob,
             json=json,
             headers=headers,
             timeout=DEFAULT_TIMEOUT,
@@ -368,11 +331,8 @@ class SumoClient:
         return response
 
     @http_unpack
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     def delete(self, path: str) -> dict:
         """Performs a DELETE-request to the Sumo API.
 
@@ -425,11 +385,8 @@ class SumoClient:
         return logger
 
     @http_unpack
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     async def get_async(self, path: str, **params):
         """Performs an async GET-request to the Sumo API.
 
@@ -474,11 +431,8 @@ class SumoClient:
 
         return response
 
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     async def post_async(
         self,
         path: str,
@@ -543,7 +497,7 @@ class SumoClient:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 url=f"{self.base_url}{path}",
-                data=blob,
+                content=blob,
                 json=json,
                 headers=headers,
                 params=params,
@@ -552,11 +506,8 @@ class SumoClient:
 
         return response
 
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     async def put_async(
         self, path: str, blob: bytes = None, json: dict = None
     ) -> httpx.Response:
@@ -593,7 +544,7 @@ class SumoClient:
         async with httpx.AsyncClient() as client:
             response = await client.put(
                 url=f"{self.base_url}{path}",
-                data=blob,
+                content=blob,
                 json=json,
                 headers=headers,
                 timeout=DEFAULT_TIMEOUT,
@@ -602,11 +553,8 @@ class SumoClient:
         return response
 
     @http_unpack
-    @raise_on_status
-    @retry(stop=stop_after_attempt(6),
-           retry=(retry_if_exception(is_retryable_exception) |
-                  retry_if_result(is_retryable_status_code)),
-           wait=wait_exponential_jitter())
+    @raise_for_status
+    @http_retry
     async def delete_async(self, path: str) -> dict:
         """Performs an async DELETE-request to the Sumo API.
 
