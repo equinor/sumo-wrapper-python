@@ -16,6 +16,28 @@ logger = logging.getLogger("sumo.wrapper")
 
 DEFAULT_TIMEOUT = httpx.Timeout(20.0)
 
+def raise_on_status(func):
+    def wrapper(*args, **kwargs):
+        # FIXME: in newer versions of httpx, raise_for_status() is chainable,
+        # so we could simply write
+        # return func(*args, **kwargs).raise_for_status()
+        response = func(*args, **kwargs)
+        response.raise_for_status()
+        return response
+    return wrapper
+
+def http_unpack(func):
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        ct = response.headers['Content-Type']
+        if ct.startswith('application/octet-stream'):
+            return response.content
+        if ct.startswith('application/json'):
+            return response.json()
+        # ELSE:
+        return response.text
+    return wrapper
+
 # Define the conditions for retrying based on exception types
 def is_retryable_exception(exception):
     return isinstance(exception, (httpx.TimeoutException, httpx.ConnectError))
@@ -171,6 +193,8 @@ class SumoClient:
 
         return None if prefixed_params == {} else prefixed_params
 
+    @http_unpack
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
@@ -220,6 +244,7 @@ class SumoClient:
 
         return response
 
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
@@ -294,6 +319,7 @@ class SumoClient:
         )
         return response
 
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
@@ -336,11 +362,13 @@ class SumoClient:
             data=blob,
             json=json,
             headers=headers,
-        timeout=DEFAULT_TIMEOUT,
+            timeout=DEFAULT_TIMEOUT,
         )
 
         return response
 
+    @http_unpack
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
@@ -396,6 +424,8 @@ class SumoClient:
         logger.addHandler(handler)
         return logger
 
+    @http_unpack
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
@@ -444,6 +474,7 @@ class SumoClient:
 
         return response
 
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
@@ -521,6 +552,7 @@ class SumoClient:
 
         return response
 
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
@@ -569,6 +601,8 @@ class SumoClient:
 
         return response
 
+    @http_unpack
+    @raise_on_status
     @retry(stop=stop_after_attempt(6),
            retry=(retry_if_exception(is_retryable_exception) |
                   retry_if_result(is_retryable_status_code)),
