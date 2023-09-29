@@ -1,6 +1,7 @@
 import httpx
 
-from .decorators import http_unpack, raise_for_status, http_retry
+from .decorators import raise_for_status, http_retry
+
 
 class BlobClient:
     """Upload blobs to blob store using pre-authorized URLs"""
@@ -27,7 +28,6 @@ class BlobClient:
     @raise_for_status
     @http_retry
     async def upload_blob_async(self, blob: bytes, url: str):
-
         """Upload a blob async.
 
         Parameters:
@@ -41,8 +41,6 @@ class BlobClient:
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.put(
-                url=url, content=blob, headers=headers
-            )
+            response = await client.put(url=url, content=blob, headers=headers)
 
         return response

@@ -8,7 +8,6 @@ import jwt
 from ._blob_client import BlobClient
 from ._logging import LogHandlerSumo
 from ._new_auth import NewAuth
-from ._request_error import raise_request_error_exception
 from .config import APP_REGISTRATION, TENANT_ID
 
 from .decorators import http_unpack, raise_for_status, http_retry
@@ -501,7 +500,7 @@ class SumoClient:
                 json=json,
                 headers=headers,
                 params=params,
-            timeout=DEFAULT_TIMEOUT,
+                timeout=DEFAULT_TIMEOUT,
             )
 
         return response
