@@ -3,4 +3,5 @@ msal-extensions>=1.0.0
 PyYAML>=5.4
 setuptools>=49.2.1
 pyjwt>=2.4.0
-httpx>=0.24.1
+httpx>=0.25.0
+tenacity>=8.2.3
