@@ -1,5 +1,4 @@
 import logging
-import time
 
 import httpx
 
@@ -7,8 +6,8 @@ import jwt
 
 from ._blob_client import BlobClient
 from ._logging import LogHandlerSumo
-from ._new_auth import NewAuth
-from .config import APP_REGISTRATION, TENANT_ID
+from ._auth_provider import get_auth_provider
+from .config import APP_REGISTRATION, TENANT_ID, AUTHORITY_HOST_URI
 
 from .decorators import http_unpack, raise_for_status, http_retry
 
@@ -42,51 +41,38 @@ class SumoClient:
         if env not in APP_REGISTRATION:
             raise ValueError(f"Invalid environment: {env}")
 
-        self.access_token = None
-        self.access_token_expires = None
-        self.refresh_token = None
         self._blob_client = BlobClient()
 
+        access_token = None
+        refresh_token = None
         if token:
             logger.debug("Token provided")
             payload = self.__decode_token(token)
 
             if payload:
                 logger.debug(f"Token decoded as JWT, payload: {payload}")
-                self.access_token = token
-                self.access_token_expires = payload["exp"]
+                access_token = token
             else:
                 logger.debug(
                     "Unable to decode token as JWT, "
                     "treating it as a refresh token"
                 )
-                self.refresh_token = token
-        else:
-            self.auth = NewAuth(
-                client_id=APP_REGISTRATION[env]["CLIENT_ID"],
-                resource_id=APP_REGISTRATION[env]["RESOURCE_ID"],
-                tenant_id=TENANT_ID,
-                interactive=interactive,
-                refresh_token=self.refresh_token,
-                verbosity=verbosity,
-            )
+                refresh_token = token
+                pass
+            pass
+        self.auth = get_auth_provider(
+            client_id=APP_REGISTRATION[env]["CLIENT_ID"],
+            authority=f"{AUTHORITY_HOST_URI}/{TENANT_ID}",
+            resource_id=APP_REGISTRATION[env]["RESOURCE_ID"],
+            interactive=interactive,
+            refresh_token=refresh_token,
+            access_token=access_token,
+        )
 
         if env == "localhost":
             self.base_url = "http://localhost:8084/api/v1"
         else:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
-
-    def authenticate(self) -> str:
-        """Authenticate to Sumo.
-
-        If no access token/refresh token has been provided,
-        this will result in an authentication prompt.
-
-        Returns:
-            An access token
-        """
-
-        return self._retrieve_token()
 
     @property
     def blob_client(self) -> BlobClient:
@@ -126,26 +112,6 @@ class SumoClient:
             return payload
         except jwt.InvalidTokenError:
             return None
-
-    def _retrieve_token(self) -> str:
-        """Retrieve a token for the Sumo API.
-
-        Returns:
-            A Json Web Token
-        """
-
-        if self.access_token:
-            logger.debug(
-                "User provided access_token exists, " "checking expire time"
-            )
-            if self.access_token_expires <= int(time.time()):
-                raise ValueError("Access_token has expired")
-            else:
-                logger.debug("Returning user provided access token")
-                return self.access_token
-
-        logger.debug("No user provided token exists, retrieving access token")
-        return self.auth.get_token()
 
     def _process_params(self, params_dict: dict) -> dict:
         """Convert a dictionary of query parameters to Sumo friendly format.
@@ -195,7 +161,7 @@ class SumoClient:
                 )
         """
 
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         headers = {
             "Content-Type": "application/json",
@@ -260,7 +226,7 @@ class SumoClient:
                     json=object_metadata
                 )
         """
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         if blob and json:
             raise ValueError("Both blob and json given to post.")
@@ -303,7 +269,7 @@ class SumoClient:
             Sumo response object
         """
 
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         if blob and json:
             raise ValueError("Both blob and json given to post")
@@ -350,7 +316,7 @@ class SumoClient:
                 sumo.delete(path=f"/objects('{object_id}')")
         """
 
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         headers = {
             "Content-Type": "application/json",
@@ -413,7 +379,7 @@ class SumoClient:
                     size=3
                 )
         """
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         headers = {
             "Content-Type": "application/json",
@@ -479,7 +445,7 @@ class SumoClient:
                 )
         """
 
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         if blob and json:
             raise ValueError("Both blob and json given to post.")
@@ -524,7 +490,7 @@ class SumoClient:
             Sumo response object
         """
 
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         if blob and json:
             raise ValueError("Both blob and json given to post")
@@ -572,7 +538,7 @@ class SumoClient:
                 await sumo.delete_async(path=f"/objects('{object_id}')")
         """
 
-        token = self._retrieve_token()
+        token = self.auth.get_token()
 
         headers = {
             "Content-Type": "application/json",
