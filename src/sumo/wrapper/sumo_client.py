@@ -73,6 +73,11 @@ class SumoClient:
             self.base_url = "http://localhost:8084/api/v1"
         else:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
+            pass
+        return
+
+    def authenticate(self):
+        return self.auth.get_token()
 
     @property
     def blob_client(self) -> BlobClient:
