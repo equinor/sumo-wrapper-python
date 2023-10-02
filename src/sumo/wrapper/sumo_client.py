@@ -9,7 +9,7 @@ from ._logging import LogHandlerSumo
 from ._auth_provider import get_auth_provider
 from .config import APP_REGISTRATION, TENANT_ID, AUTHORITY_HOST_URI
 
-from .decorators import http_unpack, raise_for_status, http_retry
+from ._decorators import http_unpack, raise_for_status, http_retry
 
 logger = logging.getLogger("sumo.wrapper")
 

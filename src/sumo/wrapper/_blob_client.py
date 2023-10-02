@@ -1,6 +1,6 @@
 import httpx
 
-from .decorators import raise_for_status, http_retry
+from ._decorators import raise_for_status, http_retry
 
 
 class BlobClient:
