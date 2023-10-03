@@ -5,3 +5,4 @@ setuptools>=49.2.1
 pyjwt>=2.4.0
 httpx>=0.25.0
 tenacity>=8.2.3
+azure-identity>=1.14.0
