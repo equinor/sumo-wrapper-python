@@ -9,7 +9,7 @@ from ._logging import LogHandlerSumo
 from ._auth_provider import get_auth_provider
 from .config import APP_REGISTRATION, TENANT_ID, AUTHORITY_HOST_URI
 
-from ._decorators import http_unpack, raise_for_status, http_retry
+from ._decorators import raise_for_status, http_retry
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -47,7 +47,14 @@ class SumoClient:
         refresh_token = None
         if token:
             logger.debug("Token provided")
-            payload = self.__decode_token(token)
+
+            payload = None
+            try:
+                payload = jwt.decode(
+                    token, options={"verify_signature": False}
+                )
+            except jwt.InvalidTokenError:
+                pass
 
             if payload:
                 logger.debug(f"Token decoded as JWT, payload: {payload}")
@@ -101,49 +108,14 @@ class SumoClient:
 
         return self._blob_client
 
-    def __decode_token(self, token: str) -> dict:
-        """
-        Decodes a Json Web Token, returns the payload as a dictionary.
-
-        Args:
-            token: Token to decode
-
-        Returns:
-            Decoded Json Web Token (None if token can't be decoded)
-        """
-
-        try:
-            payload = jwt.decode(token, options={"verify_signature": False})
-            return payload
-        except jwt.InvalidTokenError:
-            return None
-
-    def _process_params(self, params_dict: dict) -> dict:
-        """Convert a dictionary of query parameters to Sumo friendly format.
-
-        Args:
-            params_dict: Dictionary of query parameters
-
-        Returns:
-            Dictionary of processed parameters
-        """
-
-        prefixed_params = {}
-
-        for param_key in params_dict:
-            prefixed_params[f"${param_key}"] = params_dict[param_key]
-
-        return None if prefixed_params == {} else prefixed_params
-
-    @http_unpack
     @raise_for_status
     @http_retry
-    def get(self, path: str, **params) -> dict:
+    def get(self, path: str, params: dict = None) -> dict:
         """Performs a GET-request to the Sumo API.
 
         Args:
             path: Path to a Sumo endpoint
-            params: Keyword arguments treated as query parameters
+            params: query parameters, as dictionary
 
         Returns:
             Sumo JSON response as a dictionary
@@ -175,7 +147,7 @@ class SumoClient:
 
         response = httpx.get(
             f"{self.base_url}{path}",
-            params=self._process_params(params),
+            params=params,
             headers=headers,
             follow_redirects=True,
             timeout=DEFAULT_TIMEOUT,
@@ -201,6 +173,7 @@ class SumoClient:
             path: Path to a Sumo endpoint
             blob: Blob payload
             json: Json payload
+            params: query parameters, as dictionary
 
         Returns:
             Sumo response object
@@ -300,14 +273,14 @@ class SumoClient:
 
         return response
 
-    @http_unpack
     @raise_for_status
     @http_retry
-    def delete(self, path: str) -> dict:
+    def delete(self, path: str, params: dict = None) -> dict:
         """Performs a DELETE-request to the Sumo API.
 
         Args:
             path: Path to a Sumo endpoint
+            params: query parameters, as dictionary
 
         Returns:
             Sumo JSON resposne as a dictionary
@@ -331,6 +304,7 @@ class SumoClient:
         response = httpx.delete(
             f"{self.base_url}{path}",
             headers=headers,
+            params=params,
             timeout=DEFAULT_TIMEOUT,
         )
 
@@ -354,15 +328,14 @@ class SumoClient:
         logger.addHandler(handler)
         return logger
 
-    @http_unpack
     @raise_for_status
     @http_retry
-    async def get_async(self, path: str, **params):
+    async def get_async(self, path: str, params: dict = None):
         """Performs an async GET-request to the Sumo API.
 
         Args:
             path: Path to a Sumo endpoint
-            params: Keyword arguments treated as query parameters
+            params: query parameters, as dictionary
 
         Returns:
             Sumo JSON response as a dictionary
@@ -394,7 +367,7 @@ class SumoClient:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{self.base_url}{path}",
-                params=self._process_params(params),
+                params=params,
                 headers=headers,
                 timeout=DEFAULT_TIMEOUT,
             )
@@ -419,6 +392,7 @@ class SumoClient:
             path: Path to a Sumo endpoint
             blob: Blob payload
             json: Json payload
+            params: query parameters, as dictionary
 
         Returns:
             Sumo response object
@@ -522,14 +496,14 @@ class SumoClient:
 
         return response
 
-    @http_unpack
     @raise_for_status
     @http_retry
-    async def delete_async(self, path: str) -> dict:
+    async def delete_async(self, path: str, params: dict = None) -> dict:
         """Performs an async DELETE-request to the Sumo API.
 
         Args:
             path: Path to a Sumo endpoint
+            params: query parameters, as dictionary
 
         Returns:
             Sumo JSON resposne as a dictionary
@@ -554,6 +528,7 @@ class SumoClient:
             response = await client.delete(
                 url=f"{self.base_url}{path}",
                 headers=headers,
+                params=params,
                 timeout=DEFAULT_TIMEOUT,
             )
 

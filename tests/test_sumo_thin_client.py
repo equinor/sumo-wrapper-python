@@ -47,7 +47,7 @@ def _get_blob_uri(C, object_id):
 
 
 def _download_object(C, object_id):
-    json = C.api.get(f"/objects('{object_id}')")
+    json = C.api.get(f"/objects('{object_id}')").json()
 
     return json
 
@@ -61,7 +61,7 @@ def _upload_child_level_json(C, parent_id, json):
 
 
 def _delete_object(C, object_id):
-    response = C.api.delete(f"/objects('{object_id}')")
+    response = C.api.delete(f"/objects('{object_id}')").json()
 
     return response
 
@@ -131,14 +131,14 @@ def test_upload_search_delete_ensemble_child(token):
     # Search for ensemble
     query = f"fmu.case.uuid:{case_uuid}"
 
-    search_results = C.api.get("/searchroot", query=query, select=["_source"])
+    search_results = C.api.get("/searchroot", params={"$query": query, "$select": ["_source"]}).json()
 
     hits = search_results.get("hits").get("hits")
     assert len(hits) == 1
     assert hits[0].get("_id") == case_id
 
     # Search for child object
-    search_results = C.api.get("/search", query=query, select=["_source"])
+    search_results = C.api.get("/search", {"$query":query, "$select":["_source"]}).json()
 
     total = search_results.get("hits").get("total").get("value")
     assert total == 2
@@ -147,7 +147,7 @@ def test_upload_search_delete_ensemble_child(token):
     assert get_result["_id"] == surface_id
 
     # Search for blob
-    bin_obj = C.api.get(f"/objects('{surface_id}')/blob")
+    bin_obj = C.api.get(f"/objects('{surface_id}')/blob").content
     assert bin_obj == B
 
     # Delete Ensemble
@@ -157,14 +157,14 @@ def test_upload_search_delete_ensemble_child(token):
     sleep(40)
 
     # Search for ensemble
-    search_results = C.api.get("/searchroot", query=query, select=["_source"])
+    search_results = C.api.get("/searchroot", {"$query": query, "$select": ["_source"]}).json()
 
     hits = search_results.get("hits").get("hits")
 
     assert len(hits) == 0
 
     # Search for child object
-    search_results = C.api.get("/search", query=query, select=["_source"])
+    search_results = C.api.get("/search", {"$query": query, "$select": ["_source"]}).json()
     total = search_results.get("hits").get("total").get("value")
     assert total == 0
 
