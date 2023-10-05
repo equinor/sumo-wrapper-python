@@ -26,7 +26,7 @@ class AuthProvider:
 
     def get_token(self):
         accounts = self._app.get_accounts()
-        if (len(accounts) == 0):
+        if len(accounts) == 0:
             return None
         result = self._app.acquire_token_silent([self._scope], accounts[0])
         if result is None:
