@@ -26,12 +26,11 @@ class AuthProvider:
 
     def get_token(self):
         accounts = self._app.get_accounts()
+        if (len(accounts) == 0):
+            return None
         result = self._app.acquire_token_silent([self._scope], accounts[0])
-        if "error" in result:
-            raise ValueError(
-                "Failed to silently acquire token. Err: %s"
-                % json.dumps(result, indent=4)
-            )
+        if result is None:
+            return None
         # ELSE
         return result["access_token"]
 
