@@ -428,7 +428,7 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(
                 f"{self.base_url}{path}",
                 params=self._process_params(params),
