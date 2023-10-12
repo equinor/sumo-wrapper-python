@@ -211,6 +211,18 @@ def get_auth_provider(
     access_token=None,
     refresh_token=None,
 ):
+    if refresh_token:
+        return AuthProviderRefreshToken(
+            refresh_token, client_id, authority, resource_id
+        )
+    # ELSE
+    if access_token:
+        return AuthProviderAccessToken(access_token)
+    # ELSE
+    if interactive:
+        return AuthProviderInteractive(client_id, authority, resource_id)
+
+    # ELSE
     if all(
         [
             os.getenv(x)
@@ -223,16 +235,6 @@ def get_auth_provider(
         ]
     ):
         return AuthProviderManaged(resource_id)
-    # ELSE
-    if refresh_token:
-        return AuthProviderRefreshToken(
-            refresh_token, client_id, authority, resource_id
-        )
-    # ELSE
-    if access_token:
-        return AuthProviderAccessToken(access_token)
-    # ELSE
-    if interactive:
-        return AuthProviderInteractive(client_id, authority, resource_id)
+
     # ELSE
     return AuthProviderDeviceCode(client_id, authority, resource_id)
