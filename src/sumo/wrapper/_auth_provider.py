@@ -15,7 +15,7 @@ if not sys.platform.startswith("linux"):
 
 
 def scope_for_resource(resource_id):
-    return f"{resource_id}/.default offline_access"
+    return f"{resource_id}/.default"
 
 
 class AuthProvider:
@@ -138,7 +138,8 @@ class AuthProviderInteractive(AuthProvider):
         return
 
     def login(self):
-        result = self._app.acquire_token_interactive([self._scope])
+        scopes = [self.scope + " offline_access"]
+        result = self._app.acquire_token_interactive(scopes)
 
         if "error" in result:
             raise ValueError(
@@ -166,7 +167,8 @@ class AuthProviderDeviceCode(AuthProvider):
         return
 
     def login(self):
-        flow = self._app.initiate_device_flow([self._scope])
+        scopes = [self.scope + " offline_access"]
+        flow = self._app.initiate_device_flow(scopes)
 
         if "error" in flow:
             raise ValueError(
