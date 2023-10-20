@@ -147,6 +147,8 @@ class AuthProviderInteractive(AuthProvider):
                 % json.dumps(result, indent=4)
             )
 
+        protect_token_cache(self._resource_id)
+
         return
 
     pass
