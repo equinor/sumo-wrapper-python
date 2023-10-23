@@ -138,7 +138,7 @@ class AuthProviderInteractive(AuthProvider):
         return
 
     def login(self):
-        scopes = [self.scope + " offline_access"]
+        scopes = [self._scope + " offline_access"]
         result = self._app.acquire_token_interactive(scopes)
 
         if "error" in result:
@@ -169,7 +169,7 @@ class AuthProviderDeviceCode(AuthProvider):
         return
 
     def login(self):
-        scopes = [self.scope + " offline_access"]
+        scopes = [self._scope + " offline_access"]
         flow = self._app.initiate_device_flow(scopes)
 
         if "error" in flow:
