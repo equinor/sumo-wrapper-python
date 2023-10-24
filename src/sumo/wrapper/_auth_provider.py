@@ -140,10 +140,10 @@ class AuthProviderInteractive(AuthProvider):
 
     def login(self):
         scopes = [self._scope + " offline_access"]
-        print("NOTE! Please login to Equinor Azure to enable Sumo uploads: "
+        print("\n\nNOTE! Please login to Equinor Azure to enable Sumo uploads: "
             + "we opened a login web-page for you in your browser."
-            + "\nIf you are on a non-compliant device you will also need "
-            + "to exclude yourself from the Equinor compliant device policy")
+            + "\nIf you are on a non-compliant device you should first "
+            + "exclude yourself from the Equinor compliant device policy.\n")
         result = self._app.acquire_token_interactive(scopes)
 
         if "error" in result:
