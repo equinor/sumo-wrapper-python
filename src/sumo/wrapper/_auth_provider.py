@@ -129,6 +129,7 @@ class AuthProviderInteractive(AuthProvider):
         self._app = msal.PublicClientApplication(
             client_id=client_id, authority=authority, token_cache=cache
         )
+        self._resource_id = resource_id
 
         self._scope = scope_for_resource(resource_id)
 
@@ -139,6 +140,10 @@ class AuthProviderInteractive(AuthProvider):
 
     def login(self):
         scopes = [self._scope + " offline_access"]
+        print("NOTE! Please login to Equinor Azure to enable Sumo uploads: "
+            + "we opened a login web-page for you in your browser."
+            + "\nIf you are on a non-compliant device you will also need "
+            + "to exclude yourself from the Equinor compliant device policy")
         result = self._app.acquire_token_interactive(scopes)
 
         if "error" in result:
@@ -148,50 +153,50 @@ class AuthProviderInteractive(AuthProvider):
             )
 
         protect_token_cache(self._resource_id)
-
+        print("Login was successful")
         return
 
     pass
 
+# Device code login does not work with Equinor compliant device policy
+# class AuthProviderDeviceCode(AuthProvider):
+#     def __init__(self, client_id, authority, resource_id):
+#         super().__init__(resource_id)
+#         cache = get_token_cache(resource_id)
+#         self._app = msal.PublicClientApplication(
+#             client_id=client_id, authority=authority, token_cache=cache
+#         )
+#         self._resource_id = resource_id
+#         self._scope = scope_for_resource(resource_id)
+#         if self.get_token() is None:
+#             self.login()
+#             pass
+#         return
 
-class AuthProviderDeviceCode(AuthProvider):
-    def __init__(self, client_id, authority, resource_id):
-        super().__init__(resource_id)
-        cache = get_token_cache(resource_id)
-        self._app = msal.PublicClientApplication(
-            client_id=client_id, authority=authority, token_cache=cache
-        )
-        self._resource_id = resource_id
-        self._scope = scope_for_resource(resource_id)
-        if self.get_token() is None:
-            self.login()
-            pass
-        return
+#     def login(self):
+#         scopes = [self._scope + " offline_access"]
+#         flow = self._app.initiate_device_flow(scopes)
 
-    def login(self):
-        scopes = [self._scope + " offline_access"]
-        flow = self._app.initiate_device_flow(scopes)
+#         if "error" in flow:
+#             raise ValueError(
+#                 "Failed to create device flow. Err: %s"
+#                 % json.dumps(flow, indent=4)
+#             )
 
-        if "error" in flow:
-            raise ValueError(
-                "Failed to create device flow. Err: %s"
-                % json.dumps(flow, indent=4)
-            )
+#         print(flow["message"])
+#         result = self._app.acquire_token_by_device_flow(flow)
 
-        print(flow["message"])
-        result = self._app.acquire_token_by_device_flow(flow)
+#         if "error" in result:
+#             raise ValueError(
+#                 "Failed to acquire token by device flow. Err: %s"
+#                 % json.dumps(result, indent=4)
+#             )
 
-        if "error" in result:
-            raise ValueError(
-                "Failed to acquire token by device flow. Err: %s"
-                % json.dumps(result, indent=4)
-            )
+#         protect_token_cache(self._resource_id)
 
-        protect_token_cache(self._resource_id)
+#         return
 
-        return
-
-    pass
+#     pass
 
 
 class AuthProviderManaged(AuthProvider):
@@ -241,4 +246,6 @@ def get_auth_provider(
         return AuthProviderManaged(resource_id)
 
     # ELSE
-    return AuthProviderDeviceCode(client_id, authority, resource_id)
+    # Device code login does not work with Equinor compliant device policy
+    # return AuthProviderDeviceCode(client_id, authority, resource_id)
+    return AuthProviderInteractive(client_id, authority, resource_id)
