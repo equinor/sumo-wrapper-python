@@ -47,7 +47,7 @@ def is_retryable_exception(exception):
 
 # Define the conditions for retrying based on HTTP status codes
 def is_retryable_status_code(response):
-    return response.status_code in [502, 503, 504]
+    return response.status_code in [404, 502, 503, 504]
 
 
 def http_retry(func):
@@ -58,5 +58,5 @@ def http_retry(func):
             tn.retry_if_exception(is_retryable_exception)
             | tn.retry_if_result(is_retryable_status_code)
         ),
-        wait=tn.wait_exponential_jitter(),
+        wait=tn.wait_fixed(3000),
     )
