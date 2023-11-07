@@ -9,7 +9,10 @@ from ._logging import LogHandlerSumo
 from ._auth_provider import get_auth_provider
 from .config import APP_REGISTRATION, TENANT_ID, AUTHORITY_HOST_URI
 
-from ._decorators import raise_for_status, http_retry, raise_for_status_async
+from ._decorators import is_retryable_exception, \
+    is_retryable_status_code, raise_for_status, raise_for_status_async
+from tenacity import retry, retry_if_exception, retry_if_result, \
+    wait_exponential_jitter, stop_after_attempt
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -109,7 +112,13 @@ class SumoClient:
         return self._blob_client
 
     @raise_for_status
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     def get(self, path: str, params: dict = None) -> dict:
         """Performs a GET-request to the Sumo API.
 
@@ -156,7 +165,13 @@ class SumoClient:
         return response
 
     @raise_for_status
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     def post(
         self,
         path: str,
@@ -229,7 +244,13 @@ class SumoClient:
         return response
 
     @raise_for_status
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     def put(
         self, path: str, blob: bytes = None, json: dict = None
     ) -> httpx.Response:
@@ -274,7 +295,13 @@ class SumoClient:
         return response
 
     @raise_for_status
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     def delete(self, path: str, params: dict = None) -> dict:
         """Performs a DELETE-request to the Sumo API.
 
@@ -329,7 +356,13 @@ class SumoClient:
         return logger
 
     @raise_for_status_async
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     async def get_async(self, path: str, params: dict = None):
         """Performs an async GET-request to the Sumo API.
 
@@ -375,7 +408,13 @@ class SumoClient:
         return response
 
     @raise_for_status_async
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     async def post_async(
         self,
         path: str,
@@ -451,7 +490,13 @@ class SumoClient:
         return response
 
     @raise_for_status_async
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     async def put_async(
         self, path: str, blob: bytes = None, json: dict = None
     ) -> httpx.Response:
@@ -497,7 +542,13 @@ class SumoClient:
         return response
 
     @raise_for_status_async
-    @http_retry
+    @retry(stop=stop_after_attempt(6),
+           retry=(
+               retry_if_exception(is_retryable_exception)
+               | retry_if_result(is_retryable_status_code)
+           ),
+           wait=wait_exponential_jitter(),
+           )
     async def delete_async(self, path: str, params: dict = None) -> dict:
         """Performs an async DELETE-request to the Sumo API.
 
