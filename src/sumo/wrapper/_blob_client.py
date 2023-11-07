@@ -13,6 +13,7 @@ class BlobClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     def upload_blob(self, blob: bytes, url: str):
         """Upload a blob.
@@ -38,6 +39,7 @@ class BlobClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     async def upload_blob_async(self, blob: bytes, url: str):
         """Upload a blob async.

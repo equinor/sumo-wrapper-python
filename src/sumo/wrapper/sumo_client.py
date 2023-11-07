@@ -118,6 +118,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     def get(self, path: str, params: dict = None) -> dict:
         """Performs a GET-request to the Sumo API.
@@ -171,6 +172,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     def post(
         self,
@@ -250,6 +252,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     def put(
         self, path: str, blob: bytes = None, json: dict = None
@@ -301,6 +304,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     def delete(self, path: str, params: dict = None) -> dict:
         """Performs a DELETE-request to the Sumo API.
@@ -362,6 +366,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     async def get_async(self, path: str, params: dict = None):
         """Performs an async GET-request to the Sumo API.
@@ -414,6 +419,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     async def post_async(
         self,
@@ -496,6 +502,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     async def put_async(
         self, path: str, blob: bytes = None, json: dict = None
@@ -548,6 +555,7 @@ class SumoClient:
                | retry_if_result(is_retryable_status_code)
            ),
            wait=wait_exponential_jitter(),
+           reraise=True,
            )
     async def delete_async(self, path: str, params: dict = None) -> dict:
         """Performs an async DELETE-request to the Sumo API.
