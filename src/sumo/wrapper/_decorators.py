@@ -50,6 +50,10 @@ def is_retryable_status_code(response):
     return response.status_code in [502, 503, 504]
 
 
+def return_last_value(retry_state):
+    return retry_state.outcome.result()
+
+
 def http_retry(func):
     return tn.retry(
         func,
