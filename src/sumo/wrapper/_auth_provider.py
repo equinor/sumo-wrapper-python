@@ -144,7 +144,7 @@ class AuthProviderInteractive(AuthProvider):
         login_timeout_minutes = 7 
         os.system("") # Ensure color init on all platforms (win10)
         print("\n\n \033[31m NOTE! \033[0m"
-            + " Please login to Equinor Azure to enable Sumo uploads: "
+            + " Please login to Equinor Azure to enable Sumo access: "
             + "we opened a login web-page for you in your browser."
             + "\nIf you are on a non-compliant device you should first "
             + "exclude yourself from the Equinor compliant-device policy."
@@ -172,7 +172,7 @@ class AuthProviderInteractive(AuthProvider):
             )
 
         protect_token_cache(self._resource_id)
-        print("Equinor Azure login for Sumo uploads was successful")
+        print("Equinor Azure login for Sumo access was successful")
         return
 
     pass
