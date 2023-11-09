@@ -21,6 +21,7 @@ def scope_for_resource(resource_id):
 
 class AuthProvider:
     def __init__(self, resource_id):
+        self._resource_id = resource_id
         self._scope = scope_for_resource(resource_id)
         self._app = None
         return

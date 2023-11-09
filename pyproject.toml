@@ -6,5 +6,8 @@ requires = [
   "wheel"
 ]
 
+[tool.setuptools_scm]
+write_to = "src/sumo/wrapper/version.py"
+
 [tool.black]
 line-length = 79

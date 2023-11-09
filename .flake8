@@ -1,8 +1,2 @@
 [flake8]
-exclude = 
-    _call_azure_api.py
-    _call_sumo_api.py
-    _auth.py
-    test_call_sumo_api.py
-    test_sumo_thin_client.py
-    setup.py
+max-line-length = 79

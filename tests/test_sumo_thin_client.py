@@ -5,10 +5,11 @@ import yaml
 from time import sleep
 import sys
 import os
+import uuid
 
 sys.path.append(os.path.abspath(os.path.join("src")))
 
-from sumo.wrapper import SumoClient
+from sumo.wrapper import SumoClient  # noqa: E402
 
 
 class Connection:
@@ -30,7 +31,8 @@ def _upload_blob(C, blob, url=None, object_id=None):
     print("Blob save " + str(response.status_code), flush=True)
     if not 200 <= response.status_code < 202:
         raise Exception(
-            f"blob upload to object_id {object_id} returned {response.text} {response.status_code}"
+            f"blob upload to object_id {object_id}"
+            f" returned {response.text} {response.status_code}"
         )
     return response
 
@@ -41,7 +43,8 @@ def _get_blob_uri(C, object_id):
     print("Blob save " + str(response.status_code), flush=True)
     if not 200 <= response.status_code < 202:
         raise Exception(
-            f"get blob uri for {object_id} returned {response.text} {response.status_code}"
+            f"get blob uri for {object_id}"
+            f" returned {response.text} {response.status_code}"
         )
     return response
 
@@ -75,8 +78,6 @@ class ValueKeeper:
 
 
 """ TESTS """
-
-import uuid
 
 
 def test_upload_search_delete_ensemble_child(token):
@@ -113,9 +114,6 @@ def test_upload_search_delete_ensemble_child(token):
 
     fmu_surface_metadata["fmu"]["case"]["uuid"] = case_uuid
 
-    fmu_surface_id = (
-        fmu_surface_metadata.get("fmu").get("realization").get("id")
-    )
     response_surface = _upload_child_level_json(
         C=C, parent_id=case_id, json=fmu_surface_metadata
     )
