@@ -15,11 +15,12 @@ if not sys.platform.startswith("linux"):
 
 
 def scope_for_resource(resource_id):
-    return f"{resource_id}/.default offline_access"
+    return f"{resource_id}/.default"
 
 
 class AuthProvider:
     def __init__(self, resource_id):
+        self._resource_id = resource_id
         self._scope = scope_for_resource(resource_id)
         self._app = None
         return
@@ -138,13 +139,16 @@ class AuthProviderInteractive(AuthProvider):
         return
 
     def login(self):
-        result = self._app.acquire_token_interactive([self._scope])
+        scopes = [self._scope + " offline_access"]
+        result = self._app.acquire_token_interactive(scopes)
 
         if "error" in result:
             raise ValueError(
                 "Failed to acquire token interactively. Err: %s"
                 % json.dumps(result, indent=4)
             )
+
+        protect_token_cache(self._resource_id)
 
         return
 
@@ -158,15 +162,17 @@ class AuthProviderDeviceCode(AuthProvider):
         self._app = msal.PublicClientApplication(
             client_id=client_id, authority=authority, token_cache=cache
         )
-        self._resource_id = resource_id
+
         self._scope = scope_for_resource(resource_id)
+
         if self.get_token() is None:
             self.login()
             pass
         return
 
     def login(self):
-        flow = self._app.initiate_device_flow([self._scope])
+        scopes = [self._scope + " offline_access"]
+        flow = self._app.initiate_device_flow(scopes)
 
         if "error" in flow:
             raise ValueError(
@@ -211,6 +217,18 @@ def get_auth_provider(
     access_token=None,
     refresh_token=None,
 ):
+    if refresh_token:
+        return AuthProviderRefreshToken(
+            refresh_token, client_id, authority, resource_id
+        )
+    # ELSE
+    if access_token:
+        return AuthProviderAccessToken(access_token)
+    # ELSE
+    if interactive:
+        return AuthProviderInteractive(client_id, authority, resource_id)
+
+    # ELSE
     if all(
         [
             os.getenv(x)
@@ -223,16 +241,6 @@ def get_auth_provider(
         ]
     ):
         return AuthProviderManaged(resource_id)
-    # ELSE
-    if refresh_token:
-        return AuthProviderRefreshToken(
-            refresh_token, client_id, authority, resource_id
-        )
-    # ELSE
-    if access_token:
-        return AuthProviderAccessToken(access_token)
-    # ELSE
-    if interactive:
-        return AuthProviderInteractive(client_id, authority, resource_id)
+
     # ELSE
     return AuthProviderDeviceCode(client_id, authority, resource_id)
