@@ -181,47 +181,6 @@ class AuthProviderInteractive(AuthProvider):
     pass
 
 
-# Device code login does not work with Equinor compliant device policy
-# class AuthProviderDeviceCode(AuthProvider):
-#     def __init__(self, client_id, authority, resource_id):
-#         super().__init__(resource_id)
-#         cache = get_token_cache(resource_id)
-#         self._app = msal.PublicClientApplication(
-#             client_id=client_id, authority=authority, token_cache=cache
-#         )
-#         self._resource_id = resource_id
-#         self._scope = scope_for_resource(resource_id)
-#         if self.get_token() is None:
-#             self.login()
-#             pass
-#         return
-
-#     def login(self):
-#         scopes = [self._scope + " offline_access"]
-#         flow = self._app.initiate_device_flow(scopes)
-
-#         if "error" in flow:
-#             raise ValueError(
-#                 "Failed to create device flow. Err: %s"
-#                 % json.dumps(flow, indent=4)
-#             )
-
-#         print(flow["message"])
-#         result = self._app.acquire_token_by_device_flow(flow)
-
-#         if "error" in result:
-#             raise ValueError(
-#                 "Failed to acquire token by device flow. Err: %s"
-#                 % json.dumps(result, indent=4)
-#             )
-
-#         protect_token_cache(self._resource_id)
-
-#         return
-
-#     pass
-
-
 class AuthProviderManaged(AuthProvider):
     def __init__(self, resource_id):
         super().__init__(resource_id)
