@@ -142,24 +142,32 @@ class AuthProviderInteractive(AuthProvider):
 
     def login(self):
         scopes = [self._scope + " offline_access"]
-        login_timeout_minutes = 7 
-        os.system("") # Ensure color init on all platforms (win10)
-        print("\n\n \033[31m NOTE! \033[0m"
+        login_timeout_minutes = 7
+        os.system("")  # Ensure color init on all platforms (win10)
+        print(
+            "\n\n \033[31m NOTE! \033[0m"
             + " Please login to Equinor Azure to enable Sumo access: "
             + "we opened a login web-page for you in your browser."
             + "\nIf you are on a non-compliant device you should first "
             + "exclude yourself from the Equinor compliant-device policy."
-            + "\nYou should complete your login within " 
-            + str(login_timeout_minutes) + " minutes, "
-            + "that is before " + 
-            str((datetime.now() + timedelta(minutes=login_timeout_minutes)).strftime('%H:%M:%S')))
-        try: 
-            result = self._app.acquire_token_interactive(scopes, 
-                                timeout=(login_timeout_minutes*60))
-        except: 
+            + "\nYou should complete your login within "
+            + str(login_timeout_minutes)
+            + " minutes, "
+            + "that is before "
+            + str(
+                (
+                    datetime.now() + timedelta(minutes=login_timeout_minutes)
+                ).strftime("%H:%M:%S")
+            )
+        )
+        try:
+            result = self._app.acquire_token_interactive(
+                scopes, timeout=(login_timeout_minutes * 60)
+            )
+        except:
             # For some reason a login timeout raises an exception
-            # and there seem to be no way to know for sure that 
-            # a timeout was actually reached. If we skip the timout 
+            # and there seem to be no way to know for sure that
+            # a timeout was actually reached. If we skip the timout
             # argument, the login will hang indefinately.
             print("Failed to login, one possible reason is timeout")
             raise ValueError(
@@ -177,6 +185,7 @@ class AuthProviderInteractive(AuthProvider):
         return
 
     pass
+
 
 # Device code login does not work with Equinor compliant device policy
 # class AuthProviderDeviceCode(AuthProvider):
