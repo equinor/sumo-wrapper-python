@@ -163,13 +163,17 @@ class AuthProviderInteractive(AuthProvider):
                 scopes, timeout=(login_timeout_minutes * 60)
             )
             if "error" in result:
-                print("\n\n \033[31m Error during Equinor Azure login for Sumo access: \033[0m")
+                print(
+                    "\n\n \033[31m Error during Equinor Azure login for Sumo access: \033[0m"
+                )
                 print("Err: ", json.dumps(result, indent=4))
                 return
         except:
-            print("\n\n \033[31m Failed Equinor Azure login for Sumo access, one possible reason is timeout \033[0m")
+            print(
+                "\n\n \033[31m Failed Equinor Azure login for Sumo access, one possible reason is timeout \033[0m"
+            )
             return
-        
+
         protect_token_cache(self._resource_id)
         print("Equinor Azure login for Sumo access was successful")
         return
