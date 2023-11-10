@@ -148,8 +148,6 @@ class AuthProviderInteractive(AuthProvider):
             "\n\n \033[31m NOTE! \033[0m"
             + " Please login to Equinor Azure to enable Sumo access: "
             + "we opened a login web-page for you in your browser."
-            + "\nIf you are on a non-compliant device you should first "
-            + "exclude yourself from the Equinor compliant-device policy."
             + "\nYou should complete your login within "
             + str(login_timeout_minutes)
             + " minutes, "
@@ -164,22 +162,14 @@ class AuthProviderInteractive(AuthProvider):
             result = self._app.acquire_token_interactive(
                 scopes, timeout=(login_timeout_minutes * 60)
             )
+            if "error" in result:
+                print("\n\n \033[31m Error during Equinor Azure login for Sumo access: \033[0m")
+                print("Err: ", json.dumps(result, indent=4))
+                return
         except:
-            # For some reason a login timeout raises an exception
-            # and there seem to be no way to know for sure that
-            # a timeout was actually reached. If we skip the timout
-            # argument, the login will hang indefinately.
-            print("Failed to login, one possible reason is timeout")
-            raise ValueError(
-                "Failed to login and acquire token interactively."
-            )
-
-        if "error" in result:
-            raise ValueError(
-                "Failed to acquire token interactively. Err: %s"
-                % json.dumps(result, indent=4)
-            )
-
+            print("\n\n \033[31m Failed Equinor Azure login for Sumo access, one possible reason is timeout \033[0m")
+            return
+        
         protect_token_cache(self._resource_id)
         print("Equinor Azure login for Sumo access was successful")
         return
