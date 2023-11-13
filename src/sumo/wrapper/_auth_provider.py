@@ -164,13 +164,15 @@ class AuthProviderInteractive(AuthProvider):
             )
             if "error" in result:
                 print(
-                    "\n\n \033[31m Error during Equinor Azure login for Sumo access: \033[0m"
+                    "\n\n \033[31m Error during Equinor Azure login "
+                    "for Sumo access: \033[0m"
                 )
                 print("Err: ", json.dumps(result, indent=4))
                 return
-        except:
+        except Exception:
             print(
-                "\n\n \033[31m Failed Equinor Azure login for Sumo access, one possible reason is timeout \033[0m"
+                "\n\n \033[31m Failed Equinor Azure login for Sumo access, "
+                "one possible reason is timeout \033[0m"
             )
             return
 
