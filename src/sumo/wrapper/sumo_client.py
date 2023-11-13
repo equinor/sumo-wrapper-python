@@ -164,6 +164,7 @@ class SumoClient:
 
         return retryer(_get)
 
+    @raise_for_status
     def post(
         self,
         path: str,
@@ -286,6 +287,7 @@ class SumoClient:
 
         return retryer(_put)
 
+    @raise_for_status
     def delete(self, path: str, params: dict = None) -> dict:
         """Performs a DELETE-request to the Sumo API.
 
