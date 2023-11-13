@@ -226,6 +226,12 @@ def test_upload_duplicate_ensemble(token):
     result = _delete_object(C=C, object_id=case_id1)
     assert result == "Accepted"
 
+    # Ugly: sumo-core has a cache for case objects, which has a
+    # time-to-live of 60 seconds. If there are multiple replicas
+    # running, we might get the situation where we have just deleted
+    # the case via one replica, then ask for the object from another
+    # replica which still has it ins cache. Thus, the magic value 61,
+    # below.
     sleep(61)
 
     # Search for ensemble
