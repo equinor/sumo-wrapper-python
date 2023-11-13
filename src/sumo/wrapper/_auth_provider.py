@@ -1,5 +1,6 @@
 import msal
 import os
+from datetime import datetime, timedelta
 import stat
 import sys
 import json
@@ -130,6 +131,7 @@ class AuthProviderInteractive(AuthProvider):
         self._app = msal.PublicClientApplication(
             client_id=client_id, authority=authority, token_cache=cache
         )
+        self._resource_id = resource_id
 
         self._scope = scope_for_resource(resource_id)
 
@@ -140,57 +142,40 @@ class AuthProviderInteractive(AuthProvider):
 
     def login(self):
         scopes = [self._scope + " offline_access"]
-        result = self._app.acquire_token_interactive(scopes)
-
-        if "error" in result:
-            raise ValueError(
-                "Failed to acquire token interactively. Err: %s"
-                % json.dumps(result, indent=4)
+        login_timeout_minutes = 7
+        os.system("")  # Ensure color init on all platforms (win10)
+        print(
+            "\n\n \033[31m NOTE! \033[0m"
+            + " Please login to Equinor Azure to enable Sumo access: "
+            + "we opened a login web-page for you in your browser."
+            + "\nYou should complete your login within "
+            + str(login_timeout_minutes)
+            + " minutes, "
+            + "that is before "
+            + str(
+                (
+                    datetime.now() + timedelta(minutes=login_timeout_minutes)
+                ).strftime("%H:%M:%S")
             )
-
-        protect_token_cache(self._resource_id)
-
-        return
-
-    pass
-
-
-class AuthProviderDeviceCode(AuthProvider):
-    def __init__(self, client_id, authority, resource_id):
-        super().__init__(resource_id)
-        cache = get_token_cache(resource_id)
-        self._app = msal.PublicClientApplication(
-            client_id=client_id, authority=authority, token_cache=cache
         )
-
-        self._scope = scope_for_resource(resource_id)
-
-        if self.get_token() is None:
-            self.login()
-            pass
-        return
-
-    def login(self):
-        scopes = [self._scope + " offline_access"]
-        flow = self._app.initiate_device_flow(scopes)
-
-        if "error" in flow:
-            raise ValueError(
-                "Failed to create device flow. Err: %s"
-                % json.dumps(flow, indent=4)
+        try:
+            result = self._app.acquire_token_interactive(
+                scopes, timeout=(login_timeout_minutes * 60)
             )
-
-        print(flow["message"])
-        result = self._app.acquire_token_by_device_flow(flow)
-
-        if "error" in result:
-            raise ValueError(
-                "Failed to acquire token by device flow. Err: %s"
-                % json.dumps(result, indent=4)
+            if "error" in result:
+                print(
+                    "\n\n \033[31m Error during Equinor Azure login for Sumo access: \033[0m"
+                )
+                print("Err: ", json.dumps(result, indent=4))
+                return
+        except:
+            print(
+                "\n\n \033[31m Failed Equinor Azure login for Sumo access, one possible reason is timeout \033[0m"
             )
+            return
 
         protect_token_cache(self._resource_id)
-
+        print("Equinor Azure login for Sumo access was successful")
         return
 
     pass
@@ -243,4 +228,6 @@ def get_auth_provider(
         return AuthProviderManaged(resource_id)
 
     # ELSE
-    return AuthProviderDeviceCode(client_id, authority, resource_id)
+    # Device code login does not work with Equinor compliant device policy
+    # return AuthProviderDeviceCode(client_id, authority, resource_id)
+    return AuthProviderInteractive(client_id, authority, resource_id)
