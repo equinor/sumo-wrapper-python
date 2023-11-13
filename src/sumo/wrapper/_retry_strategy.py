@@ -3,7 +3,11 @@ import httpx
 
 
 def _log_retry_elapsed(retry_state):
-    # logger.log(logging.INFO, f"Attempts: {retry_state.attempt_number}; Elapsed: {retry_state.seconds_since_start}")
+    # logger.log(
+    #     logging.INFO,
+    #     f"Attempts: {retry_state.attempt_number}; "
+    #     f"Elapsed: {retry_state.seconds_since_start}",
+    # )
     print(
         f"Attempts: {retry_state.attempt_number}; "
         f"Elapsed: {retry_state.seconds_since_start}"
