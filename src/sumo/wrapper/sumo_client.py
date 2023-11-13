@@ -10,20 +10,11 @@ from ._auth_provider import get_auth_provider
 from .config import APP_REGISTRATION, TENANT_ID, AUTHORITY_HOST_URI
 
 from ._decorators import (
-    is_retryable_exception,
-    is_retryable_status_code,
     raise_for_status,
     raise_for_status_async,
-    return_last_value,
 )
-from tenacity import (
-    retry,
-    retry_if_exception,
-    retry_if_result,
-    wait_exponential,
-    wait_random_exponential,
-    stop_after_attempt,
-)
+
+from ._retry_strategy import RetryStrategy
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -39,6 +30,7 @@ class SumoClient:
         token: str = None,
         interactive: bool = False,
         verbosity: str = "CRITICAL",
+        retry_strategy=RetryStrategy(),
     ):
         """Initialize a new Sumo object
 
@@ -55,7 +47,8 @@ class SumoClient:
         if env not in APP_REGISTRATION:
             raise ValueError(f"Invalid environment: {env}")
 
-        self._blob_client = BlobClient()
+        self._retry_strategy = retry_strategy
+        self._blob_client = BlobClient(retry_strategy)
 
         access_token = None
         refresh_token = None
@@ -123,17 +116,6 @@ class SumoClient:
         return self._blob_client
 
     @raise_for_status
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     def get(self, path: str, params: dict = None) -> dict:
         """Performs a GET-request to the Sumo API.
 
@@ -169,28 +151,20 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        response = httpx.get(
-            f"{self.base_url}{path}",
-            params=params,
-            headers=headers,
-            follow_redirects=True,
-            timeout=DEFAULT_TIMEOUT,
-        )
+        def _get():
+            return httpx.get(
+                f"{self.base_url}{path}",
+                params=params,
+                headers=headers,
+                follow_redirects=True,
+                timeout=DEFAULT_TIMEOUT,
+            )
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return retryer(_get)
 
     @raise_for_status
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     def post(
         self,
         path: str,
@@ -252,28 +226,21 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        response = httpx.post(
-            f"{self.base_url}{path}",
-            content=blob,
-            json=json,
-            headers=headers,
-            params=params,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        return response
+        def _post():
+            return httpx.post(
+                f"{self.base_url}{path}",
+                content=blob,
+                json=json,
+                headers=headers,
+                params=params,
+                timeout=DEFAULT_TIMEOUT,
+            )
+
+        retryer = self._retry_strategy.make_retryer()
+
+        return retryer(_post)
 
     @raise_for_status
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     def put(
         self, path: str, blob: bytes = None, json: dict = None
     ) -> httpx.Response:
@@ -307,28 +274,20 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        response = httpx.put(
-            f"{self.base_url}{path}",
-            content=blob,
-            json=json,
-            headers=headers,
-            timeout=DEFAULT_TIMEOUT,
-        )
+        def _put():
+            return httpx.put(
+                f"{self.base_url}{path}",
+                content=blob,
+                json=json,
+                headers=headers,
+                timeout=DEFAULT_TIMEOUT,
+            )
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return retryer(_put)
 
     @raise_for_status
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     def delete(self, path: str, params: dict = None) -> dict:
         """Performs a DELETE-request to the Sumo API.
 
@@ -355,14 +314,17 @@ class SumoClient:
             "Authorization": f"Bearer {token}",
         }
 
-        response = httpx.delete(
-            f"{self.base_url}{path}",
-            headers=headers,
-            params=params,
-            timeout=DEFAULT_TIMEOUT,
-        )
+        def _delete():
+            return httpx.delete(
+                f"{self.base_url}{path}",
+                headers=headers,
+                params=params,
+                timeout=DEFAULT_TIMEOUT,
+            )
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return retryer(_delete)
 
     def getLogger(self, name):
         """Gets a logger object that sends log objects into the message_log
@@ -383,17 +345,6 @@ class SumoClient:
         return logger
 
     @raise_for_status_async
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     async def get_async(self, path: str, params: dict = None):
         """Performs an async GET-request to the Sumo API.
 
@@ -428,28 +379,20 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(
-                f"{self.base_url}{path}",
-                params=params,
-                headers=headers,
-                timeout=DEFAULT_TIMEOUT,
-            )
+        async def _get():
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                return await client.get(
+                    f"{self.base_url}{path}",
+                    params=params,
+                    headers=headers,
+                    timeout=DEFAULT_TIMEOUT,
+                )
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return await retryer(_get)
 
     @raise_for_status_async
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     async def post_async(
         self,
         path: str,
@@ -512,30 +455,22 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                url=f"{self.base_url}{path}",
-                content=blob,
-                json=json,
-                headers=headers,
-                params=params,
-                timeout=DEFAULT_TIMEOUT,
-            )
+        async def _post():
+            async with httpx.AsyncClient() as client:
+                return await client.post(
+                    url=f"{self.base_url}{path}",
+                    content=blob,
+                    json=json,
+                    headers=headers,
+                    params=params,
+                    timeout=DEFAULT_TIMEOUT,
+                )
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return await retryer(_post)
 
     @raise_for_status_async
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     async def put_async(
         self, path: str, blob: bytes = None, json: dict = None
     ) -> httpx.Response:
@@ -569,29 +504,21 @@ class SumoClient:
             "authorization": f"Bearer {token}",
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.put(
-                url=f"{self.base_url}{path}",
-                content=blob,
-                json=json,
-                headers=headers,
-                timeout=DEFAULT_TIMEOUT,
-            )
+        async def _put():
+            async with httpx.AsyncClient() as client:
+                return await client.put(
+                    url=f"{self.base_url}{path}",
+                    content=blob,
+                    json=json,
+                    headers=headers,
+                    timeout=DEFAULT_TIMEOUT,
+                )
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return await retryer(_put)
 
     @raise_for_status_async
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     async def delete_async(self, path: str, params: dict = None) -> dict:
         """Performs an async DELETE-request to the Sumo API.
 
@@ -618,12 +545,15 @@ class SumoClient:
             "Authorization": f"Bearer {token}",
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.delete(
-                url=f"{self.base_url}{path}",
-                headers=headers,
-                params=params,
-                timeout=DEFAULT_TIMEOUT,
-            )
+        async def _delete():
+            async with httpx.AsyncClient() as client:
+                return await client.delete(
+                    url=f"{self.base_url}{path}",
+                    headers=headers,
+                    params=params,
+                    timeout=DEFAULT_TIMEOUT,
+                )
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return await retryer(_delete)

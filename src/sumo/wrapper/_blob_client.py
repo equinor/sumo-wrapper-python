@@ -1,37 +1,21 @@
 import httpx
 
 from ._decorators import (
-    is_retryable_exception,
-    is_retryable_status_code,
     raise_for_status,
     raise_for_status_async,
-    return_last_value,
 )
-from tenacity import (
-    retry,
-    retry_if_exception,
-    retry_if_result,
-    wait_exponential,
-    wait_random_exponential,
-    stop_after_attempt,
-)
+
+from ._retry_strategy import RetryStrategy
 
 
 class BlobClient:
     """Upload blobs to blob store using pre-authorized URLs"""
 
+    def __init__(self, retry_strategy=RetryStrategy()):
+        self._retry_strategy = retry_strategy
+        return
+
     @raise_for_status
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     def upload_blob(self, blob: bytes, url: str):
         """Upload a blob.
 
@@ -45,22 +29,14 @@ class BlobClient:
             "x-ms-blob-type": "BlockBlob",
         }
 
-        response = httpx.put(url, content=blob, headers=headers)
+        def _put():
+            return httpx.put(url, content=blob, headers=headers)
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return retryer(_put)
 
     @raise_for_status_async
-    @retry(
-        stop=stop_after_attempt(6),
-        retry=(
-            retry_if_exception(is_retryable_exception)
-            | retry_if_result(is_retryable_status_code)
-        ),
-        wait=wait_exponential(multiplier=0.5)
-        + wait_random_exponential(multiplier=0.5),
-        reraise=True,
-        retry_error_callback=return_last_value,
-    )
     async def upload_blob_async(self, blob: bytes, url: str):
         """Upload a blob async.
 
@@ -74,7 +50,10 @@ class BlobClient:
             "x-ms-blob-type": "BlockBlob",
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.put(url=url, content=blob, headers=headers)
+        async def _put():
+            async with httpx.AsyncClient() as client:
+                return await client.put(url=url, content=blob, headers=headers)
 
-        return response
+        retryer = self._retry_strategy.make_retryer()
+
+        return await retryer(_put)
