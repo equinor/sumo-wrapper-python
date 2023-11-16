@@ -2,15 +2,17 @@ import tenacity as tn
 import httpx
 
 
-def _log_retry_elapsed(retry_state):
+def _log_retry_info(retry_state):
     # logger.log(
     #     logging.INFO,
     #     f"Attempts: {retry_state.attempt_number}; "
     #     f"Elapsed: {retry_state.seconds_since_start}",
     # )
     print(
+        f"Function: {retry_state.fn}; "
+        f"Result:   {retry_state.outcome.result()}; "
         f"Attempts: {retry_state.attempt_number}; "
-        f"Elapsed: {retry_state.seconds_since_start}"
+        f"Elapsed:  {retry_state.seconds_since_start}"
     )
     return
 
@@ -52,5 +54,5 @@ class RetryStrategy:
                 )
             ),
             retry_error_callback=_return_last_value,
-            before_sleep=_log_retry_elapsed,
+            before_sleep=_log_retry_info,
         )
