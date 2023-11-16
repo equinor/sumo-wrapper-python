@@ -9,8 +9,6 @@ def _log_retry_info(retry_state):
     #     f"Elapsed: {retry_state.seconds_since_start}",
     # )
     print(
-        f"Function: {retry_state.fn}; "
-        f"Result:   {retry_state.outcome.result()}; "
         f"Attempts: {retry_state.attempt_number}; "
         f"Elapsed:  {retry_state.seconds_since_start}"
     )
