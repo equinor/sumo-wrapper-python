@@ -54,3 +54,22 @@ class RetryStrategy:
             retry_error_callback=_return_last_value,
             before_sleep=_log_retry_info,
         )
+
+    def make_retryer_async(self):
+        return tn.AsyncRetrying(
+            stop=tn.stop_after_attempt(self._stop_after),
+            retry=(
+                tn.retry_if_exception(_is_retryable_exception)
+                | tn.retry_if_result(_is_retryable_status_code)
+            ),
+            wait=(
+                tn.wait_exponential(
+                    multiplier=self._multiplier, exp_base=self._exp_base
+                )
+                + tn.wait_random_exponential(
+                    multiplier=self._multiplier, exp_base=self._exp_base
+                )
+            ),
+            retry_error_callback=_return_last_value,
+            before_sleep=_log_retry_info,
+        )
