@@ -54,6 +54,6 @@ class BlobClient:
             async with httpx.AsyncClient() as client:
                 return await client.put(url=url, content=blob, headers=headers)
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = self._retry_strategy.make_retryer_async()
 
         return await retryer(_put)

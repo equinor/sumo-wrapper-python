@@ -388,7 +388,7 @@ class SumoClient:
                     timeout=DEFAULT_TIMEOUT,
                 )
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = self._retry_strategy.make_retryer_async()
 
         return await retryer(_get)
 
@@ -466,7 +466,7 @@ class SumoClient:
                     timeout=DEFAULT_TIMEOUT,
                 )
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = self._retry_strategy.make_retryer_async()
 
         return await retryer(_post)
 
@@ -514,7 +514,7 @@ class SumoClient:
                     timeout=DEFAULT_TIMEOUT,
                 )
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = self._retry_strategy.make_retryer_async()
 
         return await retryer(_put)
 
@@ -554,6 +554,6 @@ class SumoClient:
                     timeout=DEFAULT_TIMEOUT,
                 )
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = self._retry_strategy.make_retryer_async()
 
         return await retryer(_delete)
