@@ -29,6 +29,7 @@ class SumoClient:
         env: str,
         token: str = None,
         interactive: bool = False,
+        devicecode: bool = False,
         verbosity: str = "CRITICAL",
         retry_strategy=RetryStrategy(),
     ):
@@ -81,6 +82,7 @@ class SumoClient:
             interactive=interactive,
             refresh_token=refresh_token,
             access_token=access_token,
+            devicecode=devicecode,
         )
 
         if env == "localhost":

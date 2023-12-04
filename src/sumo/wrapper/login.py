@@ -38,6 +38,15 @@ def get_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
+        "-d",
+        "--devicecode",
+        dest="devicecode",
+        action="store_true",
+        default=False,
+        help="Login with device-code",
+    )
+
+    parser.add_argument(
         "-p",
         "--print",
         dest="print_token",
@@ -57,7 +66,9 @@ def main():
 
     print("Login to Sumo environment: " + env)
 
-    sumo = SumoClient(args.env, interactive=args.interactive)
+    sumo = SumoClient(
+        args.env, interactive=args.interactive, devicecode=args.devicecode
+    )
     token = sumo.authenticate()
 
     if args.print_token:
