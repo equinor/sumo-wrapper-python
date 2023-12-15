@@ -11,8 +11,6 @@ Want to contribute? Read our [contributing](./CONTRIBUTING.md) guidelines
 For internal Equinor users, this package is available through the Komodo
 distribution.
 
-> **:warning:** `CallSumoApi` is deprecated.
-
 # Table of contents
 
 - [sumo-wrapper-python](#sumo-wrapper-python)
