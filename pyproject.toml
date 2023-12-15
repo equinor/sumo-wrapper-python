@@ -1,13 +1,41 @@
 [build-system]
-requires = [
-  "pip>=19.1.1",
-  "setuptools>=28",
-  "setuptools_scm>=3.2.0",
-  "wheel"
-]
+requires = ["setuptools>=28", "setuptools_scm>=3.2.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-write_to = "src/sumo/wrapper/version.py"
+version_file = "src/sumo/wrapper/_version.py"
+
 
 [tool.black]
 line-length = 79
+
+[project]
+name = "sumo-wrapper-python"
+description = "Python wrapper for the Sumo API"
+license = { file = "LICENSE" }
+readme = { file = "README.md", content-type = "text/markdown" }
+classifiers = ["Programming Language :: Python"]
+authors = [{ name = "Equinor" }]
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = [
+  "msal>=1.20.0",
+  "msal-extensions>=1.0.0",
+  "pyjwt>=2.4.0",
+  "httpx>=0.24.1",
+  "tenacity>=8.2.2",
+  "azure-identity>=1.13.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "PyYAML"]
+docs = ["sphinx", "sphinx-rtd-theme"]
+
+[project.urls]
+Repository = "https://github.com/equinor/sumo-wrapper-python"
+
+[project.scripts]
+sumo_login = "sumo.wrapper.login:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
