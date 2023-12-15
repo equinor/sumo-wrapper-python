@@ -2,7 +2,7 @@ from .sumo_client import SumoClient
 from ._retry_strategy import RetryStrategy
 
 try:
-    from .version import version
+    from ._version import version
 
     __version__ = version
 except ImportError:
