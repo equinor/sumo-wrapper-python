@@ -37,7 +37,7 @@ class AuthProvider:
         return result["access_token"]
 
     def get_authorization(self):
-        return {"Authorization": "Bearer " + self.get_token()};
+        return {"Authorization": "Bearer " + self.get_token()}
 
     pass
 
@@ -237,16 +237,17 @@ class AuthProviderManaged(AuthProvider):
 
     pass
 
+
 class AuthProviderSumoToken(AuthProvider):
     def __init__(self):
         self._token = os.getenv("SUMO_TOKEN")
         return
 
     def get_token(self):
-        return self._token;
+        return self._token
 
     def get_authorization(self):
-        return { "X-SUMO-Token": self._token }
+        return {"X-SUMO-Token": self._token}
 
 
 def get_auth_provider(
