@@ -71,13 +71,13 @@ class AuthProviderRefreshToken(AuthProvider):
     pass
 
 
-def get_token_path(resource_id):
+def get_token_path(resource_id, suffix):
     return os.path.join(
-        os.path.expanduser("~"), ".sumo", str(resource_id) + ".token"
+        os.path.expanduser("~"), ".sumo", str(resource_id) + suffix
     )
 
 
-def get_token_cache(resource_id):
+def get_token_cache(resource_id, suffix):
     # https://github.com/AzureAD/microsoft-authentication-extensions-\
     # for-python
     # Encryption not supported on linux servers like rgs, and
@@ -85,7 +85,7 @@ def get_token_cache(resource_id):
     # Encryption is supported on Windows and Mac.
 
     cache = None
-    token_path = get_token_path(resource_id)
+    token_path = get_token_path(resource_id, suffix)
     if sys.platform.startswith("linux"):
         persistence = FilePersistence(token_path)
         cache = PersistedTokenCache(persistence)
@@ -110,8 +110,8 @@ def get_token_cache(resource_id):
     return cache
 
 
-def protect_token_cache(resource_id):
-    token_path = get_token_path(resource_id)
+def protect_token_cache(resource_id, suffix):
+    token_path = get_token_path(resource_id, suffix)
 
     if sys.platform.startswith("linux"):
         filemode = stat.filemode(os.stat(token_path).st_mode)
@@ -130,7 +130,7 @@ def protect_token_cache(resource_id):
 class AuthProviderInteractive(AuthProvider):
     def __init__(self, client_id, authority, resource_id):
         super().__init__(resource_id)
-        cache = get_token_cache(resource_id)
+        cache = get_token_cache(resource_id, ".token")
         self._app = msal.PublicClientApplication(
             client_id=client_id, authority=authority, token_cache=cache
         )
@@ -179,7 +179,7 @@ class AuthProviderInteractive(AuthProvider):
             )
             return
 
-        protect_token_cache(self._resource_id)
+        protect_token_cache(self._resource_id, ".token")
         print("Equinor Azure login for Sumo access was successful")
         return
 
@@ -189,7 +189,7 @@ class AuthProviderInteractive(AuthProvider):
 class AuthProviderDeviceCode(AuthProvider):
     def __init__(self, client_id, authority, resource_id):
         super().__init__(resource_id)
-        cache = get_token_cache(resource_id)
+        cache = get_token_cache(resource_id, ".token")
         self._app = msal.PublicClientApplication(
             client_id=client_id, authority=authority, token_cache=cache
         )
@@ -218,7 +218,7 @@ class AuthProviderDeviceCode(AuthProvider):
                 % json.dumps(result, indent=4)
             )
 
-        protect_token_cache(self._resource_id)
+        protect_token_cache(self._resource_id, ".token")
 
         return
 
@@ -239,8 +239,10 @@ class AuthProviderManaged(AuthProvider):
 
 
 class AuthProviderSumoToken(AuthProvider):
-    def __init__(self):
-        self._token = os.getenv("SUMO_TOKEN")
+    def __init__(self, resource_id):
+        token_path = get_token_path(resource_id, ".sharedkey")
+        with open(token_path, "r") as f:
+            self._token = f.readline().strip()
         return
 
     def get_token(self):
@@ -267,8 +269,8 @@ def get_auth_provider(
     if access_token:
         return AuthProviderAccessToken(access_token)
     # ELSE
-    if os.getenv("SUMO_TOKEN"):
-        return AuthProviderSumoToken()
+    if os.path.exists(get_token_path(resource_id, ".sharedkey")):
+        return AuthProviderSumoToken(resource_id)
     # ELSE
     if interactive:
         return AuthProviderInteractive(client_id, authority, resource_id)
