@@ -113,7 +113,7 @@ def get_token_cache(resource_id, suffix):
 def protect_token_cache(resource_id, suffix):
     token_path = get_token_path(resource_id, suffix)
 
-    if sys.platform.startswith("linux"):
+    if sys.platform.startswith("linux") or sys.platform == "darwin":
         filemode = stat.filemode(os.stat(token_path).st_mode)
         if filemode != "-rw-------":
             os.chmod(token_path, 0o600)
@@ -240,6 +240,7 @@ class AuthProviderManaged(AuthProvider):
 
 class AuthProviderSumoToken(AuthProvider):
     def __init__(self, resource_id):
+        protect_token_cache(resource_id, ".sharedkey")
         token_path = get_token_path(resource_id, ".sharedkey")
         with open(token_path, "r") as f:
             self._token = f.readline().strip()
