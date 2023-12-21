@@ -146,12 +146,11 @@ class SumoClient:
                 )
         """
 
-        token = self.auth.get_token()
-
         headers = {
             "Content-Type": "application/json",
-            "authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         def _get():
             return httpx.get(
@@ -214,8 +213,6 @@ class SumoClient:
                     json=object_metadata
                 )
         """
-        token = self.auth.get_token()
-
         if blob and json:
             raise ValueError("Both blob and json given to post.")
 
@@ -225,8 +222,9 @@ class SumoClient:
 
         headers = {
             "Content-Type": content_type,
-            "authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         def _post():
             return httpx.post(
@@ -260,8 +258,6 @@ class SumoClient:
             Sumo response object
         """
 
-        token = self.auth.get_token()
-
         if blob and json:
             raise ValueError("Both blob and json given to post")
 
@@ -273,8 +269,9 @@ class SumoClient:
 
         headers = {
             "Content-Type": content_type,
-            "authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         def _put():
             return httpx.put(
@@ -309,12 +306,11 @@ class SumoClient:
                 sumo.delete(path=f"/objects('{object_id}')")
         """
 
-        token = self.auth.get_token()
-
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         def _delete():
             return httpx.delete(
@@ -374,12 +370,12 @@ class SumoClient:
                     size=3
                 )
         """
-        token = self.auth.get_token()
 
         headers = {
             "Content-Type": "application/json",
-            "authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         async def _get():
             async with httpx.AsyncClient(follow_redirects=True) as client:
@@ -443,8 +439,6 @@ class SumoClient:
                 )
         """
 
-        token = self.auth.get_token()
-
         if blob and json:
             raise ValueError("Both blob and json given to post.")
 
@@ -454,8 +448,9 @@ class SumoClient:
 
         headers = {
             "Content-Type": content_type,
-            "authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         async def _post():
             async with httpx.AsyncClient() as client:
@@ -490,8 +485,6 @@ class SumoClient:
             Sumo response object
         """
 
-        token = self.auth.get_token()
-
         if blob and json:
             raise ValueError("Both blob and json given to post")
 
@@ -503,8 +496,9 @@ class SumoClient:
 
         headers = {
             "Content-Type": content_type,
-            "authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         async def _put():
             async with httpx.AsyncClient() as client:
@@ -540,12 +534,11 @@ class SumoClient:
                 await sumo.delete_async(path=f"/objects('{object_id}')")
         """
 
-        token = self.auth.get_token()
-
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}",
         }
+
+        headers.update(self.auth.get_authorization())
 
         async def _delete():
             async with httpx.AsyncClient() as client:
