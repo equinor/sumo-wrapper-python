@@ -12,6 +12,7 @@ from ._retry_strategy import _log_retry_info, _return_last_value
 
 from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
+import errno
 
 # FIXME: remove
 import random
@@ -82,7 +83,12 @@ def get_token_path(resource_id, suffix):
     )
 
 
-@tn.retry(retry=tn.retry_if_exception_type(Exception),
+def _maybe_nfs_exception(exception):
+    return isinstance(exception, OSError) and \
+        (exception.errno in (errno.EAGAIN, errno.ESTALE))
+
+
+@tn.retry(retry=tn.retry_if_exception(_maybe_nfs_exception),
           stop=tn.stop_after_attempt(6),
           wait=(
                 tn.wait_exponential(
@@ -104,7 +110,9 @@ def get_token_cache(resource_id, suffix):
 
     # FIXME: remove
     if random.randrange(0, 100) < 80:
-        raise Exception
+        err = [errno.EAGAIN, errno.ESTALE][random.randrange(0,2)]
+        errstr = os.strerror(err)
+        raise OSError(err, errstr)
     cache = None
     token_path = get_token_path(resource_id, suffix)
     if sys.platform.startswith("linux"):
