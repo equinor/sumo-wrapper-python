@@ -7,6 +7,8 @@ import json
 import jwt
 import time
 from azure.identity import ManagedIdentityCredential
+import tenacity as tn
+from ._retry_strategy import _log_retry_info, _return_last_value
 
 from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
@@ -77,6 +79,19 @@ def get_token_path(resource_id, suffix):
     )
 
 
+@tn.retry(retry=tn.retry_if_exception_type(Exception),
+          stop=tn.stop_after_attempt(6),
+          wait=(
+                tn.wait_exponential(
+                    multiplier=0.5, exp_base=2
+                )
+                + tn.wait_random_exponential(
+                    multiplier=0.5, exp_base=2
+                )
+            ),
+            retry_error_callback=_return_last_value,
+            before_sleep=_log_retry_info,
+          )
 def get_token_cache(resource_id, suffix):
     # https://github.com/AzureAD/microsoft-authentication-extensions-\
     # for-python
