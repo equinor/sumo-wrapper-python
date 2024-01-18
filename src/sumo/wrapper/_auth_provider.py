@@ -109,7 +109,7 @@ def get_token_cache(resource_id, suffix):
     # Encryption is supported on Windows and Mac.
 
     # FIXME: remove
-    if random.randrange(0, 100) < 80:
+    if random.randrange(0, 100) < 5:
         err = [errno.EAGAIN, errno.ESTALE][random.randrange(0,2)]
         errstr = os.strerror(err)
         raise OSError(err, errstr)
