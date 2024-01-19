@@ -17,7 +17,7 @@ def _log_retry_info(retry_state):
 
 # Define the conditions for retrying based on exception types
 def _is_retryable_exception(exception):
-    return isinstance(exception, (httpx.TimeoutException, httpx.ConnectError,
+    return isinstance(exception, (httpx.TimeoutException, httpx.NetworkError,
                                   httpx.ProxyError))
 
 
