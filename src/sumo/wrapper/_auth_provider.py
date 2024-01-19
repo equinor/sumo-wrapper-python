@@ -14,8 +14,6 @@ from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
 import errno
 
-# FIXME: remove
-import random
 
 if not sys.platform.startswith("linux"):
     from msal_extensions import build_encrypted_persistence
@@ -108,11 +106,6 @@ def get_token_cache(resource_id, suffix):
     # neither is common usage from many cluster nodes.
     # Encryption is supported on Windows and Mac.
 
-    # FIXME: remove
-    if random.randrange(0, 100) < 5:
-        err = [errno.EAGAIN, errno.ESTALE][random.randrange(0,2)]
-        errstr = os.strerror(err)
-        raise OSError(err, errstr)
     cache = None
     token_path = get_token_path(resource_id, suffix)
     if sys.platform.startswith("linux"):
