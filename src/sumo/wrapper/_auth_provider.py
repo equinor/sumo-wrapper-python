@@ -139,6 +139,19 @@ def get_token_cache(resource_id, suffix):
     return cache
 
 
+@tn.retry(retry=tn.retry_if_exception(_maybe_nfs_exception),
+          stop=tn.stop_after_attempt(6),
+          wait=(
+                tn.wait_exponential(
+                    multiplier=0.5, exp_base=2
+                )
+                + tn.wait_random_exponential(
+                    multiplier=0.5, exp_base=2
+                )
+            ),
+            retry_error_callback=_return_last_value,
+            before_sleep=_log_retry_info,
+          )
 def protect_token_cache(resource_id, suffix):
     token_path = get_token_path(resource_id, suffix)
 
