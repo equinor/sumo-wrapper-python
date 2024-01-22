@@ -17,8 +17,10 @@ def _log_retry_info(retry_state):
 
 # Define the conditions for retrying based on exception types
 def _is_retryable_exception(exception):
-    return isinstance(exception, (httpx.TimeoutException, httpx.NetworkError,
-                                  httpx.ProxyError))
+    return isinstance(
+        exception,
+        (httpx.TimeoutException, httpx.NetworkError, httpx.ProxyError),
+    )
 
 
 # Define the conditions for retrying based on HTTP status codes
@@ -32,7 +34,6 @@ def _return_last_value(retry_state):
 
 class RetryStrategy:
     def __init__(self, stop_after=6, multiplier=0.5, exp_base=2):
-
         self._stop_after = stop_after
         self._multiplier = multiplier
         self._exp_base = exp_base
