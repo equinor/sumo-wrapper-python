@@ -7,9 +7,13 @@ import json
 import jwt
 import time
 from azure.identity import ManagedIdentityCredential
+import tenacity as tn
+from ._retry_strategy import _log_retry_info, _return_last_value
 
 from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
+import errno
+
 
 if not sys.platform.startswith("linux"):
     from msal_extensions import build_encrypted_persistence
@@ -19,6 +23,12 @@ def scope_for_resource(resource_id):
     return f"{resource_id}/.default"
 
 
+def _maybe_nfs_exception(exception):
+    return isinstance(exception, OSError) and (
+        exception.errno in (errno.EAGAIN, errno.ESTALE)
+    )
+
+
 class AuthProvider:
     def __init__(self, resource_id):
         self._resource_id = resource_id
@@ -26,6 +36,16 @@ class AuthProvider:
         self._app = None
         return
 
+    @tn.retry(
+        retry=tn.retry_if_exception(_maybe_nfs_exception),
+        stop=tn.stop_after_attempt(6),
+        wait=(
+            tn.wait_exponential(multiplier=0.5, exp_base=2)
+            + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+        ),
+        retry_error_callback=_return_last_value,
+        before_sleep=_log_retry_info,
+    )
     def get_token(self):
         accounts = self._app.get_accounts()
         if len(accounts) == 0:
@@ -77,6 +97,16 @@ def get_token_path(resource_id, suffix):
     )
 
 
+@tn.retry(
+    retry=tn.retry_if_exception(_maybe_nfs_exception),
+    stop=tn.stop_after_attempt(6),
+    wait=(
+        tn.wait_exponential(multiplier=0.5, exp_base=2)
+        + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+    ),
+    retry_error_callback=_return_last_value,
+    before_sleep=_log_retry_info,
+)
 def get_token_cache(resource_id, suffix):
     # https://github.com/AzureAD/microsoft-authentication-extensions-\
     # for-python
@@ -110,6 +140,16 @@ def get_token_cache(resource_id, suffix):
     return cache
 
 
+@tn.retry(
+    retry=tn.retry_if_exception(_maybe_nfs_exception),
+    stop=tn.stop_after_attempt(6),
+    wait=(
+        tn.wait_exponential(multiplier=0.5, exp_base=2)
+        + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+    ),
+    retry_error_callback=_return_last_value,
+    before_sleep=_log_retry_info,
+)
 def protect_token_cache(resource_id, suffix):
     token_path = get_token_path(resource_id, suffix)
 
@@ -143,6 +183,16 @@ class AuthProviderInteractive(AuthProvider):
             pass
         return
 
+    @tn.retry(
+        retry=tn.retry_if_exception(_maybe_nfs_exception),
+        stop=tn.stop_after_attempt(6),
+        wait=(
+            tn.wait_exponential(multiplier=0.5, exp_base=2)
+            + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+        ),
+        retry_error_callback=_return_last_value,
+        before_sleep=_log_retry_info,
+    )
     def login(self):
         scopes = [self._scope + " offline_access"]
         login_timeout_minutes = 7
@@ -200,6 +250,16 @@ class AuthProviderDeviceCode(AuthProvider):
             pass
         return
 
+    @tn.retry(
+        retry=tn.retry_if_exception(_maybe_nfs_exception),
+        stop=tn.stop_after_attempt(6),
+        wait=(
+            tn.wait_exponential(multiplier=0.5, exp_base=2)
+            + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+        ),
+        retry_error_callback=_return_last_value,
+        before_sleep=_log_retry_info,
+    )
     def login(self):
         flow = self._app.initiate_device_flow([self._scope])
 
@@ -232,6 +292,16 @@ class AuthProviderManaged(AuthProvider):
         self._scope = scope_for_resource(resource_id)
         return
 
+    @tn.retry(
+        retry=tn.retry_if_exception(_maybe_nfs_exception),
+        stop=tn.stop_after_attempt(6),
+        wait=(
+            tn.wait_exponential(multiplier=0.5, exp_base=2)
+            + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+        ),
+        retry_error_callback=_return_last_value,
+        before_sleep=_log_retry_info,
+    )
     def get_token(self):
         return self._app.get_token(self._scope).token
 
@@ -239,6 +309,16 @@ class AuthProviderManaged(AuthProvider):
 
 
 class AuthProviderSumoToken(AuthProvider):
+    @tn.retry(
+        retry=tn.retry_if_exception(_maybe_nfs_exception),
+        stop=tn.stop_after_attempt(6),
+        wait=(
+            tn.wait_exponential(multiplier=0.5, exp_base=2)
+            + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+        ),
+        retry_error_callback=_return_last_value,
+        before_sleep=_log_retry_info,
+    )
     def __init__(self, resource_id):
         protect_token_cache(resource_id, ".sharedkey")
         token_path = get_token_path(resource_id, ".sharedkey")
@@ -253,6 +333,16 @@ class AuthProviderSumoToken(AuthProvider):
         return {"X-SUMO-Token": self._token}
 
 
+@tn.retry(
+    retry=tn.retry_if_exception(_maybe_nfs_exception),
+    stop=tn.stop_after_attempt(6),
+    wait=(
+        tn.wait_exponential(multiplier=0.5, exp_base=2)
+        + tn.wait_random_exponential(multiplier=0.5, exp_base=2)
+    ),
+    retry_error_callback=_return_last_value,
+    before_sleep=_log_retry_info,
+)
 def get_auth_provider(
     client_id,
     authority,
