@@ -10,8 +10,13 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+# flake8: noqa
+# pylint: skip-file
 import os
 import sys
+from pathlib import Path
+import sphinx
+from datetime import date
 
 sys.path.insert(0, os.path.abspath('../src/'))
 
@@ -19,7 +24,8 @@ sys.path.insert(0, os.path.abspath('../src/'))
 # -- Project information -----------------------------------------------------
 
 project = 'sumo-wrapper-python'
-copyright = '2022, Sudo Team @ Equinor'
+current_year = date.today().year
+copyright = "Equinor " + str(current_year)
 author = 'Sudo Team @ Equinor'
 
 
@@ -53,4 +59,4 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
