@@ -32,7 +32,13 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest", "PyYAML"]
-docs = ["sphinx", "sphinx-rtd-theme"]
+docs = [
+  "sphinx",
+  "sphinx-rtd-theme",
+  "autoapi",
+  "sphinx-autodoc-typehints",
+  "sphinxcontrib-apidoc",
+]
 
 [project.urls]
 Repository = "https://github.com/equinor/sumo-wrapper-python"
