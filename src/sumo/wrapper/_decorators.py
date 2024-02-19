@@ -1,4 +1,9 @@
+# For sphinx:
+from functools import wraps
+
+
 def raise_for_status(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         # FIXME: in newer versions of httpx, raise_for_status() is chainable,
         # so we could simply write
@@ -11,6 +16,7 @@ def raise_for_status(func):
 
 
 def raise_for_status_async(func):
+    @wraps(func)
     async def wrapper(*args, **kwargs):
         # FIXME: in newer versions of httpx, raise_for_status() is chainable,
         # so we could simply write
