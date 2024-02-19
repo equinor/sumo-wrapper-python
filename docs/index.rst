@@ -6,6 +6,8 @@
 sumo-wrapper-python
 ===================
 
+This is a thin python wrapper for the Sumo API. 
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

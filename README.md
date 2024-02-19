@@ -4,28 +4,16 @@ Python wrappers for Sumo APIs
 
 Want to contribute? Read our [contributing](./CONTRIBUTING.md) guidelines
 
-## Install:
+## Access
+
+Equinor AccessIT: search for SUMO
+
+## Install
 
     pip install sumo-wrapper-python
 
 For internal Equinor users, this package is available through the Komodo
 distribution.
-
-# Table of contents
-
-- [sumo-wrapper-python](#sumo-wrapper-python)
-  - [Install:](#install)
-- [Table of contents](#table-of-contents)
-- [SumoClient](#sumoclient)
-    - [Initialization](#initialization)
-    - [Parameters](#parameters)
-          - [`token` logic](#token-logic)
-  - [Methods](#methods)
-    - [get(path, \*\*params)](#getpath-params)
-    - [post(path, json, blob, params)](#postpath-json-blob-params)
-    - [put(path, json, blob)](#putpath-json-blob)
-    - [delete(path)](#deletepath)
-  - [Async methods](#async-methods)
 
 # SumoClient
 
@@ -36,7 +24,7 @@ A thin wrapper class for the Sumo API.
 ```python
 from sumo.wrapper import SumoClient
 
-sumo = SumoClient(env="dev")
+Sumo = SumoClient(env="dev")
 ```
 
 ### Parameters
@@ -45,19 +33,27 @@ sumo = SumoClient(env="dev")
 class SumoClient:
     def __init__(
         self,
-        env:str,
-        token:str=None,
-        interactive:bool=False,
-        verbosity:str="CRITICAL"
+        env: str,
+        token: str = None,
+        interactive: bool = False,
+        devicecode: bool = False,
+        verbosity: str = "CRITICAL",
+        retry_strategy=RetryStrategy(),
     ):
 ```
 
-- `env`: sumo environment
+- `env`: Sumo environment: "dev", "prod"
 - `token`: bearer token or refresh token
 - `interactive`: use interactive flow when authenticating
+- `devicecode`: use device code flow when authenticating
 - `verbosity`: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+- `retry_strategy`: network retry strategy
 
 ###### `token` logic
+
+The most used option is to not provide a token: this will trigger 
+an authentication process and then handles token, token refresh and
+re-authentication as automatic as possible.
 
 If an access token is provided in the `token` parameter, it will be used as long
 as it's valid. An error will be raised when it expires.
@@ -65,13 +61,11 @@ as it's valid. An error will be raised when it expires.
 If we are unable to decode the provided `token` as a JWT, we treat it as a
 refresh token and attempt to use it to retrieve an access token.
 
-If no `token` is provided, an authentication code flow/interactive flow is
-triggered to retrieve a token.
 
 ## Methods
 
-`SumoClient` has one method for each HTTP-method that is used in the sumo-core
-API. See examples of how to use these methods below.
+`SumoClient` has one method for each HTTP-method that is used in the Sumo
+API. The Sumo API documentation is available from the Swagger button in the Sumo frontend. 
 
 All methods accepts a path argument. Path parameters can be interpolated into
 the path string. Example:
@@ -79,13 +73,13 @@ the path string. Example:
 ```python
 object_id = "1234"
 
-# GET/objects('{obejctid}')
+# GET/objects('{objectid}')
 sumo.get(f"/objects('{object_id}')")
 ```
 
 ### get(path, \*\*params)
 
-Performs a GET-request to sumo-core. Accepts query parameters as keyword
+Performs a GET-request to Sumo. Accepts query parameters as keyword
 arguments.
 
 ```python
@@ -107,7 +101,7 @@ obj = sumo.get(f"/objects('{object_id}')")
 
 ### post(path, json, blob, params)
 
-Performs a POST-request to sumo-core. Accepts json and blob, but not both at the
+Performs a POST-request to Sumo. Accepts json and blob, but not both at the
 same time.
 
 ```python
@@ -122,7 +116,7 @@ child_object = sumo.post(f"/objects('{parent_id}')", json=child_meta_data)
 
 ### put(path, json, blob)
 
-Performs a PUT-request to sumo-core. Accepts json and blob, but not both at the
+Performs a PUT-request to Sumo. Accepts json and blob, but not both at the
 same time.
 
 ```python
@@ -134,7 +128,7 @@ sumo.put(f"/objects('{child_id}')/blob", blob=blob)
 
 ### delete(path)
 
-Performs a DELETE-request to sumo-core.
+Performs a DELETE-request to Sumo.
 
 ```python
 # Delete blob
@@ -155,4 +149,36 @@ These accept the same parameters as their synchronous counterparts, but have to 
 ```python
 # Retrieve userdata
 user_data = await sumo.get_async("/userdata")
+```
+
+## Example
+
+```python
+from sumo.wrapper import SumoClient
+sumo = SumoClient(env="prod")
+
+# The line above will trigger the authentication process, and 
+# the behaviour depends on how long since your last login. 
+# It could re-use existing login or it could take you through 
+# a full Microsoft authentication process including  
+# username, password, two-factor. 
+
+# List your Sumo permissions:
+print("My permissions:", sumo.get("/userpermissions").json())
+
+# Get the first case from the list of cases you have access to:
+case = sumo.get("/searchroot").json()["hits"]["hits"][0]
+print("Case metadata:", case["_source"])
+case_uuid = case["_source"]["fmu"]["case"]["uuid"]
+print("Case uuid: ", case_uuid)
+
+# Get the first child object:
+child = sumo.get(f"/objects('{case_uuid}')/search").json()["hits"]["hits"][0]
+print("Child metadata", child["_source"])
+child_uuid = child["_id"]
+print("Child uuid: ", child_uuid)
+
+# Get the binary of the child
+binary_object = sumo.get(f"/objects('{child_uuid}')/blob").content
+print("Size of child binary object:", len(binary_object))
 ```
