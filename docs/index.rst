@@ -114,8 +114,6 @@ Example
    print("Size of child binary object:", len(binary_object))
 
 
-This is a thin python wrapper for the Sumo API. 
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
