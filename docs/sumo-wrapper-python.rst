@@ -8,9 +8,9 @@ A thin python wrapper class that can be used by Sumo client applications to
 communicate with the Sumo core server. It has methods for GET, PUT, POST and DELETE, 
 and handles authentication and automatic network retries. 
 
-This is low-level and close to the Sumo API, and the higher level
-alternative `fmu-sumo <https://fmu-sumo.readthedocs.io>`_ 
-might be a better choice for many use cases. 
+This is low-level and close to the Sumo API and primarily intended for developers. 
+For usage in the FMU context, the higher-level alternative 
+`fmu-sumo <https://fmu-sumo.readthedocs.io>`_ is recommended. 
 
 The Sumo API is described at 
 `https://main-sumo-prod.radix.equinor.com/swagger-ui/ <https://main-sumo-prod.radix.equinor.com/swagger-ui/>`_
