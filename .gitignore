@@ -11,5 +11,4 @@ build
 .cache/
 /src/testing.py
 /docs/_build
-/docs/_static
 /src/sumo/wrapper/version.py
