@@ -1,5 +1,5 @@
 # Build the docs here, to show errors. 
-# The actual building is configured in ReadTheDocs.org. 
+# The actual deployment of docs is configured in ReadTheDocs.org. 
 
 name: Build and deploy docs 
 

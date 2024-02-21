@@ -8,13 +8,17 @@ A thin python wrapper class that can be used by Sumo client applications to
 communicate with the Sumo core server. It has methods for GET, PUT, POST and DELETE, 
 and handles authentication and automatic network retries. 
 
-This class is low-level and close to the Sumo API, and the higher level
+This is low-level and close to the Sumo API, and the higher level
 alternative `fmu-sumo <https://fmu-sumo.readthedocs.io>`_ 
 might be a better choice for many use cases. 
 
 The Sumo API is described at 
 `https://main-sumo-prod.radix.equinor.com/swagger-ui/ <https://main-sumo-prod.radix.equinor.com/swagger-ui/>`_
 
+The data model and schema is described at 
+`https://fmu-dataio.readthedocs.io/en/latest/datamodel.html <https://fmu-dataio.readthedocs.io/en/latest/datamodel.html>`_
+
+Information on Sumo can be found `here <https://doc-sumo-doc-prod.radix.equinor.com/>`_
 
 Preconditions
 *************
@@ -48,7 +52,8 @@ Initialization
 
 No token provided: this will trigger 
 an authentication process and then handles token, token refresh and
-re-authentication as automatic as possible.
+re-authentication as automatic as possible. This would be the most common
+usecase. 
 
 If an access token is provided in the `token` parameter, it will be used as long
 as it's valid. An error will be raised when it expires.
@@ -61,12 +66,21 @@ Methods
 *******
 
 `SumoClient` has one method for each HTTP-method that is used in the Sumo
-API: GET, PUT, POST and DELETE. 
-The Sumo API documentation is available from the Swagger button in 
-the Sumo frontend. 
+API: GET, PUT, POST and DELETE. In addition a method to get a blob client 
+which handles blob contents. 
 
-Methods accepts a path argument. Path parameters can be interpolated into
-the path string. 
+The methods accepts a path argument.  A path is the path to a 
+Sumo `API <https://main-sumo-prod.radix.equinor.com/swagger-ui/>`_ method, for 
+example "/search" or "/smda/countries". Path parameters can be added into
+the path string, for example 
+
+.. code-block:: python
+
+f"/objects('{case_uuid}')/search"
+
+The Sumo API documentation is available from the Swagger button in 
+the Sumo frontend, or you can use this link:
+`https://main-sumo-prod.radix.equinor.com/swagger-ui/ <https://main-sumo-prod.radix.equinor.com/swagger-ui/>`_. 
 
 Async methods
 *************
