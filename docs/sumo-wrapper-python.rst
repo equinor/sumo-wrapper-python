@@ -76,7 +76,7 @@ the path string, for example
 
 .. code-block:: python
 
-f"/objects('{case_uuid}')/search"
+   f"/objects('{case_uuid}')/search"
 
 The Sumo API documentation is available from the Swagger button in 
 the Sumo frontend, or you can use this link:
