@@ -74,6 +74,8 @@ def main():
     if args.print_token:
         print(f"TOKEN: {token}")
 
+    print("Successfully logged in to Sumo environment: " + env)
+
 
 if __name__ == "__main__":
     main()
