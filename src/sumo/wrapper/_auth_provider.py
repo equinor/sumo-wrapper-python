@@ -58,7 +58,7 @@ class AuthProvider:
 
     def get_authorization(self):
         token = self.get_token()
-        if token  is None:
+        if token is None:
             return ""
 
         return {"Authorization": "Bearer " + token}
