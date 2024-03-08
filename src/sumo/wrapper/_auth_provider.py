@@ -57,7 +57,11 @@ class AuthProvider:
         return result["access_token"]
 
     def get_authorization(self):
-        return {"Authorization": "Bearer " + self.get_token()}
+        token = self.get_token()
+        if token is None:
+            return ""
+
+        return {"Authorization": "Bearer " + token}
 
     pass
 
