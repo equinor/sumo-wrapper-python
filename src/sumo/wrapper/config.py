@@ -11,6 +11,10 @@ APP_REGISTRATION = {
         "CLIENT_ID": "1826bd7c-582f-4838-880d-5b4da5c3eea2",
         "RESOURCE_ID": "88d2b022-3539-4dda-9e66-853801334a86",
     },
+    "devnortheurope": {
+        "CLIENT_ID": "1826bd7c-582f-4838-880d-5b4da5c3eea2",
+        "RESOURCE_ID": "88d2b022-3539-4dda-9e66-853801334a86",
+    },
     "preview": {
         "CLIENT_ID": "1826bd7c-582f-4838-880d-5b4da5c3eea2",
         "RESOURCE_ID": "88d2b022-3539-4dda-9e66-853801334a86",
