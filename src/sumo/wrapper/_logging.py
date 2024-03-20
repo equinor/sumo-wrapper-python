@@ -20,6 +20,9 @@ class LogHandlerSumo(logging.Handler):
                 "funcname": record.funcName,
                 "linenumber": record.lineno,
             }
+            if "objectUuid" in record.__dict__.keys():
+                json["objectUuid"] = record.__dict__.get("objectUuid")
+
             self._sumoClient.post("/message-log/new", json=json)
         except Exception:
             # Never fail on logging
