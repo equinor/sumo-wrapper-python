@@ -34,6 +34,9 @@ class AuthProvider:
         self._resource_id = resource_id
         self._scope = scope_for_resource(resource_id)
         self._app = None
+        self._login_timeout_minutes = 5
+        os.system("")  # Ensure color init on all platforms (win10)
+
         return
 
     @tn.retry(
@@ -199,25 +202,24 @@ class AuthProviderInteractive(AuthProvider):
     )
     def login(self):
         scopes = [self._scope + " offline_access"]
-        login_timeout_minutes = 7
-        os.system("")  # Ensure color init on all platforms (win10)
         print(
             "\n\n \033[31m NOTE! \033[0m"
             + " Please login to Equinor Azure to enable Sumo access: "
             + "we opened a login web-page for you in your browser."
             + "\nYou should complete your login within "
-            + str(login_timeout_minutes)
+            + str(self._login_timeout_minutes)
             + " minutes, "
             + "that is before "
             + str(
                 (
-                    datetime.now() + timedelta(minutes=login_timeout_minutes)
+                    datetime.now()
+                    + timedelta(minutes=self._login_timeout_minutes)
                 ).strftime("%H:%M:%S")
             )
         )
         try:
             result = self._app.acquire_token_interactive(
-                scopes, timeout=(login_timeout_minutes * 60)
+                scopes, timeout=(self._login_timeout_minutes * 60)
             )
             if "error" in result:
                 print(
@@ -234,7 +236,9 @@ class AuthProviderInteractive(AuthProvider):
             return
 
         protect_token_cache(self._resource_id, ".token")
-        print("Equinor Azure login for Sumo access was successful")
+        print(
+            "Equinor Azure login for Sumo access was successful (interactive)"
+        )
         return
 
     pass
@@ -265,24 +269,56 @@ class AuthProviderDeviceCode(AuthProvider):
         before_sleep=_log_retry_info,
     )
     def login(self):
-        flow = self._app.initiate_device_flow([self._scope])
-
-        if "error" in flow:
-            raise ValueError(
-                "Failed to create device flow. Err: %s"
-                % json.dumps(flow, indent=4)
+        try:
+            scopes = [self._scope + " offline_access"]
+            flow = self._app.initiate_device_flow(scopes)
+            if "error" in flow:
+                print(
+                    "\n\n \033[31m"
+                    + "Failed to initiate device-code login. Err: %s"
+                    + "\033[0m" % json.dumps(flow, indent=4)
+                )
+                return
+            flow["expires_at"] = (
+                int(time.time()) + self._login_timeout_minutes * 60
             )
 
-        print(flow["message"])
-        result = self._app.acquire_token_by_device_flow(flow)
-
-        if "error" in result:
-            raise ValueError(
-                "Failed to acquire token by device flow. Err: %s"
-                % json.dumps(result, indent=4)
+            print(
+                "\033[31m"
+                + " NOTE! Please login to Equinor Azure to enable Sumo access:"
+                + flow["message"]
+                + " \033[0m"
+                + "\nYou should complete your login within"
+                + str(self._login_timeout_minutes)
+                + " minutes,"
+                + "that is before"
+                + str(
+                    (
+                        datetime.now()
+                        + timedelta(minutes=self._login_timeout_minutes)
+                    ).strftime("%H:%M:%S")
+                )
             )
+            result = self._app.acquire_token_by_device_flow(flow)
+
+            if "error" in result:
+                print(
+                    "\n\n \033[31m Error during Equinor Azure login "
+                    "for Sumo access: \033[0m"
+                )
+                print("Err: ", json.dumps(result, indent=4))
+                return
+        except Exception:
+            print(
+                "\n\n \033[31m Failed Equinor Azure login for Sumo access, "
+                "one possible reason is timeout \033[0m"
+            )
+            return
 
         protect_token_cache(self._resource_id, ".token")
+        print(
+            "Equinor Azure login for Sumo access was successful (device-code)"
+        )
 
         return
 

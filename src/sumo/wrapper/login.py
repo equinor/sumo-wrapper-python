@@ -74,7 +74,10 @@ def main():
     if args.print_token:
         print(f"TOKEN: {token}")
 
-    print("Successfully logged in to Sumo environment: " + env)
+    if token is not None:
+        print("Successfully logged in to Sumo environment: " + env)
+    else:
+        print("Failed login to Sumo environment: " + env)
 
 
 if __name__ == "__main__":
