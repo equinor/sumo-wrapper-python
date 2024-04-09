@@ -1,3 +1,5 @@
+import platform
+from pathlib import Path
 import msal
 import os
 from datetime import datetime, timedelta
@@ -414,5 +416,17 @@ def get_auth_provider(
         ]
     ):
         return AuthProviderManaged(resource_id)
+    # ELSE
+    lockfile_path = Path.home() / ".config/chromium/SingletonLock"
+    if Path(lockfile_path).is_symlink() and not str(
+        Path(lockfile_path).resolve()
+    ).__contains__(platform.node()):
+        # https://github.com/equinor/sumo-wrapper-python/issues/193
+        print(
+            "Chromium lockfile points to another host, "
+            f"you should delete {lockfile_path}. "
+            "Falling back to device-code login now"
+        )
+        return AuthProviderDeviceCode(client_id, authority, resource_id)
     # ELSE
     return AuthProviderInteractive(client_id, authority, resource_id)
