@@ -288,16 +288,7 @@ class AuthProviderDeviceCode(AuthProvider):
                 + " NOTE! Please login to Equinor Azure to enable Sumo access:"
                 + flow["message"]
                 + " \033[0m"
-                + "\nYou should complete your login within"
-                + str(self._login_timeout_minutes)
-                + " minutes,"
-                + "that is before"
-                + str(
-                    (
-                        datetime.now()
-                        + timedelta(minutes=self._login_timeout_minutes)
-                    ).strftime("%H:%M:%S")
-                )
+                + "\nYou should complete your login within a few minutes"
             )
             result = self._app.acquire_token_by_device_flow(flow)
 
