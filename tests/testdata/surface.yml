@@ -24,7 +24,10 @@ fmu:
     description:
       - detailed description
       - optional
-
+  
+  context:
+    stage: "realization"
+  
   workflow: # not sure, but a reference to the workflow / job that made this. Making it expandable.
     reference: rms/structural_model
 
