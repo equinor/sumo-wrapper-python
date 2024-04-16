@@ -423,9 +423,10 @@ def get_auth_provider(
     ).__contains__(platform.node()):
         # https://github.com/equinor/sumo-wrapper-python/issues/193
         print(
-            "Chromium lockfile points to another host, "
-            f"you should delete {lockfile_path}. "
-            "Falling back to device-code login now"
+            "We cannot open the Sumo login-webpage for you. \n"
+            "This can happen if you use several RGS-nodes simultaneously.\n"
+            f"If not using several RGS-nodes, consider deleting {lockfile_path}"
+            "\nUsing a fallback Sumo login now:"
         )
         return AuthProviderDeviceCode(client_id, authority, resource_id)
     # ELSE
