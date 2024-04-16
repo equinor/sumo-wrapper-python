@@ -207,7 +207,7 @@ class AuthProviderInteractive(AuthProvider):
         print(
             "\n\n \033[31m NOTE! \033[0m"
             + " Please login to Equinor Azure to enable Sumo access: "
-            + "we opened a login web-page for you in your browser."
+            + "we are opening a login web-page for you in your browser."
             + "\nYou should complete your login within "
             + str(self._login_timeout_minutes)
             + " minutes, "
