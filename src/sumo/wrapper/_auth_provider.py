@@ -207,7 +207,7 @@ class AuthProviderInteractive(AuthProvider):
         print(
             "\n\n \033[31m NOTE! \033[0m"
             + " Please login to Equinor Azure to enable Sumo access: "
-            + "we opened a login web-page for you in your browser."
+            + "we are opening a login web-page for you in your browser."
             + "\nYou should complete your login within "
             + str(self._login_timeout_minutes)
             + " minutes, "
@@ -422,11 +422,6 @@ def get_auth_provider(
         Path(lockfile_path).resolve()
     ).__contains__(platform.node()):
         # https://github.com/equinor/sumo-wrapper-python/issues/193
-        print(
-            "Chromium lockfile points to another host, "
-            f"you should delete {lockfile_path}. "
-            "Falling back to device-code login now"
-        )
         return AuthProviderDeviceCode(client_id, authority, resource_id)
     # ELSE
     return AuthProviderInteractive(client_id, authority, resource_id)
