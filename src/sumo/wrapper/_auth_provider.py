@@ -422,9 +422,6 @@ def get_auth_provider(
         Path(lockfile_path).resolve()
     ).__contains__(platform.node()):
         # https://github.com/equinor/sumo-wrapper-python/issues/193
-        print(
-            "We were not able to open the browser. Using a backup solution."
-        )
         return AuthProviderDeviceCode(client_id, authority, resource_id)
     # ELSE
     return AuthProviderInteractive(client_id, authority, resource_id)
