@@ -1,5 +1,6 @@
 import logging
-
+import platform
+from pathlib import Path
 from argparse import ArgumentParser
 from sumo.wrapper import SumoClient
 
@@ -33,7 +34,7 @@ def get_parser() -> ArgumentParser:
         "--interactive",
         dest="interactive",
         action="store_true",
-        default=False,
+        default=True,
         help="Login interactively",
     )
 
@@ -55,6 +56,15 @@ def get_parser() -> ArgumentParser:
         help="Print access token",
     )
 
+    parser.add_argument(
+        "-s",
+        "--silent",
+        dest="silent",
+        action="store_true",
+        default=False,
+        help="Attempt acquire token silently",
+    )
+
     return parser
 
 
@@ -64,20 +74,39 @@ def main():
     env = args.env
     logger.debug("env is %s", env)
 
-    print("Login to Sumo environment: " + env)
+    if args.silent:
+        args.interactive = False
+        args.devicecode = False
+        args.print_token = False
+    else:
+        print("Login to Sumo environment: " + env)
+
+    if args.interactive:
+        lockfile_path = Path.home() / ".config/chromium/SingletonLock"
+        if Path(lockfile_path).is_symlink() and not str(
+            Path(lockfile_path).resolve()
+        ).__contains__(platform.node()):
+            # https://github.com/equinor/sumo-wrapper-python/issues/193
+            args.interactive = False
+            args.devicecode = True
 
     sumo = SumoClient(
         args.env, interactive=args.interactive, devicecode=args.devicecode
     )
     token = sumo.authenticate()
 
-    if args.print_token:
-        print(f"TOKEN: {token}")
-
-    if token is not None:
-        print("Successfully logged in to Sumo environment: " + env)
+    if args.silent:
+        if token is None:
+            return 1
+        return 0
     else:
-        print("Failed login to Sumo environment: " + env)
+        if args.print_token:
+            print(f"TOKEN: {token}")
+
+        if token is not None:
+            print("Successfully logged in to Sumo environment: " + env)
+        else:
+            print("Failed login to Sumo environment: " + env)
 
 
 if __name__ == "__main__":

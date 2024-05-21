@@ -1,5 +1,3 @@
-import platform
-from pathlib import Path
 import msal
 import os
 from datetime import datetime, timedelta
@@ -69,6 +67,18 @@ class AuthProvider:
         return {"Authorization": "Bearer " + token}
 
     pass
+
+
+class AuthProviderSilent(AuthProvider):
+    def __init__(self, client_id, authority, resource_id):
+        super().__init__(resource_id)
+        cache = get_token_cache(resource_id, ".token")
+        self._app = msal.PublicClientApplication(
+            client_id=client_id, authority=authority, token_cache=cache
+        )
+        self._resource_id = resource_id
+
+        self._scope = scope_for_resource(resource_id)
 
 
 class AuthProviderAccessToken(AuthProvider):
@@ -396,6 +406,11 @@ def get_auth_provider(
     if os.path.exists(get_token_path(resource_id, ".sharedkey")):
         return AuthProviderSumoToken(resource_id)
     # ELSE
+    auth_silent = AuthProviderSilent(client_id, authority, resource_id)
+    token = auth_silent.get_token()
+    if token is not None:
+        return auth_silent
+    # ELSE
     if interactive:
         return AuthProviderInteractive(client_id, authority, resource_id)
     # ELSE
@@ -416,12 +431,3 @@ def get_auth_provider(
         ]
     ):
         return AuthProviderManaged(resource_id)
-    # ELSE
-    lockfile_path = Path.home() / ".config/chromium/SingletonLock"
-    if Path(lockfile_path).is_symlink() and not str(
-        Path(lockfile_path).resolve()
-    ).__contains__(platform.node()):
-        # https://github.com/equinor/sumo-wrapper-python/issues/193
-        return AuthProviderDeviceCode(client_id, authority, resource_id)
-    # ELSE
-    return AuthProviderInteractive(client_id, authority, resource_id)
