@@ -8,6 +8,8 @@ from sumo.wrapper import SumoClient
 logger = logging.getLogger("sumo.wrapper")
 logger.setLevel(level="CRITICAL")
 
+modes = ["interactive", "devicecode", "silent"]
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description="Login to Sumo on azure")
@@ -30,21 +32,12 @@ def get_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
-        "-i",
-        "--interactive",
-        dest="interactive",
-        action="store_true",
-        default=True,
-        help="Login interactively",
-    )
-
-    parser.add_argument(
-        "-d",
-        "--devicecode",
-        dest="devicecode",
-        action="store_true",
-        default=False,
-        help="Login with device-code",
+        "-m",
+        "--mode",
+        dest="mode",
+        action="store",
+        default="interactive",
+        help=f"Valid modes: {', '.join(modes)}",
     )
 
     parser.add_argument(
@@ -56,15 +49,6 @@ def get_parser() -> ArgumentParser:
         help="Print access token",
     )
 
-    parser.add_argument(
-        "-s",
-        "--silent",
-        dest="silent",
-        action="store_true",
-        default=False,
-        help="Attempt acquire token silently",
-    )
-
     return parser
 
 
@@ -72,16 +56,18 @@ def main():
     args = get_parser().parse_args()
     logger.setLevel(level=args.verbosity)
     env = args.env
+    mode = args.mode
+
     logger.debug("env is %s", env)
 
-    if args.silent:
-        args.interactive = False
-        args.devicecode = False
-        args.print_token = False
-    else:
+    if mode not in modes:
+        print(f"Invalid mode: {mode}")
+        return 1
+
+    if mode != "silent":
         print("Login to Sumo environment: " + env)
 
-    if args.interactive:
+    if mode == "interactive":
         lockfile_path = Path.home() / ".config/chromium/SingletonLock"
         if Path(lockfile_path).is_symlink() and not str(
             Path(lockfile_path).resolve()
@@ -91,11 +77,13 @@ def main():
             args.devicecode = True
 
     sumo = SumoClient(
-        args.env, interactive=args.interactive, devicecode=args.devicecode
+        args.env,
+        interactive=mode == "interactive",
+        devicecode=mode == "devicecode",
     )
     token = sumo.authenticate()
 
-    if args.silent:
+    if mode == "silent":
         if token is None:
             return 1
         return 0
