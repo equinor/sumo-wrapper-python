@@ -57,6 +57,8 @@ def main():
     logger.setLevel(level=args.verbosity)
     env = args.env
     mode = args.mode
+    is_interactive = mode == "interactive"
+    is_devicecode = mode == "devicecode"
 
     logger.debug("env is %s", env)
 
@@ -69,17 +71,18 @@ def main():
 
     if mode == "interactive":
         lockfile_path = Path.home() / ".config/chromium/SingletonLock"
+
         if Path(lockfile_path).is_symlink() and not str(
             Path(lockfile_path).resolve()
         ).__contains__(platform.node()):
             # https://github.com/equinor/sumo-wrapper-python/issues/193
-            args.interactive = False
-            args.devicecode = True
+            is_interactive = False
+            is_devicecode = True
 
     sumo = SumoClient(
-        args.env,
-        interactive=mode == "interactive",
-        devicecode=mode == "devicecode",
+        env,
+        interactive=is_interactive,
+        devicecode=is_devicecode,
     )
     token = sumo.authenticate()
 
