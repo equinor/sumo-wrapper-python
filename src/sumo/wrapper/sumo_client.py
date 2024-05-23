@@ -84,27 +84,6 @@ class SumoClient:
             access_token=access_token,
             devicecode=devicecode,
         )
-        if (
-            self.auth.get_token() is None
-            and refresh_token is None
-            and access_token is None
-        ):
-            print("\n \033[31m !!! Falling back to device-code login:\033[0m")
-            self.auth = get_auth_provider(
-                client_id=APP_REGISTRATION[env]["CLIENT_ID"],
-                authority=f"{AUTHORITY_HOST_URI}/{TENANT_ID}",
-                resource_id=APP_REGISTRATION[env]["RESOURCE_ID"],
-                interactive=False,
-                refresh_token=None,
-                access_token=None,
-                devicecode=True,
-            )
-        if self.auth.get_token() is None:
-            print(
-                "\n\n \033[31m "
-                + "NOTE! Login failed/timed out. Giving up."
-                + "\033[0m"
-            )
 
         if env == "localhost":
             self.base_url = "http://localhost:8084/api/v1"
@@ -114,6 +93,8 @@ class SumoClient:
         return
 
     def authenticate(self):
+        if self.auth is None:
+            return None
         return self.auth.get_token()
 
     @property

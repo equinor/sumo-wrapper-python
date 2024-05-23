@@ -12,3 +12,4 @@ build
 /src/testing.py
 /docs/_build
 /src/sumo/wrapper/version.py
+*_version.py
