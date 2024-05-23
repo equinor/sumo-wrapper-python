@@ -86,18 +86,18 @@ def main():
     )
     token = sumo.authenticate()
 
-    if mode == "silent":
-        if token is None:
-            return 1
-        return 0
-    else:
+    if mode != "silent":
         if args.print_token:
-            print(f"TOKEN: {token}")
+            print(token)
 
         if token is not None:
             print("Successfully logged in to Sumo environment: " + env)
         else:
             print("Failed login to Sumo environment: " + env)
+
+    if token is None:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
