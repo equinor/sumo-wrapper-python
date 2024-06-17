@@ -26,7 +26,7 @@ dependencies = [
   "msal-extensions>=1.0.0",
   "pyjwt>=2.4.0",
   "httpx>=0.24.1",
-  "tenacity>=8.2.2",
+  "tenacity>=8.2.2, !=8.4.0",
   "azure-identity>=1.13.0",
 ]
 
