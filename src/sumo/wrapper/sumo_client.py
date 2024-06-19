@@ -49,6 +49,7 @@ class SumoClient:
             raise ValueError(f"Invalid environment: {env}")
 
         self._retry_strategy = retry_strategy
+        self._client = httpx
         self._blob_client = BlobClient(retry_strategy)
 
         access_token = None
@@ -90,6 +91,14 @@ class SumoClient:
         else:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
             pass
+        return
+
+    def __enter__(self):
+        self._client = httpx.Client()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._client.close()
         return
 
     def authenticate(self):
@@ -155,7 +164,7 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         def _get():
-            return httpx.get(
+            return self._client.get(
                 f"{self.base_url}{path}",
                 params=params,
                 headers=headers,
@@ -229,7 +238,7 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         def _post():
-            return httpx.post(
+            return self._client.post(
                 f"{self.base_url}{path}",
                 content=blob,
                 json=json,
@@ -276,7 +285,7 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         def _put():
-            return httpx.put(
+            return self._client.put(
                 f"{self.base_url}{path}",
                 content=blob,
                 json=json,
@@ -315,7 +324,7 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         def _delete():
-            return httpx.delete(
+            return self._client.delete(
                 f"{self.base_url}{path}",
                 headers=headers,
                 params=params,
