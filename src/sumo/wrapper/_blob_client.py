@@ -1,17 +1,16 @@
-import httpx
-
 from ._decorators import (
     raise_for_status,
     raise_for_status_async,
 )
 
-from ._retry_strategy import RetryStrategy
-
 
 class BlobClient:
     """Upload blobs to blob store using pre-authorized URLs"""
 
-    def __init__(self, retry_strategy=RetryStrategy()):
+    def __init__(self, client, async_client, timeout, retry_strategy):
+        self._client = client
+        self._async_client = client
+        self._timeout = timeout
         self._retry_strategy = retry_strategy
         return
 
@@ -30,11 +29,12 @@ class BlobClient:
         }
 
         def _put():
-            return httpx.put(url, content=blob, headers=headers)
+            return self._client.put(url, content=blob, headers=headers, timeout = self._timeout)
 
         retryer = self._retry_strategy.make_retryer()
 
         return retryer(_put)
+
 
     @raise_for_status_async
     async def upload_blob_async(self, blob: bytes, url: str):
@@ -51,8 +51,7 @@ class BlobClient:
         }
 
         async def _put():
-            async with httpx.AsyncClient() as client:
-                return await client.put(url=url, content=blob, headers=headers)
+            return await self._async_client.put(url=url, content=blob, headers=headers, timeout=self._timeout)
 
         retryer = self._retry_strategy.make_retryer_async()
 

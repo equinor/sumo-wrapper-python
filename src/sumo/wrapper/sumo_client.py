@@ -18,7 +18,7 @@ from ._retry_strategy import RetryStrategy
 
 logger = logging.getLogger("sumo.wrapper")
 
-DEFAULT_TIMEOUT = httpx.Timeout(20.0)
+DEFAULT_TIMEOUT = httpx.Timeout(30.0)
 
 
 class SumoClient:
@@ -32,6 +32,7 @@ class SumoClient:
         devicecode: bool = False,
         verbosity: str = "CRITICAL",
         retry_strategy=RetryStrategy(),
+        timeout = DEFAULT_TIMEOUT,
     ):
         """Initialize a new Sumo object
 
@@ -49,8 +50,10 @@ class SumoClient:
             raise ValueError(f"Invalid environment: {env}")
 
         self._retry_strategy = retry_strategy
-        self._client = httpx
-        self._blob_client = BlobClient(retry_strategy)
+        self._client = httpx.Client(follow_redirects=True)
+        self._async_client = httpx.AsyncClient(follow_redirects=True)
+
+        self._timeout = timeout
 
         access_token = None
         refresh_token = None
@@ -94,12 +97,33 @@ class SumoClient:
         return
 
     def __enter__(self):
-        self._client = httpx.Client()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._client.close()
-        return
+        self._client = None
+        self._async_client.close()
+        self._async_client = None
+        return False
+
+    def __aenter__(self):
+        return self
+
+    def __aexit__(self, exc_type, exc_value, traceback):
+        self._client.close()
+        self._client = None
+        self._async_client.close()
+        self._async_client = None
+        return False
+
+    def __del__(self):
+        if self._client is not None:
+            self._client.close()
+            self._client = None
+            pass
+        if self._async_client is not None:
+            self._async_client.close()
+            self._async_client = None
 
     def authenticate(self):
         if self.auth is None:
@@ -126,7 +150,7 @@ class SumoClient:
                 await sumo.blob_client.upload_blob_async(blob, blob_url)
         """
 
-        return self._blob_client
+        return BlobClient(self._client, self._async_client, self._timeout, self._retry_strategy)
 
     @raise_for_status
     def get(self, path: str, params: dict = None) -> dict:
@@ -169,7 +193,7 @@ class SumoClient:
                 params=params,
                 headers=headers,
                 follow_redirects=True,
-                timeout=DEFAULT_TIMEOUT,
+                timeout=self._timeout,
             )
 
         retryer = self._retry_strategy.make_retryer()
@@ -244,7 +268,7 @@ class SumoClient:
                 json=json,
                 headers=headers,
                 params=params,
-                timeout=DEFAULT_TIMEOUT,
+                timeout=self._timeout,
             )
 
         retryer = self._retry_strategy.make_retryer()
@@ -290,7 +314,7 @@ class SumoClient:
                 content=blob,
                 json=json,
                 headers=headers,
-                timeout=DEFAULT_TIMEOUT,
+                timeout=self._timeout,
             )
 
         retryer = self._retry_strategy.make_retryer()
@@ -328,7 +352,7 @@ class SumoClient:
                 f"{self.base_url}{path}",
                 headers=headers,
                 params=params,
-                timeout=DEFAULT_TIMEOUT,
+                timeout=self._timeout,
             )
 
         retryer = self._retry_strategy.make_retryer()
@@ -389,13 +413,12 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         async def _get():
-            async with httpx.AsyncClient(follow_redirects=True) as client:
-                return await client.get(
-                    f"{self.base_url}{path}",
-                    params=params,
-                    headers=headers,
-                    timeout=DEFAULT_TIMEOUT,
-                )
+            return await self._async_client.get(
+                f"{self.base_url}{path}",
+                params=params,
+                headers=headers,
+                timeout=self._timeout,
+            )
 
         retryer = self._retry_strategy.make_retryer_async()
 
@@ -464,15 +487,14 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         async def _post():
-            async with httpx.AsyncClient() as client:
-                return await client.post(
-                    url=f"{self.base_url}{path}",
-                    content=blob,
-                    json=json,
-                    headers=headers,
-                    params=params,
-                    timeout=DEFAULT_TIMEOUT,
-                )
+            return await self._async_client.post(
+                url=f"{self.base_url}{path}",
+                content=blob,
+                json=json,
+                headers=headers,
+                params=params,
+                timeout=self._timeout,
+            )
 
         retryer = self._retry_strategy.make_retryer_async()
 
@@ -512,14 +534,13 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         async def _put():
-            async with httpx.AsyncClient() as client:
-                return await client.put(
-                    url=f"{self.base_url}{path}",
-                    content=blob,
-                    json=json,
-                    headers=headers,
-                    timeout=DEFAULT_TIMEOUT,
-                )
+            return await self._async_client.put(
+                url=f"{self.base_url}{path}",
+                content=blob,
+                json=json,
+                headers=headers,
+                timeout=self._timeout,
+            )
 
         retryer = self._retry_strategy.make_retryer_async()
 
@@ -552,13 +573,12 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         async def _delete():
-            async with httpx.AsyncClient() as client:
-                return await client.delete(
-                    url=f"{self.base_url}{path}",
-                    headers=headers,
-                    params=params,
-                    timeout=DEFAULT_TIMEOUT,
-                )
+            return await self._async_client.delete(
+                url=f"{self.base_url}{path}",
+                headers=headers,
+                params=params,
+                timeout=self._timeout,
+            )
 
         retryer = self._retry_strategy.make_retryer_async()
 
