@@ -1,7 +1,6 @@
 import logging
-
+import asyncio
 import httpx
-
 import jwt
 
 from ._blob_client import BlobClient
@@ -102,17 +101,13 @@ class SumoClient:
     def __exit__(self, exc_type, exc_value, traceback):
         self._client.close()
         self._client = None
-        self._async_client.close()
-        self._async_client = None
         return False
 
-    def __aenter__(self):
+    async def __aenter__(self):
         return self
 
-    def __aexit__(self, exc_type, exc_value, traceback):
-        self._client.close()
-        self._client = None
-        self._async_client.close()
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self._async_client.aclose()
         self._async_client = None
         return False
 
@@ -122,7 +117,10 @@ class SumoClient:
             self._client = None
             pass
         if self._async_client is not None:
-            self._async_client.close()
+            # async def closeit():
+            #     await self._async_client.aclose()
+            #     return
+            # asyncio.run(closeit())
             self._async_client = None
 
     def authenticate(self):
