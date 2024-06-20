@@ -29,12 +29,13 @@ class BlobClient:
         }
 
         def _put():
-            return self._client.put(url, content=blob, headers=headers, timeout = self._timeout)
+            return self._client.put(
+                url, content=blob, headers=headers, timeout=self._timeout
+            )
 
         retryer = self._retry_strategy.make_retryer()
 
         return retryer(_put)
-
 
     @raise_for_status_async
     async def upload_blob_async(self, blob: bytes, url: str):
@@ -51,7 +52,9 @@ class BlobClient:
         }
 
         async def _put():
-            return await self._async_client.put(url=url, content=blob, headers=headers, timeout=self._timeout)
+            return await self._async_client.put(
+                url=url, content=blob, headers=headers, timeout=self._timeout
+            )
 
         retryer = self._retry_strategy.make_retryer_async()
 

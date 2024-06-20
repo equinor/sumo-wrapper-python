@@ -32,7 +32,7 @@ class SumoClient:
         devicecode: bool = False,
         verbosity: str = "CRITICAL",
         retry_strategy=RetryStrategy(),
-        timeout = DEFAULT_TIMEOUT,
+        timeout=DEFAULT_TIMEOUT,
     ):
         """Initialize a new Sumo object
 
@@ -150,7 +150,12 @@ class SumoClient:
                 await sumo.blob_client.upload_blob_async(blob, blob_url)
         """
 
-        return BlobClient(self._client, self._async_client, self._timeout, self._retry_strategy)
+        return BlobClient(
+            self._client,
+            self._async_client,
+            self._timeout,
+            self._retry_strategy,
+        )
 
     @raise_for_status
     def get(self, path: str, params: dict = None) -> dict:
