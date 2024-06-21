@@ -1,3 +1,4 @@
+import sys
 import logging
 import asyncio
 import httpx
@@ -117,11 +118,18 @@ class SumoClient:
             self._client = None
             pass
         if self._async_client is not None:
-            # async def closeit():
-            #     await self._async_client.aclose()
-            #     return
-            # asyncio.run(closeit())
+
+            async def closeit(client):
+                await client.aclose()
+                return
+
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(closeit(self._async_client))
+            except RuntimeError as ex:
+                pass
             self._async_client = None
+            pass
 
     def authenticate(self):
         if self.auth is None:
