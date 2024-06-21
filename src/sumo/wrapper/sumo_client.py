@@ -1,4 +1,3 @@
-import sys
 import logging
 import asyncio
 import httpx
@@ -126,7 +125,7 @@ class SumoClient:
             try:
                 loop = asyncio.get_running_loop()
                 loop.create_task(closeit(self._async_client))
-            except RuntimeError as ex:
+            except RuntimeError:
                 pass
             self._async_client = None
             pass
