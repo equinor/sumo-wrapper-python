@@ -9,7 +9,7 @@ class BlobClient:
 
     def __init__(self, client, async_client, timeout, retry_strategy):
         self._client = client
-        self._async_client = client
+        self._async_client = async_client
         self._timeout = timeout
         self._retry_strategy = retry_strategy
         return
