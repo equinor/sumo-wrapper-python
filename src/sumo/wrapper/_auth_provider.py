@@ -406,10 +406,12 @@ def get_auth_provider(
     if os.path.exists(get_token_path(resource_id, ".sharedkey")):
         return AuthProviderSumoToken(resource_id)
     # ELSE
-    auth_silent = AuthProviderSilent(client_id, authority, resource_id)
-    token = auth_silent.get_token()
-    if token is not None:
-        return auth_silent
+    if os.path.exists(get_token_path(resource_id, ".token")):
+        auth_silent = AuthProviderSilent(client_id, authority, resource_id)
+        token = auth_silent.get_token()
+        if token is not None:
+            return auth_silent
+        pass
     # ELSE
     if interactive:
         return AuthProviderInteractive(client_id, authority, resource_id)
