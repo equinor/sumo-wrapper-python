@@ -383,8 +383,10 @@ class SumoClient:
         """
 
         logger = logging.getLogger(name)
-        handler = LogHandlerSumo(self)
-        logger.addHandler(handler)
+        if len(logger.handlers) == 0:
+            handler = LogHandlerSumo(self)
+            logger.addHandler(handler)
+            pass
         return logger
 
     @raise_for_status_async
