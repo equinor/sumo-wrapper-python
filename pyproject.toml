@@ -33,7 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest", "PyYAML"]
 docs = [
-  "sphinx",
+  "sphinx==7.1.2",
   "sphinx-rtd-theme",
   "autoapi",
   "sphinx-autodoc-typehints",
