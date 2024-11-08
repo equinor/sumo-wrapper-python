@@ -199,8 +199,13 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         follow_redirects = False
-        if re.match(r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
-                    path) is not None:
+        if (
+            re.match(
+                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
+                path,
+            )
+            is not None
+        ):
             follow_redirects = True
 
         def _get():
@@ -431,8 +436,13 @@ class SumoClient:
         headers.update(self.auth.get_authorization())
 
         follow_redirects = False
-        if re.match(r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
-                    path) is not None:
+        if (
+            re.match(
+                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
+                path,
+            )
+            is not None
+        ):
             follow_redirects = True
 
         async def _get():
@@ -440,7 +450,7 @@ class SumoClient:
                 f"{self.base_url}{path}",
                 params=params,
                 headers=headers,
-                follow_redirects = follow_redirects,
+                follow_redirects=follow_redirects,
                 timeout=self._timeout,
             )
 
