@@ -2,6 +2,7 @@ import logging
 import asyncio
 import httpx
 import jwt
+import re
 
 from ._blob_client import BlobClient
 from ._logging import LogHandlerSumo
@@ -49,8 +50,8 @@ class SumoClient:
             raise ValueError(f"Invalid environment: {env}")
 
         self._retry_strategy = retry_strategy
-        self._client = httpx.Client(follow_redirects=True)
-        self._async_client = httpx.AsyncClient(follow_redirects=True)
+        self._client = httpx.Client()
+        self._async_client = httpx.AsyncClient()
 
         self._timeout = timeout
 
@@ -197,12 +198,17 @@ class SumoClient:
 
         headers.update(self.auth.get_authorization())
 
+        follow_redirects = False
+        if re.match(r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
+                    path) is not None:
+            follow_redirects = True
+
         def _get():
             return self._client.get(
                 f"{self.base_url}{path}",
                 params=params,
                 headers=headers,
-                follow_redirects=True,
+                follow_redirects=follow_redirects,
                 timeout=self._timeout,
             )
 
@@ -424,11 +430,17 @@ class SumoClient:
 
         headers.update(self.auth.get_authorization())
 
+        follow_redirects = False
+        if re.match(r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
+                    path) is not None:
+            follow_redirects = True
+
         async def _get():
             return await self._async_client.get(
                 f"{self.base_url}{path}",
                 params=params,
                 headers=headers,
+                follow_redirects = follow_redirects,
                 timeout=self._timeout,
             )
 
