@@ -201,7 +201,7 @@ class SumoClient:
         follow_redirects = False
         if (
             re.match(
-                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
+                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",  # noqa: E501
                 path,
             )
             is not None
@@ -438,7 +438,7 @@ class SumoClient:
         follow_redirects = False
         if (
             re.match(
-                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
+                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",  # noqa: E501
                 path,
             )
             is not None
