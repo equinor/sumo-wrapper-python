@@ -13,3 +13,4 @@ build
 /docs/_build
 /src/sumo/wrapper/version.py
 *_version.py
+.vscode/

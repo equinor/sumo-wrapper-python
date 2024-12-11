@@ -1,5 +1,5 @@
-import tenacity as tn
 import httpx
+import tenacity as tn
 
 
 def _log_retry_info(retry_state):

@@ -1,19 +1,19 @@
-import msal
+import errno
+import json
 import os
-from datetime import datetime, timedelta
 import stat
 import sys
-import json
-import jwt
 import time
-from azure.identity import ManagedIdentityCredential
-import tenacity as tn
-from ._retry_strategy import _log_retry_info, _return_last_value
+from datetime import datetime, timedelta
 
+import jwt
+import msal
+import tenacity as tn
+from azure.identity import ManagedIdentityCredential
 from msal_extensions.persistence import FilePersistence
 from msal_extensions.token_cache import PersistedTokenCache
-import errno
 
+from ._retry_strategy import _log_retry_info, _return_last_value
 
 if not sys.platform.startswith("linux"):
     from msal_extensions import build_encrypted_persistence
@@ -422,14 +422,12 @@ def get_auth_provider(
         return AuthProviderDeviceCode(client_id, authority, resource_id)
     # ELSE
     if all(
-        [
-            os.getenv(x)
-            for x in [
-                "AZURE_FEDERATED_TOKEN_FILE",
-                "AZURE_TENANT_ID",
-                "AZURE_CLIENT_ID",
-                "AZURE_AUTHORITY_HOST",
-            ]
+        os.getenv(x)
+        for x in [
+            "AZURE_FEDERATED_TOKEN_FILE",
+            "AZURE_TENANT_ID",
+            "AZURE_CLIENT_ID",
+            "AZURE_AUTHORITY_HOST",
         ]
     ):
         return AuthProviderManaged(resource_id)
