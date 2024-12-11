@@ -18,16 +18,16 @@ class Connection:
         self.api = SumoClient(env="dev", token=token)
 
 
-def _upload_parent_object(c, json):
-    response = c.api.post("/objects", json=json)
+def _upload_parent_object(conn, json):
+    response = conn.api.post("/objects", json=json)
 
     if not 200 <= response.status_code < 202:
         raise Exception(f"code: {response.status_code}, text: {response.text}")
     return response
 
 
-def _upload_blob(c, blob, url=None, object_id=None):
-    response = c.api.blob_client.upload_blob(blob=blob, url=url)
+def _upload_blob(conn, blob, url=None, object_id=None):
+    response = conn.api.blob_client.upload_blob(blob=blob, url=url)
 
     print("Blob save " + str(response.status_code), flush=True)
     if not 200 <= response.status_code < 202:
@@ -38,8 +38,8 @@ def _upload_blob(c, blob, url=None, object_id=None):
     return response
 
 
-def _get_blob_uri(c, object_id):
-    response = c.api.get(f"/objects('{object_id}')/blob/authuri")
+def _get_blob_uri(conn, object_id):
+    response = conn.api.get(f"/objects('{object_id}')/blob/authuri")
 
     print("Blob save " + str(response.status_code), flush=True)
     if not 200 <= response.status_code < 202:
@@ -50,14 +50,14 @@ def _get_blob_uri(c, object_id):
     return response
 
 
-def _download_object(c, object_id):
-    json = c.api.get(f"/objects('{object_id}')").json()
+def _download_object(conn, object_id):
+    json = conn.api.get(f"/objects('{object_id}')").json()
 
     return json
 
 
-def _upload_child_level_json(c, parent_id, json):
-    response = c.api.post(f"/objects('{parent_id}')", json=json)
+def _upload_child_level_json(conn, parent_id, json):
+    response = conn.api.post(f"/objects('{parent_id}')", json=json)
 
     if not 200 <= response.status_code < 202:
         raise Exception(
@@ -66,8 +66,8 @@ def _upload_child_level_json(c, parent_id, json):
     return response
 
 
-def _delete_object(c, object_id):
-    response = c.api.delete(f"/objects('{object_id}')").json()
+def _delete_object(conn, object_id):
+    response = conn.api.delete(f"/objects('{object_id}')").json()
 
     return response
 
