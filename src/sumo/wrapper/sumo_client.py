@@ -1,20 +1,20 @@
-import logging
 import asyncio
-import httpx
-import jwt
+import contextlib
+import logging
 import re
 
-from ._blob_client import BlobClient
-from ._logging import LogHandlerSumo
-from ._auth_provider import get_auth_provider
-from .config import APP_REGISTRATION, TENANT_ID, AUTHORITY_HOST_URI
+import httpx
+import jwt
 
+from ._auth_provider import get_auth_provider
+from ._blob_client import BlobClient
 from ._decorators import (
     raise_for_status,
     raise_for_status_async,
 )
-
+from ._logging import LogHandlerSumo
 from ._retry_strategy import RetryStrategy
+from .config import APP_REGISTRATION, AUTHORITY_HOST_URI, TENANT_ID
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -61,12 +61,10 @@ class SumoClient:
             logger.debug("Token provided")
 
             payload = None
-            try:
+            with contextlib.suppress(jwt.InvalidTokenError):
                 payload = jwt.decode(
                     token, options={"verify_signature": False}
                 )
-            except jwt.InvalidTokenError:
-                pass
 
             if payload:
                 logger.debug(f"Token decoded as JWT, payload: {payload}")
@@ -380,7 +378,7 @@ class SumoClient:
 
         return retryer(_delete)
 
-    def getLogger(self, name):
+    def get_logger(self, name):
         """Gets a logger object that sends log objects into the message_log
         index for the Sumo instance.
 

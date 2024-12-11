@@ -1,9 +1,9 @@
 import logging
 import platform
-from pathlib import Path
 from argparse import ArgumentParser
-from sumo.wrapper import SumoClient
+from pathlib import Path
 
+from sumo.wrapper import SumoClient
 
 logger = logging.getLogger("sumo.wrapper")
 logger.setLevel(level="CRITICAL")

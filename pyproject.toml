@@ -5,10 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 version_file = "src/sumo/wrapper/_version.py"
 
-
-[tool.black]
-line-length = 79
-
 [project]
 name = "sumo-wrapper-python"
 description = "Python wrapper for the Sumo API"
@@ -39,6 +35,7 @@ docs = [
   "sphinx-autodoc-typehints",
   "sphinxcontrib-apidoc",
 ]
+dev = ["ruff"]
 
 [project.urls]
 Repository = "https://github.com/equinor/sumo-wrapper-python"
@@ -48,3 +45,32 @@ sumo_login = "sumo.wrapper.login:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+exclude = [
+  ".env",
+  ".git",
+  ".github",
+  ".venv",
+  "venv",
+]
+
+line-length = 79
+
+[tool.ruff.lint]
+ignore = [
+  "E501",
+]
+
+extend-select = [
+  "C4",  # Flake8-comprehensions
+  "I",   # isort
+  "SIM", # Flake8-simplify
+  "TC",  # Flake8-type-checking
+  "TID", # Flake8-tidy-imports
+  "N",   # pep8-naming  
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
