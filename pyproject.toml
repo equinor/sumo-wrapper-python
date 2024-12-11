@@ -35,7 +35,7 @@ docs = [
   "sphinx-autodoc-typehints",
   "sphinxcontrib-apidoc",
 ]
-dev = ["ruff"]
+dev = ["ruff", "pre-commit"]
 
 [project.urls]
 Repository = "https://github.com/equinor/sumo-wrapper-python"
