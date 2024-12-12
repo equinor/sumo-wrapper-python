@@ -60,6 +60,7 @@ line-length = 79
 [tool.ruff.lint]
 ignore = [
   "E501",
+  "N802",
 ]
 
 extend-select = [

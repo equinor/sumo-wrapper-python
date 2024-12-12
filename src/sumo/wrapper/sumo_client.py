@@ -378,7 +378,7 @@ class SumoClient:
 
         return retryer(_delete)
 
-    def get_logger(self, name):
+    def getLogger(self, name):
         """Gets a logger object that sends log objects into the message_log
         index for the Sumo instance.
 
