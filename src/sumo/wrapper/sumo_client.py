@@ -33,6 +33,7 @@ class SumoClient:
         verbosity: str = "CRITICAL",
         retry_strategy=RetryStrategy(),
         timeout=DEFAULT_TIMEOUT,
+        case_uuid = None,
     ):
         """Initialize a new Sumo object
 
@@ -85,6 +86,7 @@ class SumoClient:
             refresh_token=refresh_token,
             access_token=access_token,
             devicecode=devicecode,
+            case_uuid = case_uuid,
         )
 
         if env == "localhost":
@@ -397,6 +399,22 @@ class SumoClient:
             logger.addHandler(handler)
             pass
         return logger
+
+    def create_shared_access_key_for_case(self, case_uuid):
+        """Creates and stores a shared access key that can be used to access
+        the case identified by *case_uuid*, in the current Sumo environment.
+
+        This shared access key can then be used by instantiating
+        SumoClient with the parameter case_uuid set accordingly.
+
+        Args:
+            case_uuid: the uuid for a case.
+
+        Side effects:
+            Creates a new file in ~/.sumo, named {app_id}+{case_uuid}
+        """
+        token = self.get(f"/objects('{case_uuid}')/make-shared-access-key").text
+        self.auth.store_shared_access_key_for_case(case_uuid, token)
 
     @raise_for_status_async
     async def get_async(self, path: str, params: dict = None):
