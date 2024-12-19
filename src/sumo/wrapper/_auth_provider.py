@@ -67,8 +67,10 @@ class AuthProvider:
         return {"Authorization": "Bearer " + token}
 
     def store_shared_access_key_for_case(self, case_uuid, token):
-        with open(get_token_path(self._resource_id + "+" + case_uuid,
-                                      ".sharedkey"), "w") as f:
+        with open(
+            get_token_path(self._resource_id + "+" + case_uuid, ".sharedkey"),
+            "w",
+        ) as f:
             f.write(token)
 
     pass
@@ -399,7 +401,7 @@ def get_auth_provider(
     access_token=None,
     refresh_token=None,
     devicecode=False,
-    case_uuid = None,
+    case_uuid=None,
 ):
     if refresh_token:
         return AuthProviderRefreshToken(
@@ -409,7 +411,9 @@ def get_auth_provider(
     if access_token:
         return AuthProviderAccessToken(access_token)
     # ELSE
-    if case_uuid is not None and os.path.exists(get_token_path(resource_id + "+" + case_uuid, ".sharedkey")):
+    if case_uuid is not None and os.path.exists(
+        get_token_path(resource_id + "+" + case_uuid, ".sharedkey")
+    ):
         return AuthProviderSumoToken(resource_id + "+" + case_uuid)
     # ELSE
     if os.path.exists(get_token_path(resource_id, ".sharedkey")):
