@@ -93,7 +93,7 @@ class AuthProviderAccessToken(AuthProvider):
         self._access_token = access_token
         payload = jwt.decode(access_token, options={"verify_signature": False})
         self._expires = payload["exp"]
-        self._resource_id=payload["aud"]
+        self._resource_id = payload["aud"]
         return
 
     def get_token(self):
