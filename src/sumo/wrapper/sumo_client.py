@@ -50,6 +50,8 @@ class SumoClient:
         if env not in APP_REGISTRATION:
             raise ValueError(f"Invalid environment: {env}")
 
+        self.env = env
+
         self._retry_strategy = retry_strategy
         self._client = httpx.Client()
         self._async_client = httpx.AsyncClient()
