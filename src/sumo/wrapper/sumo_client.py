@@ -51,6 +51,7 @@ class SumoClient:
             raise ValueError(f"Invalid environment: {env}")
 
         self.env = env
+        self._verbosity = verbosity
 
         self._retry_strategy = retry_strategy
         self._client = httpx.Client()
@@ -419,6 +420,13 @@ class SumoClient:
             f"/objects('{case_uuid}')/make-shared-access-key"
         ).text
         self.auth.store_shared_access_key_for_case(case_uuid, token)
+
+    def client_for_case(self, case_uuid):
+        """Instantiate and return new SumoClient for accessing the
+        case identified by "case_uuid*."""
+        return SumoClient(env=self.env, verbosity=self._verbosity,
+                          retry_strategy=self._retry_strategy,
+                          timeout=self._timeout, case_uuid=case_uuid)
 
     @raise_for_status_async
     async def get_async(self, path: str, params: dict = None):
