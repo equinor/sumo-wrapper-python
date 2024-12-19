@@ -423,7 +423,7 @@ class SumoClient:
 
     def client_for_case(self, case_uuid):
         """Instantiate and return new SumoClient for accessing the
-        case identified by "case_uuid*."""
+        case identified by *case_uuid*."""
         return SumoClient(
             env=self.env,
             verbosity=self._verbosity,
