@@ -29,6 +29,23 @@ def _maybe_nfs_exception(exception):
     )
 
 
+def get_token_dir():
+    return os.path.join(os.path.expanduser("~"), ".sumo")
+
+
+def get_token_path(resource_id, suffix, case_uuid=None):
+    if case_uuid is not None:
+        return os.path.join(
+            os.path.expanduser("~"),
+            ".sumo",
+            str(resource_id) + "+" + str(case_uuid) + suffix,
+        )
+    else:
+        return os.path.join(
+            os.path.expanduser("~"), ".sumo", str(resource_id) + suffix
+        )
+
+
 class AuthProvider:
     def __init__(self, resource_id):
         self._resource_id = resource_id
@@ -67,11 +84,13 @@ class AuthProvider:
         return {"Authorization": "Bearer " + token}
 
     def store_shared_access_key_for_case(self, case_uuid, token):
+        os.makedirs(get_token_dir(), mode=0o700, exist_ok=True)
         with open(
             get_token_path(self._resource_id, ".sharedkey", case_uuid),
             "w",
         ) as f:
             f.write(token)
+        protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
 
     pass
 
@@ -116,19 +135,6 @@ class AuthProviderRefreshToken(AuthProvider):
         return
 
     pass
-
-
-def get_token_path(resource_id, suffix, case_uuid=None):
-    if case_uuid is not None:
-        return os.path.join(
-            os.path.expanduser("~"),
-            ".sumo",
-            str(resource_id) + "+" + str(case_uuid) + suffix,
-        )
-    else:
-        return os.path.join(
-            os.path.expanduser("~"), ".sumo", str(resource_id) + suffix
-        )
 
 
 @tn.retry(
