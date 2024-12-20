@@ -92,6 +92,11 @@ class AuthProvider:
             f.write(token)
         protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
 
+    def has_case_token(self, case_uuid):
+        return os.path.exists(
+            get_token_path(self._resource_id, ".sharedkey", case_uuid)
+        )
+
     pass
 
 
