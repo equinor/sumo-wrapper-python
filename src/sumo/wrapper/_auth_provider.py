@@ -389,6 +389,7 @@ class AuthProviderSumoToken(AuthProvider):
         before_sleep=_log_retry_info,
     )
     def __init__(self, resource_id, case_uuid=None):
+        super().__init__(resource_id)
         protect_token_cache(resource_id, ".sharedkey", case_uuid)
         token_path = get_token_path(resource_id, ".sharedkey", case_uuid)
         with open(token_path, "r") as f:
