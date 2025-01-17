@@ -31,19 +31,17 @@ def _maybe_nfs_exception(exception):
 
 
 def get_token_dir():
-    return os.path.join(os.path.expanduser("~"), ".sumo")
+    return os.path.expanduser("~/.sumo")
 
 
 def get_token_path(resource_id, suffix, case_uuid=None):
     if case_uuid is not None:
         return os.path.join(
-            os.path.expanduser("~/.sumo"),
+            get_token_dir(),
             str(resource_id) + "+" + str(case_uuid) + suffix,
         )
     else:
-        return os.path.join(
-            os.path.expanduser("~/.sumo"), str(resource_id) + suffix
-        )
+        return os.path.join(get_token_dir(), str(resource_id) + suffix)
 
 
 class AuthProvider:
@@ -94,7 +92,9 @@ class AuthProvider:
         return
 
     def cleanup_shared_keys(self):
-        tokendir = os.path.join(os.path.expanduser("~/.sumo"))
+        tokendir = get_token_dir()
+        if not os.path.exists(tokendir):
+            return
         for f in os.listdir(tokendir):
             ff = os.path.join(tokendir, f)
             if os.path.isfile(ff):
