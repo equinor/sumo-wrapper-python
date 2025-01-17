@@ -92,7 +92,7 @@ class AuthProvider:
             f.write(token)
         protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
         return
-    
+
     def cleanup_shared_keys(self):
         tokendir = os.path.join(os.path.expanduser("~/.sumo"))
         for f in os.listdir(tokendir):
@@ -105,7 +105,9 @@ class AuthProvider:
                             token = file.read()
                             pq = parse_qs(token)
                             se = pq["se"][0]
-                            end = datetime.strptime(se, "%Y-%m-%dT%H:%M:%S.%fZ")
+                            end = datetime.strptime(
+                                se, "%Y-%m-%dT%H:%M:%S.%fZ"
+                            )
                             now = datetime.utcnow()
                             if now > end:
                                 os.unlink(ff)
