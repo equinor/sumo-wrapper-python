@@ -5,6 +5,7 @@ import stat
 import sys
 import time
 from datetime import datetime, timedelta
+from urllib.parse import parse_qs
 
 import jwt
 import msal
@@ -30,20 +31,17 @@ def _maybe_nfs_exception(exception):
 
 
 def get_token_dir():
-    return os.path.join(os.path.expanduser("~"), ".sumo")
+    return os.path.expanduser("~/.sumo")
 
 
 def get_token_path(resource_id, suffix, case_uuid=None):
     if case_uuid is not None:
         return os.path.join(
-            os.path.expanduser("~"),
-            ".sumo",
+            get_token_dir(),
             str(resource_id) + "+" + str(case_uuid) + suffix,
         )
     else:
-        return os.path.join(
-            os.path.expanduser("~"), ".sumo", str(resource_id) + suffix
-        )
+        return os.path.join(get_token_dir(), str(resource_id) + suffix)
 
 
 class AuthProvider:
@@ -91,6 +89,36 @@ class AuthProvider:
         ) as f:
             f.write(token)
         protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
+        return
+
+    def cleanup_shared_keys(self):
+        tokendir = get_token_dir()
+        if not os.path.exists(tokendir):
+            return
+        for f in os.listdir(tokendir):
+            ff = os.path.join(tokendir, f)
+            if os.path.isfile(ff):
+                (name, ext) = os.path.splitext(ff)
+                if ext.lower() == ".sharedkey":
+                    try:
+                        with open(ff, "r") as file:
+                            token = file.read()
+                            pq = parse_qs(token)
+                            se = pq["se"][0]
+                            end = datetime.strptime(
+                                se, "%Y-%m-%dT%H:%M:%S.%fZ"
+                            )
+                            now = datetime.utcnow()
+                            if now > end:
+                                os.unlink(ff)
+                                pass
+                            pass
+                        pass
+                    except Exception:
+                        pass
+                pass
+            pass
+        return
 
     def has_case_token(self, case_uuid):
         return os.path.exists(
