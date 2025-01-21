@@ -92,6 +92,8 @@ class SumoClient:
             case_uuid=case_uuid,
         )
 
+        self.auth.cleanup_shared_keys()
+
         if env == "localhost":
             self.base_url = "http://localhost:8084/api/v1"
         else:
