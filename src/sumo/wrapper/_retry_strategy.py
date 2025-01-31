@@ -30,7 +30,7 @@ def _is_retryable_exception(exception):
 
 # Define the conditions for retrying based on HTTP status codes
 def _is_retryable_status_code(response):
-    return response.status_code in [502, 503, 504]
+    return response.status_code in [502, 503]
 
 
 def _return_last_value(retry_state):
