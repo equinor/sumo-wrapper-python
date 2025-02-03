@@ -34,6 +34,8 @@ class SumoClient:
         retry_strategy=RetryStrategy(),
         timeout=DEFAULT_TIMEOUT,
         case_uuid=None,
+        http_client=None,
+        async_http_client=None,
     ):
         """Initialize a new Sumo object
 
@@ -54,8 +56,19 @@ class SumoClient:
         self._verbosity = verbosity
 
         self._retry_strategy = retry_strategy
-        self._client = httpx.Client()
-        self._async_client = httpx.AsyncClient()
+        if http_client is None:
+            self._client = httpx.Client()
+            self._borrowed_client = False
+        else:
+            self._client = http_client
+            self._borrowed_client = True
+
+        if async_http_client is None:
+            self._async_client = httpx.AsyncClient()
+            self._borrowed_async_client = False
+        else:
+            self._async_client = async_http_client
+            self._borrowed_async_client = True
 
         self._timeout = timeout
 
@@ -105,7 +118,8 @@ class SumoClient:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._client.close()
+        if not self._borrowed_client:
+            self._client.close()
         self._client = None
         return False
 
@@ -113,16 +127,17 @@ class SumoClient:
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self._async_client.aclose()
+        if not self._borrowed_async_client:
+            await self._async_client.aclose()
         self._async_client = None
         return False
 
     def __del__(self):
-        if self._client is not None:
+        if self._client is not None and not self._borrowed_client:
             self._client.close()
-            self._client = None
             pass
-        if self._async_client is not None:
+        self._client = None
+        if self._async_client is not None and not self._borrowed_async_client:
 
             async def closeit(client):
                 await client.aclose()
@@ -133,8 +148,8 @@ class SumoClient:
                 loop.create_task(closeit(self._async_client))
             except RuntimeError:
                 pass
-            self._async_client = None
             pass
+        self._async_client = None
 
     def authenticate(self):
         if self.auth is None:
