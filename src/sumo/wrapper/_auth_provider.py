@@ -4,7 +4,7 @@ import os
 import stat
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs
 
 import jwt
@@ -89,35 +89,6 @@ class AuthProvider:
         ) as f:
             f.write(token)
         protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
-        return
-
-    def cleanup_shared_keys(self):
-        tokendir = get_token_dir()
-        if not os.path.exists(tokendir):
-            return
-        for f in os.listdir(tokendir):
-            ff = os.path.join(tokendir, f)
-            if os.path.isfile(ff):
-                (name, ext) = os.path.splitext(ff)
-                if ext.lower() == ".sharedkey":
-                    try:
-                        with open(ff, "r") as file:
-                            token = file.read()
-                            pq = parse_qs(token)
-                            se = pq["se"][0]
-                            end = datetime.strptime(
-                                se, "%Y-%m-%dT%H:%M:%S.%fZ"
-                            )
-                            now = datetime.utcnow()
-                            if now > end:
-                                os.unlink(ff)
-                                pass
-                            pass
-                        pass
-                    except Exception:
-                        pass
-                pass
-            pass
         return
 
     def has_case_token(self, case_uuid):
@@ -487,3 +458,31 @@ def get_auth_provider(
         ]
     ):
         return AuthProviderManaged(resource_id)
+
+
+def cleanup_shared_keys():
+    tokendir = get_token_dir()
+    if not os.path.exists(tokendir):
+        return
+    for f in os.listdir(tokendir):
+        ff = os.path.join(tokendir, f)
+        if os.path.isfile(ff):
+            (name, ext) = os.path.splitext(ff)
+            if ext.lower() == ".sharedkey":
+                try:
+                    with open(ff, "r") as file:
+                        token = file.read()
+                        pq = parse_qs(token)
+                        se = pq["se"][0]
+                        end = datetime.strptime(se, "%Y-%m-%dT%H:%M:%S.%fZ")
+                        now = datetime.now(timezone.utc)
+                        if now.timestamp() > end.timestamp():
+                            os.unlink(ff)
+                            pass
+                        pass
+                    pass
+                except Exception:
+                    pass
+            pass
+        pass
+    return
