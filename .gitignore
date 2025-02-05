@@ -4,6 +4,7 @@ __pycache__/
 *~
 _venv
 venv
+.venv
 dist
 build
 *.egg-info/

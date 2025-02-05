@@ -6,7 +6,7 @@ import re
 import httpx
 import jwt
 
-from ._auth_provider import get_auth_provider
+from ._auth_provider import cleanup_shared_keys, get_auth_provider
 from ._blob_client import BlobClient
 from ._decorators import (
     raise_for_status,
@@ -94,6 +94,9 @@ class SumoClient:
                 refresh_token = token
                 pass
             pass
+
+        cleanup_shared_keys()
+
         self.auth = get_auth_provider(
             client_id=APP_REGISTRATION[env]["CLIENT_ID"],
             authority=f"{AUTHORITY_HOST_URI}/{TENANT_ID}",
@@ -104,8 +107,6 @@ class SumoClient:
             devicecode=devicecode,
             case_uuid=case_uuid,
         )
-
-        self.auth.cleanup_shared_keys()
 
         if env == "localhost":
             self.base_url = "http://localhost:8084/api/v1"
