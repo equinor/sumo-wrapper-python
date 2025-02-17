@@ -237,3 +237,12 @@ def test_upload_duplicate_ensemble(token):
     # Search for ensemble
     with pytest.raises(Exception):
         assert _download_object(conn, object_id=case_id2)
+
+
+def test_poll(token):
+    conn = SumoClient(env="dev", token=token)
+    res = conn.get("/admin/index/orphans")
+    res2 = conn.poll(res)
+    assert res2.status_code == 200
+    indexorphans = res2.json()
+    assert type(indexorphans) == list
