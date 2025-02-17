@@ -414,7 +414,6 @@ class SumoClient:
         assert retry_after is not None, "Missing header: Retry-After"
         location = location[len(self.base_url) :]
         retry_after = int(retry_after)
-        retry_after = 10
         return location, retry_after
 
     def poll(
