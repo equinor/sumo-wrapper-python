@@ -429,7 +429,7 @@ class SumoClient:
             A new httpx.response object.
         """
         location, retry_after = self._get_retry_details(response_in)
-        expiry = time.time() + expiry if timeout is not None else None
+        expiry = time.time() + timeout if timeout is not None else None
         while True:
             time.sleep(retry_after)
             response = self.get(location)
@@ -725,7 +725,7 @@ class SumoClient:
             A new httpx.response object.
         """
         location, retry_after = self._get_retry_details(response_in)
-        expiry = time.time() + expiry if timeout is not None else None
+        expiry = time.time() + timeout if timeout is not None else None
         while True:
             await asyncio.sleep(retry_after)
             response = await self.get_async(location)
