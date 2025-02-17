@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import logging
 import re
+import time
 
 import httpx
 import jwt
@@ -372,7 +373,7 @@ class SumoClient:
             params: query parameters, as dictionary
 
         Returns:
-            Sumo JSON resposne as a dictionary
+            Sumo JSON response as a dictionary
 
         Examples:
             Deleting object::
@@ -400,6 +401,47 @@ class SumoClient:
         retryer = self._retry_strategy.make_retryer()
 
         return retryer(_delete)
+
+    def _get_retry_details(self, response_in):
+        assert response_in.status_code == 202, (
+            "Incorrect status code; expcted 202"
+        )
+        headers = response_in.headers
+        location = headers.get("location")
+        assert location is not None, "Missing header: Location"
+        assert location.startswith(self.base_url)
+        retry_after = headers.get("retry-after")
+        assert retry_after is not None, "Missing header: Retry-After"
+        location = location[len(self.base_url) :]
+        retry_after = int(retry_after)
+        retry_after = 10
+        return location, retry_after
+
+    def poll(
+        self, response_in: httpx.Response, timeout=None
+    ) -> httpx.Response:
+        """Poll a specific endpoint until a result is obtained.
+
+        Args:
+            response_in: httpx.Response from a previous request, with 'location' and 'retry-after' headers.
+
+        Returns:
+            A new httpx.response object.
+        """
+        location, retry_after = self._get_retry_details(response_in)
+        expiry = time.time() + expiry if timeout is not None else None
+        while True:
+            time.sleep(retry_after)
+            response = self.get(location)
+            if response.status_code != 202:
+                return response
+            if expiry is not None and time.time() > expiry:
+                raise httpx.TimeoutException(
+                    "No response within specified timeout."
+                )
+            location, retry_after = self._get_retry_details(response)
+            pass
+        return None  # should never get here.
 
     def getLogger(self, name):
         """Gets a logger object that sends log objects into the message_log
@@ -642,7 +684,7 @@ class SumoClient:
             params: query parameters, as dictionary
 
         Returns:
-            Sumo JSON resposne as a dictionary
+            Sumo JSON response as a dictionary
 
         Examples:
             Deleting object::
@@ -670,3 +712,29 @@ class SumoClient:
         retryer = self._retry_strategy.make_retryer_async()
 
         return await retryer(_delete)
+
+    async def poll_async(
+        self, response_in: httpx.Response, timeout=None
+    ) -> httpx.Response:
+        """Poll a specific endpoint until a result is obtained.
+
+        Args:
+            response_in: httpx.Response from a previous request, with 'location' and 'retry-after' headers.
+
+        Returns:
+            A new httpx.response object.
+        """
+        location, retry_after = self._get_retry_details(response_in)
+        expiry = time.time() + expiry if timeout is not None else None
+        while True:
+            await asyncio.sleep(retry_after)
+            response = await self.get_async(location)
+            if response.status_code != 202:
+                return response
+            if expiry is not None and time.time() > expiry:
+                raise httpx.TimeoutException(
+                    "No response within specified timeout."
+                )
+            location, retry_after = self._get_retry_details(response)
+            pass
+        return None  # should never get here.
