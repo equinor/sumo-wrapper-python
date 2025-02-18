@@ -112,9 +112,13 @@ def test_upload_search_delete_ensemble_child(token):
 
     fmu_surface_metadata["fmu"]["case"]["uuid"] = case_uuid
 
-    response_surface = _upload_child_level_json(
-        conn=sumo_client, parent_id=case_id, json=fmu_surface_metadata
-    )
+    try:
+        response_surface = _upload_child_level_json(
+            conn=sumo_client, parent_id=case_id, json=fmu_surface_metadata
+        )
+    except Exception as ex:
+        print(ex.response.text)
+        raise ex
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
@@ -237,3 +241,12 @@ def test_upload_duplicate_ensemble(token):
     # Search for ensemble
     with pytest.raises(Exception):
         assert _download_object(conn, object_id=case_id2)
+
+
+def test_poll(token):
+    conn = SumoClient(env="dev", token=token)
+    res = conn.get("/admin/index/orphans")
+    res2 = conn.poll(res)
+    assert res2.status_code == 200
+    indexorphans = res2.json()
+    assert isinstance(indexorphans, list)
