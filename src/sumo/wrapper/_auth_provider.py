@@ -449,7 +449,9 @@ def get_auth_provider(
             Path(lockfile_path).resolve()
         ).__contains__(platform.node()):
             # https://github.com/equinor/sumo-wrapper-python/issues/193
-            print("\n\n\033[1mDetected chromium lockfile for different node; using firefox to authenticate.\033[0m")
+            print(
+                "\n\n\033[1mDetected chromium lockfile for different node; using firefox to authenticate.\033[0m"
+            )
             os.environ["BROWSER"] = "firefox"
             pass
 
