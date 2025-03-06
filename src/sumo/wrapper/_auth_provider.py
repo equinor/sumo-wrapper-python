@@ -1,10 +1,12 @@
 import errno
 import json
 import os
+import platform
 import stat
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from urllib.parse import parse_qs
 
 import jwt
@@ -441,6 +443,16 @@ def get_auth_provider(
         pass
     # ELSE
     if interactive:
+        lockfile_path = Path.home() / ".config/chromium/SingletonLock"
+
+        if Path(lockfile_path).is_symlink() and not str(
+            Path(lockfile_path).resolve()
+        ).__contains__(platform.node()):
+            # https://github.com/equinor/sumo-wrapper-python/issues/193
+            print("\n\n\033[1mDetected chromium lockfile for different node; using firefox to authenticate.\033[0m")
+            os.environ["BROWSER"] = "firefox"
+            pass
+
         return AuthProviderInteractive(client_id, authority, resource_id)
     # ELSE
     if devicecode:
