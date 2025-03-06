@@ -1,7 +1,5 @@
 import logging
-import platform
 from argparse import ArgumentParser
-from pathlib import Path
 
 from sumo.wrapper import SumoClient
 
@@ -68,16 +66,6 @@ def main():
 
     if mode != "silent":
         print("Login to Sumo environment: " + env)
-
-    if mode == "interactive":
-        lockfile_path = Path.home() / ".config/chromium/SingletonLock"
-
-        if Path(lockfile_path).is_symlink() and not str(
-            Path(lockfile_path).resolve()
-        ).__contains__(platform.node()):
-            # https://github.com/equinor/sumo-wrapper-python/issues/193
-            is_interactive = False
-            is_devicecode = True
 
     sumo = SumoClient(
         env,
