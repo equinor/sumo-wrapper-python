@@ -44,7 +44,7 @@ class RetryStrategy:
         self._exp_base = exp_base
         return
 
-    def make_retryer(self):
+    def make_retryer(self) -> tn.Retrying:
         return tn.Retrying(
             stop=tn.stop_after_attempt(self._stop_after),
             retry=(
@@ -63,7 +63,7 @@ class RetryStrategy:
             before_sleep=_log_retry_info,
         )
 
-    def make_retryer_async(self):
+    def make_retryer_async(self) -> tn.AsyncRetrying:
         return tn.AsyncRetrying(
             stop=tn.stop_after_attempt(self._stop_after),
             retry=(
