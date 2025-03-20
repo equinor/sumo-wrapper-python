@@ -3,6 +3,7 @@ import contextlib
 import logging
 import re
 import time
+from typing import Dict, Optional, Tuple
 
 import httpx
 import jwt
@@ -16,8 +17,6 @@ from ._decorators import (
 from ._logging import LogHandlerSumo
 from ._retry_strategy import RetryStrategy
 from .config import APP_REGISTRATION, AUTHORITY_HOST_URI, TENANT_ID
-
-from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger("sumo.wrapper")
 
@@ -500,7 +499,9 @@ class SumoClient:
             return self
 
     @raise_for_status_async
-    async def get_async(self, path: str, params: Optional[dict] = None) -> httpx.Response:
+    async def get_async(
+        self, path: str, params: Optional[dict] = None
+    ) -> httpx.Response:
         """Performs an async GET-request to the Sumo API.
 
         Args:
