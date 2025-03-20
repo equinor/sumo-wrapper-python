@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class LogHandlerSumo(logging.Handler):
@@ -11,8 +11,8 @@ class LogHandlerSumo(logging.Handler):
     def emit(self, record):
         try:
             dt = (
-                datetime.now(datetime.timezone.utc)
-                .replace(microsecond=0)
+                datetime.now(timezone.utc)
+                .replace(microsecond=0, tzinfo=None)
                 .isoformat()
                 + "Z"
             )
