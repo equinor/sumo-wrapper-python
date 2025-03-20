@@ -500,7 +500,7 @@ class SumoClient:
             return self
 
     @raise_for_status_async
-    async def get_async(self, path: str, params: Optional[dict] = None):
+    async def get_async(self, path: str, params: Optional[dict] = None) -> httpx.Response:
         """Performs an async GET-request to the Sumo API.
 
         Args:
@@ -685,7 +685,7 @@ class SumoClient:
     @raise_for_status_async
     async def delete_async(
         self, path: str, params: Optional[dict] = None
-    ) -> dict:
+    ) -> httpx.Response:
         """Performs an async DELETE-request to the Sumo API.
 
         Args:
