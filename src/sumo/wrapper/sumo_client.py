@@ -3,6 +3,7 @@ import contextlib
 import logging
 import re
 import time
+from typing import Dict, Optional, Tuple
 
 import httpx
 import jwt
@@ -25,10 +26,13 @@ DEFAULT_TIMEOUT = httpx.Timeout(30.0)
 class SumoClient:
     """Authenticate and perform requests to the Sumo API."""
 
+    _client: httpx.Client
+    _async_client: httpx.AsyncClient
+
     def __init__(
         self,
         env: str,
-        token: str = None,
+        token: Optional[str] = None,
         interactive: bool = False,
         devicecode: bool = False,
         verbosity: str = "CRITICAL",
@@ -119,26 +123,23 @@ class SumoClient:
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, *_):
         if not self._borrowed_client:
             self._client.close()
-        self._client = None
         return False
 
     async def __aenter__(self):
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, *_):
         if not self._borrowed_async_client:
             await self._async_client.aclose()
-        self._async_client = None
         return False
 
     def __del__(self):
         if self._client is not None and not self._borrowed_client:
             self._client.close()
             pass
-        self._client = None
         if self._async_client is not None and not self._borrowed_async_client:
 
             async def closeit(client):
@@ -151,7 +152,6 @@ class SumoClient:
             except RuntimeError:
                 pass
             pass
-        self._async_client = None
 
     def authenticate(self):
         if self.auth is None:
@@ -186,7 +186,7 @@ class SumoClient:
         )
 
     @raise_for_status
-    def get(self, path: str, params: dict = None) -> dict:
+    def get(self, path: str, params: Optional[Dict] = None) -> httpx.Response:
         """Performs a GET-request to the Sumo API.
 
         Args:
@@ -247,9 +247,9 @@ class SumoClient:
     def post(
         self,
         path: str,
-        blob: bytes = None,
-        json: dict = None,
-        params: dict = None,
+        blob: Optional[bytes] = None,
+        json: Optional[dict] = None,
+        params: Optional[dict] = None,
     ) -> httpx.Response:
         """Performs a POST-request to the Sumo API.
 
@@ -320,7 +320,10 @@ class SumoClient:
 
     @raise_for_status
     def put(
-        self, path: str, blob: bytes = None, json: dict = None
+        self,
+        path: str,
+        blob: Optional[bytes] = None,
+        json: Optional[dict] = None,
     ) -> httpx.Response:
         """Performs a PUT-request to the Sumo API.
 
@@ -365,7 +368,9 @@ class SumoClient:
         return retryer(_put)
 
     @raise_for_status
-    def delete(self, path: str, params: dict = None) -> dict:
+    def delete(
+        self, path: str, params: Optional[dict] = None
+    ) -> httpx.Response:
         """Performs a DELETE-request to the Sumo API.
 
         Args:
@@ -402,12 +407,12 @@ class SumoClient:
 
         return retryer(_delete)
 
-    def _get_retry_details(self, response_in):
+    def _get_retry_details(self, response_in) -> Tuple[str, int]:
         assert response_in.status_code == 202, (
             "Incorrect status code; expcted 202"
         )
         headers = response_in.headers
-        location = headers.get("location")
+        location: str = headers.get("location")
         assert location is not None, "Missing header: Location"
         assert location.startswith(self.base_url)
         retry_after = headers.get("retry-after")
@@ -440,7 +445,6 @@ class SumoClient:
                 )
             location, retry_after = self._get_retry_details(response)
             pass
-        return None  # should never get here.
 
     def getLogger(self, name):
         """Gets a logger object that sends log objects into the message_log
@@ -495,7 +499,9 @@ class SumoClient:
             return self
 
     @raise_for_status_async
-    async def get_async(self, path: str, params: dict = None):
+    async def get_async(
+        self, path: str, params: Optional[dict] = None
+    ) -> httpx.Response:
         """Performs an async GET-request to the Sumo API.
 
         Args:
@@ -556,9 +562,9 @@ class SumoClient:
     async def post_async(
         self,
         path: str,
-        blob: bytes = None,
-        json: dict = None,
-        params: dict = None,
+        blob: Optional[bytes] = None,
+        json: Optional[dict] = None,
+        params: Optional[dict] = None,
     ) -> httpx.Response:
         """Performs an async POST-request to the Sumo API.
 
@@ -630,7 +636,10 @@ class SumoClient:
 
     @raise_for_status_async
     async def put_async(
-        self, path: str, blob: bytes = None, json: dict = None
+        self,
+        path: str,
+        blob: Optional[bytes] = None,
+        json: Optional[dict] = None,
     ) -> httpx.Response:
         """Performs an async PUT-request to the Sumo API.
 
@@ -675,7 +684,9 @@ class SumoClient:
         return await retryer(_put)
 
     @raise_for_status_async
-    async def delete_async(self, path: str, params: dict = None) -> dict:
+    async def delete_async(
+        self, path: str, params: Optional[dict] = None
+    ) -> httpx.Response:
         """Performs an async DELETE-request to the Sumo API.
 
         Args:
@@ -736,4 +747,3 @@ class SumoClient:
                 )
             location, retry_after = self._get_retry_details(response)
             pass
-        return None  # should never get here.

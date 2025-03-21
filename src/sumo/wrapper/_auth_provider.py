@@ -7,6 +7,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Dict
 from urllib.parse import parse_qs
 
 import jwt
@@ -76,10 +77,10 @@ class AuthProvider:
         # ELSE
         return result["access_token"]
 
-    def get_authorization(self):
+    def get_authorization(self) -> Dict:
         token = self.get_token()
         if token is None:
-            return ""
+            return {}
 
         return {"Authorization": "Bearer " + token}
 
@@ -97,6 +98,13 @@ class AuthProvider:
         return os.path.exists(
             get_token_path(self._resource_id, ".sharedkey", case_uuid)
         )
+
+    pass
+
+
+class AuthProviderNone(AuthProvider):
+    def get_token(self):
+        raise Exception("No valid authorization provider found.")
 
     pass
 
@@ -423,7 +431,7 @@ def get_auth_provider(
     refresh_token=None,
     devicecode=False,
     case_uuid=None,
-):
+) -> AuthProvider:
     if refresh_token:
         return AuthProviderRefreshToken(
             refresh_token, client_id, authority, resource_id
@@ -472,6 +480,8 @@ def get_auth_provider(
         ]
     ):
         return AuthProviderManaged(resource_id)
+    # ELSE
+    return AuthProviderNone(resource_id)
 
 
 def cleanup_shared_keys():
@@ -481,7 +491,7 @@ def cleanup_shared_keys():
     for f in os.listdir(tokendir):
         ff = os.path.join(tokendir, f)
         if os.path.isfile(ff):
-            (name, ext) = os.path.splitext(ff)
+            (_, ext) = os.path.splitext(ff)
             if ext.lower() == ".sharedkey":
                 try:
                     with open(ff, "r") as file:
