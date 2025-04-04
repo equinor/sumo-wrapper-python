@@ -443,6 +443,9 @@ def get_auth_provider(
     if os.path.exists(get_token_path(resource_id, ".sharedkey", case_uuid)):
         return AuthProviderSumoToken(resource_id, case_uuid)
     # ELSE
+    if os.path.exists(get_token_path(resource_id, ".sharedkey")):
+        return AuthProviderSumoToken(resource_id)
+    # ELSE
     if os.path.exists(get_token_path(resource_id, ".token")):
         auth_silent = AuthProviderSilent(client_id, authority, resource_id)
         token = auth_silent.get_token()
