@@ -33,7 +33,7 @@ class SumoClient:
         self,
         env: str,
         token: Optional[str] = None,
-        interactive: bool = False,
+        interactive: bool = True,
         devicecode: bool = False,
         verbosity: str = "CRITICAL",
         retry_strategy=RetryStrategy(),
