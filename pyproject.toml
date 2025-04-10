@@ -15,7 +15,7 @@ classifiers = [
   "Programming Language :: Python",
 ]
 authors = [{ name = "Equinor" }]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dynamic = ["version"]
 dependencies = [
   "msal>=1.20.0",
