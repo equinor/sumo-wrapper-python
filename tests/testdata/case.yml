@@ -1,19 +1,19 @@
 # example YAML file for ensembles (a parent object in Sumo)
 
-$schema: https://main-fmu-schemas-dev.radix.equinor.com/schemas/0.8.0/fmu_results.json
-version: "0.8.0" # including for REP and others to build logic on.
-source: fmu  # always included, and always this value if FMU made it. For quick identification for external consumers.
+$schema: https://main-fmu-schemas-dev.radix.equinor.com/schemas/0.12.0/fmu_results.json
+version: "0.12.0" # including for REP and others to build logic on.
+source: fmu # always included, and always this value if FMU made it. For quick identification for external consumers.
 class: case
 fmu:
   case:
     name: TestCase from fmu.sumo
-    uuid: 8bb56d60-8758-481a-89a4-6bac8561d38e # (pseudo-)random valid uuid4xs
+    uuid: 8bb56d60-8758-481a-89a4-6bac8561d38e # (pseudo-)random valid uuid4xs, this is re-generated in tests.
     user:
       id: testuser # $USER from ERT
     description:
       - yet other detailed description
       - optional
-    restart_from: 00000000-0000-0000-0000-000000000000   # fmu.iteration.uuid for another iteration/case
+    restart_from: 00000000-0000-0000-0000-000000000000 # fmu.ensemble.uuid for another ensemble/case
   model:
     name: ff
     revision: 21.0.0.dev
@@ -26,7 +26,7 @@ fmu:
 
 access:
   asset:
-    name: Drogon  # adding level to make room for unique ID in the future
+    name: Drogon # adding level to make room for unique ID in the future
 
 # ensemble objects have no ssdl details
 
