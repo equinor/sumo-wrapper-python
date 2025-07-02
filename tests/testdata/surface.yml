@@ -3,11 +3,11 @@ version: "0.12.0" # including for REP and others to build logic on.
 source: fmu # always included, and always this value if FMU made it. For quick identification for external consumers.
 
 tracklog:
-  - datetime: '2020-10-28T14:28:02'
+  - datetime: '2020-10-28T14:28:02Z'
     user:
       id: testuser
     event: created
-  - datetime: '2020-10-28T14:46:14'
+  - datetime: '2020-10-28T14:46:14Z'
     user: 
       id: testuser
     event: updated
