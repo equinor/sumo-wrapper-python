@@ -33,18 +33,6 @@ def _upload_blob(conn, blob, url=None, object_id=None):
     return response
 
 
-def _get_blob_uri(conn, object_id):
-    response = conn.get(f"/objects('{object_id}')/blob/authuri")
-
-    print("Blob save " + str(response.status_code), flush=True)
-    if not 200 <= response.status_code < 202:
-        raise Exception(
-            f"get blob uri for {object_id}"
-            f" returned {response.text} {response.status_code}"
-        )
-    return response
-
-
 def _download_object(conn, object_id):
     json = conn.get(f"/objects('{object_id}')").json()
 
@@ -65,12 +53,6 @@ def _delete_object(conn, object_id):
     response = conn.delete(f"/objects('{object_id}')").json()
 
     return response
-
-
-class ValueKeeper:
-    """Class for keeping/passing values between tests"""
-
-    pass
 
 
 """ TESTS """
@@ -234,7 +216,7 @@ def test_upload_duplicate_ensemble(token):
     # time-to-live of 60 seconds. If there are multiple replicas
     # running, we might get the situation where we have just deleted
     # the case via one replica, then ask for the object from another
-    # replica which still has it ins cache. Thus, the magic value 61,
+    # replica which still has it in cache. Thus, the magic value 61,
     # below.
     sleep(61)
 
