@@ -231,4 +231,4 @@ def test_poll(token):
     res2 = conn.poll(res)
     assert res2.status_code == 200
     indexorphans = res2.json()
-    assert isinstance(indexorphans, list)
+    assert isinstance(indexorphans["result"], list)
