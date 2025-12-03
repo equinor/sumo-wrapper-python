@@ -113,11 +113,12 @@ class SumoClient:
             case_uuid=case_uuid,
         )
 
-        if env == "localhost":
+        if env == "prod":
+            self.base_url = "https://api.sumo.equinor.com/api/v1"
+        elif env == "localhost":
             self.base_url = "http://localhost:8084/api/v1"
         else:
             self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
-            pass
         return
 
     def __enter__(self):
