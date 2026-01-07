@@ -13,7 +13,7 @@ For usage in the FMU context, the higher-level alternative
 `fmu-sumo <https://fmu-sumo.readthedocs.io>`_ is recommended. 
 
 The Sumo API is described at 
-`https://main-sumo-prod.radix.equinor.com/swagger-ui/ <https://main-sumo-prod.radix.equinor.com/swagger-ui/>`_
+`https://api.sumo.equinor.com/swagger-ui/ <https://api.sumo.equinor.com/swagger-ui/>`_
 
 The data model and schema is described at 
 `https://fmu-dataio.readthedocs.io/en/latest/datamodel.html <https://fmu-dataio.readthedocs.io/en/latest/datamodel.html>`_
@@ -70,7 +70,7 @@ API: GET, PUT, POST and DELETE. In addition a method to get a blob client
 which handles blob contents. 
 
 The methods accepts a path argument.  A path is the path to a 
-Sumo `API <https://main-sumo-prod.radix.equinor.com/swagger-ui/>`_ method, for 
+Sumo `API <https://api.sumo.equinor.com/swagger-ui/>`_ method, for
 example "/search" or "/smda/countries". Path parameters can be added into
 the path string, for example 
 
@@ -80,7 +80,7 @@ the path string, for example
 
 The Sumo API documentation is available from the Swagger button in 
 the Sumo frontend, or you can use this link:
-`https://main-sumo-prod.radix.equinor.com/swagger-ui/ <https://main-sumo-prod.radix.equinor.com/swagger-ui/>`_. 
+`https://api.sumo.equinor.com/swagger-ui/ <https://api.sumo.equinor.com/swagger-ui/>`_.
 
 Async methods
 *************
