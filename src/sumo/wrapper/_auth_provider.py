@@ -432,17 +432,6 @@ def get_auth_provider(
     devicecode=False,
     case_uuid=None,
 ) -> AuthProvider:
-    if all(
-        os.getenv(x)
-        for x in [
-            "AZURE_FEDERATED_TOKEN_FILE",
-            "AZURE_TENANT_ID",
-            "AZURE_CLIENT_ID",
-            "AZURE_AUTHORITY_HOST",
-        ]
-    ):
-        return AuthProviderManaged(resource_id)
-    # ELSE
     if refresh_token:
         return AuthProviderRefreshToken(
             refresh_token, client_id, authority, resource_id
@@ -463,6 +452,17 @@ def get_auth_provider(
         if token is not None:
             return auth_silent
         pass
+    # ELSE
+    if all(
+        os.getenv(x)
+        for x in [
+            "AZURE_FEDERATED_TOKEN_FILE",
+            "AZURE_TENANT_ID",
+            "AZURE_CLIENT_ID",
+            "AZURE_AUTHORITY_HOST",
+        ]
+    ):
+        return AuthProviderManaged(resource_id)
     # ELSE
     if interactive:
         lockfile_path = Path.home() / ".config/chromium/SingletonLock"
