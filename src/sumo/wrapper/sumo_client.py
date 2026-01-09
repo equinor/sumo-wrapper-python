@@ -118,7 +118,9 @@ class SumoClient:
         elif env == "localhost":
             self.base_url = "http://localhost:8084/api/v1"
         else:
-            self.base_url = f"https://main-sumo-{env}.radix.equinor.com/api/v1"
+            self.base_url = (
+                f"https://main-sumo-core-{env}.c3.radix.equinor.com/api/v1"
+            )
         return
 
     def __enter__(self):
