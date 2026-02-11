@@ -100,19 +100,6 @@ class SumoClient:
                 pass
             pass
 
-        cleanup_shared_keys()
-
-        self.auth = get_auth_provider(
-            client_id=APP_REGISTRATION[env]["CLIENT_ID"],
-            authority=f"{AUTHORITY_HOST_URI}/{TENANT_ID}",
-            resource_id=APP_REGISTRATION[env]["RESOURCE_ID"],
-            interactive=interactive,
-            refresh_token=refresh_token,
-            access_token=access_token,
-            devicecode=devicecode,
-            case_uuid=case_uuid,
-        )
-
         if env == "prod":
             self.base_url = "https://api.sumo.equinor.com/api/v1"
         elif env == "localhost":
@@ -121,6 +108,41 @@ class SumoClient:
             self.base_url = (
                 f"https://main-sumo-core-{env}.c3.radix.equinor.com/api/v1"
             )
+        cleanup_shared_keys()
+
+        def _get_auth_provider():
+            return get_auth_provider(
+                client_id=APP_REGISTRATION[env]["CLIENT_ID"],
+                authority=f"{AUTHORITY_HOST_URI}/{TENANT_ID}",
+                resource_id=APP_REGISTRATION[env]["RESOURCE_ID"],
+                interactive=interactive,
+                refresh_token=refresh_token,
+                access_token=access_token,
+                devicecode=devicecode,
+                case_uuid=case_uuid,
+            )
+
+        def _try_setup_auth_provider():
+            self.auth = _get_auth_provider()
+            response = httpx.get(
+                url=self.base_url + "/userpermissions",
+                headers=self.auth.get_authorization(),
+            )
+            if response.is_success:
+                return True, False
+
+            elif response.status_code == 401:
+                return False, self.auth.delete_token()
+
+            else:
+                raise httpx.HTTPStatusError
+
+        ok, retry = _try_setup_auth_provider()
+        if retry:
+            ok, retry = _try_setup_auth_provider()
+            if retry:
+                ok, retry = _try_setup_auth_provider()
+
         return
 
     def __enter__(self):
