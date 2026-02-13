@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import os
 import re
 import time
 from typing import Dict, Optional, Tuple
@@ -16,11 +17,14 @@ from ._decorators import (
 )
 from ._logging import LogHandlerSumo
 from ._retry_strategy import RetryStrategy
-from .config import APP_REGISTRATION, AUTHORITY_HOST_URI, TENANT_ID
 
 logger = logging.getLogger("sumo.wrapper")
 
 DEFAULT_TIMEOUT = httpx.Timeout(30.0)
+
+WELL_KNOWN = os.environ.get(
+    "SUMOCONNECTIONINFO", "https://api.sumo.equinor.com"
+)
 
 
 class SumoClient:
@@ -54,8 +58,16 @@ class SumoClient:
 
         logger.setLevel(verbosity)
 
-        if env not in APP_REGISTRATION:
+        well_known = httpx.get(WELL_KNOWN).json()
+        if env not in well_known["envs"]:
             raise ValueError(f"Invalid environment: {env}")
+
+        tenant_id = well_known["tenant_id"]
+        authority_host = well_known["authority"]
+        config = well_known["envs"][env]
+        client_id = config["client_id"]
+        resource_id = config["resource_id"]
+        base_url = config["base_url"]
 
         self.env = env
         self._verbosity = verbosity
@@ -103,9 +115,9 @@ class SumoClient:
         cleanup_shared_keys()
 
         self.auth = get_auth_provider(
-            client_id=APP_REGISTRATION[env]["CLIENT_ID"],
-            authority=f"{AUTHORITY_HOST_URI}/{TENANT_ID}",
-            resource_id=APP_REGISTRATION[env]["RESOURCE_ID"],
+            client_id=client_id,
+            authority=f"{authority_host}{tenant_id}",
+            resource_id=resource_id,
             interactive=interactive,
             refresh_token=refresh_token,
             access_token=access_token,
@@ -113,14 +125,7 @@ class SumoClient:
             case_uuid=case_uuid,
         )
 
-        if env == "prod":
-            self.base_url = "https://api.sumo.equinor.com/api/v1"
-        elif env == "localhost":
-            self.base_url = "http://localhost:8084/api/v1"
-        else:
-            self.base_url = (
-                f"https://main-sumo-core-{env}.c3.radix.equinor.com/api/v1"
-            )
+        self.base_url = base_url
         return
 
     def __enter__(self):
