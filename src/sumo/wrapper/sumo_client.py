@@ -23,7 +23,7 @@ logger = logging.getLogger("sumo.wrapper")
 DEFAULT_TIMEOUT = httpx.Timeout(30.0)
 
 WELL_KNOWN = os.environ.get(
-    "SUMOCONNECTIONINFO", "https://api.sumo.equinor.com"
+    "SUMOCONNECTIONINFO", "https://api.sumo.equinor.com/well-known"
 )
 
 
