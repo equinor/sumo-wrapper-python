@@ -35,7 +35,7 @@ class SumoClient:
 
     def __init__(
         self,
-        env: str,
+        env: str = "prod",
         token: Optional[str] = None,
         interactive: bool = True,
         devicecode: bool = False,
@@ -65,10 +65,10 @@ class SumoClient:
         tenant_id = well_known["tenant_id"]
         authority_host = well_known["authority"]
         config = well_known["envs"][env]
-        client_id = config["client_id"]
+        config_client_id = config["client_id"]
         resource_id = config["resource_id"]
         base_url = config["base_url"]
-
+        azure_client_id = os.environ.get("AZURE_CLIENT_ID")
         self.env = env
         self._verbosity = verbosity
 
@@ -113,17 +113,36 @@ class SumoClient:
             pass
 
         cleanup_shared_keys()
-
-        self.auth = get_auth_provider(
-            client_id=client_id,
-            authority=f"{authority_host}{tenant_id}",
-            resource_id=resource_id,
-            interactive=interactive,
-            refresh_token=refresh_token,
-            access_token=access_token,
-            devicecode=devicecode,
-            case_uuid=case_uuid,
-        )
+        if azure_client_id:
+            try:
+                self.auth = get_auth_provider(
+                    client_id=azure_client_id,
+                    authority=f"{authority_host}{tenant_id}",
+                    resource_id=resource_id,
+                    interactive=interactive,
+                    refresh_token=refresh_token,
+                    access_token=access_token,
+                    devicecode=devicecode,
+                    case_uuid=case_uuid,
+                )
+                token = self.auth.get_token()
+                if token is None:
+                    raise ValueError(
+                        f"Authentication failed with the provided AZURE_CLIENT_ID: {azure_client_id}"
+                    )
+            except Exception as e:
+                logger.error(f"Authentication failed. Error: {e}")
+        else:
+            self.auth = get_auth_provider(
+                client_id=config_client_id,
+                authority=f"{authority_host}{tenant_id}",
+                resource_id=resource_id,
+                interactive=interactive,
+                refresh_token=refresh_token,
+                access_token=access_token,
+                devicecode=devicecode,
+                case_uuid=case_uuid,
+            )
 
         self.base_url = base_url
         return
