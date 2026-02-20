@@ -35,7 +35,7 @@ class SumoClient:
 
     def __init__(
         self,
-        env: str,
+        env: str = "prod",
         token: Optional[str] = None,
         interactive: bool = True,
         devicecode: bool = False,
@@ -45,15 +45,28 @@ class SumoClient:
         case_uuid=None,
         http_client=None,
         async_http_client=None,
+        client_id: Optional[str] = None,
     ):
         """Initialize a new Sumo object
 
         Args:
-            env: Sumo environment
-            token: Access token or refresh token.
-            interactive: Enable interactive authentication (in browser).
-                If not enabled, code grant flow will be used.
-            verbosity: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            env (str): Sumo environment. Defaults to "prod".
+            token (Optional[str]): Access token or refresh token. Defaults to None.
+            interactive (bool): Enable interactive authentication (in browser).
+                If not enabled, code grant flow will be used. Defaults to True.
+            devicecode (bool): Enable device code flow. Defaults to False.
+            verbosity (str): Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+                Defaults to "CRITICAL".
+            retry_strategy (RetryStrategy): Retry strategy for HTTP requests.
+                Defaults to RetryStrategy().
+            timeout (int): Timeout for HTTP requests. Defaults to DEFAULT_TIMEOUT.
+            case_uuid (Optional[str]): Case UUID for authentication. Defaults to None.
+            http_client (Optional[httpx.Client]): HTTP client for synchronous requests.
+                Defaults to None.
+            async_http_client (Optional[httpx.AsyncClient]): HTTP client for asynchronous requests.
+                Defaults to None.
+            client_id (Optional[str]): Client ID for authentication. If None, will use
+                AZURE_CLIENT_ID from environment variables or the config. Defaults to None.
         """
 
         logger.setLevel(verbosity)
@@ -65,10 +78,13 @@ class SumoClient:
         tenant_id = well_known["tenant_id"]
         authority_host = well_known["authority"]
         config = well_known["envs"][env]
-        client_id = config["client_id"]
         resource_id = config["resource_id"]
         base_url = config["base_url"]
-
+        self.client_id = (
+            client_id
+            or os.environ.get("AZURE_CLIENT_ID")
+            or config["client_id"]
+        )
         self.env = env
         self._verbosity = verbosity
 
@@ -113,9 +129,8 @@ class SumoClient:
             pass
 
         cleanup_shared_keys()
-
         self.auth = get_auth_provider(
-            client_id=client_id,
+            client_id=self.client_id,
             authority=f"{authority_host}{tenant_id}",
             resource_id=resource_id,
             interactive=interactive,
