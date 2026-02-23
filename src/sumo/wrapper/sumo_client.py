@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import os
 import re
 import time
 from typing import Dict, Optional, Tuple
@@ -16,11 +17,14 @@ from ._decorators import (
 )
 from ._logging import LogHandlerSumo
 from ._retry_strategy import RetryStrategy
-from .config import APP_REGISTRATION, AUTHORITY_HOST_URI, TENANT_ID
 
 logger = logging.getLogger("sumo.wrapper")
 
 DEFAULT_TIMEOUT = httpx.Timeout(30.0)
+
+WELL_KNOWN = os.environ.get(
+    "SUMOCONNECTIONINFO", "https://api.sumo.equinor.com/well-known"
+)
 
 
 class SumoClient:
@@ -31,7 +35,7 @@ class SumoClient:
 
     def __init__(
         self,
-        env: str,
+        env: str = "prod",
         token: Optional[str] = None,
         interactive: bool = True,
         devicecode: bool = False,
@@ -41,22 +45,46 @@ class SumoClient:
         case_uuid=None,
         http_client=None,
         async_http_client=None,
+        client_id: Optional[str] = None,
     ):
         """Initialize a new Sumo object
 
         Args:
-            env: Sumo environment
-            token: Access token or refresh token.
-            interactive: Enable interactive authentication (in browser).
-                If not enabled, code grant flow will be used.
-            verbosity: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            env (str): Sumo environment. Defaults to "prod".
+            token (Optional[str]): Access token or refresh token. Defaults to None.
+            interactive (bool): Enable interactive authentication (in browser).
+                If not enabled, code grant flow will be used. Defaults to True.
+            devicecode (bool): Enable device code flow. Defaults to False.
+            verbosity (str): Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+                Defaults to "CRITICAL".
+            retry_strategy (RetryStrategy): Retry strategy for HTTP requests.
+                Defaults to RetryStrategy().
+            timeout (int): Timeout for HTTP requests. Defaults to DEFAULT_TIMEOUT.
+            case_uuid (Optional[str]): Case UUID for authentication. Defaults to None.
+            http_client (Optional[httpx.Client]): HTTP client for synchronous requests.
+                Defaults to None.
+            async_http_client (Optional[httpx.AsyncClient]): HTTP client for asynchronous requests.
+                Defaults to None.
+            client_id (Optional[str]): Client ID for authentication. If None, will use
+                AZURE_CLIENT_ID from environment variables or the config. Defaults to None.
         """
 
         logger.setLevel(verbosity)
 
-        if env not in APP_REGISTRATION:
+        well_known = httpx.get(WELL_KNOWN).json()
+        if env not in well_known["envs"]:
             raise ValueError(f"Invalid environment: {env}")
 
+        tenant_id = well_known["tenant_id"]
+        authority_host = well_known["authority"]
+        config = well_known["envs"][env]
+        resource_id = config["resource_id"]
+        base_url = config["base_url"]
+        self.client_id = (
+            client_id
+            or os.environ.get("AZURE_CLIENT_ID")
+            or config["client_id"]
+        )
         self.env = env
         self._verbosity = verbosity
 
@@ -100,49 +128,19 @@ class SumoClient:
                 pass
             pass
 
-        if env == "prod":
-            self.base_url = "https://api.sumo.equinor.com/api/v1"
-        elif env == "localhost":
-            self.base_url = "http://localhost:8084/api/v1"
-        else:
-            self.base_url = (
-                f"https://main-sumo-core-{env}.c3.radix.equinor.com/api/v1"
-            )
         cleanup_shared_keys()
+        self.auth = get_auth_provider(
+            client_id=self.client_id,
+            authority=f"{authority_host}{tenant_id}",
+            resource_id=resource_id,
+            interactive=interactive,
+            refresh_token=refresh_token,
+            access_token=access_token,
+            devicecode=devicecode,
+            case_uuid=case_uuid,
+        )
 
-        def _get_auth_provider():
-            return get_auth_provider(
-                client_id=APP_REGISTRATION[env]["CLIENT_ID"],
-                authority=f"{AUTHORITY_HOST_URI}/{TENANT_ID}",
-                resource_id=APP_REGISTRATION[env]["RESOURCE_ID"],
-                interactive=interactive,
-                refresh_token=refresh_token,
-                access_token=access_token,
-                devicecode=devicecode,
-                case_uuid=case_uuid,
-            )
-
-        def _try_setup_auth_provider():
-            self.auth = _get_auth_provider()
-            response = httpx.get(
-                url=self.base_url + "/userpermissions",
-                headers=self.auth.get_authorization(),
-            )
-            if response.is_success:
-                return True, False
-
-            elif response.status_code == 401:
-                return False, self.auth.delete_token()
-
-            else:
-                raise httpx.HTTPStatusError
-
-        ok, retry = _try_setup_auth_provider()
-        if retry:
-            ok, retry = _try_setup_auth_provider()
-            if retry:
-                ok, retry = _try_setup_auth_provider()
-
+        self.base_url = base_url
         return
 
     def __enter__(self):
