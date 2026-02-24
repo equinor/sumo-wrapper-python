@@ -1,5 +1,6 @@
 # For sphinx:
 from functools import wraps
+
 from sumo.wrapper._auth_provider import AuthProviderSumoToken
 
 
