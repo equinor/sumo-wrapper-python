@@ -210,13 +210,10 @@ class SumoClient:
 
     def _handle_invalid_shared_key(self):
         """Handle the invalid shared key by deleting it."""
-        self.auth.delete_token()
-        logger.error(
-            "Invalid shared key detected and deleted, run again to reset automatically"
-        )
-        print(
-            "Invalid shared key detected and deleted, run again to reset automatically"
-        )
+        if self.auth.delete_token():
+            print(
+                "Invalid shared key detected and deleted, run again to reset automatically"
+            )
 
     @raise_for_status
     def get(self, path: str, params: Optional[Dict] = None) -> httpx.Response:
