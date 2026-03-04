@@ -4,11 +4,13 @@ from functools import wraps
 
 def raise_for_status(func):
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(self, *args, **kwargs):
         # FIXME: in newer versions of httpx, raise_for_status() is chainable,
         # so we could simply write
         # return func(*args, **kwargs).raise_for_status()
-        response = func(*args, **kwargs)
+        response = func(self, *args, **kwargs)
+        if response.status_code == 401:
+            self._handle_invalid_shared_key()
         response.raise_for_status()
         return response
 
@@ -17,11 +19,13 @@ def raise_for_status(func):
 
 def raise_for_status_async(func):
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(self, *args, **kwargs):
         # FIXME: in newer versions of httpx, raise_for_status() is chainable,
         # so we could simply write
         # return func(*args, **kwargs).raise_for_status()
-        response = await func(*args, **kwargs)
+        response = await func(self, *args, **kwargs)
+        if response.status_code == 401:
+            self._handle_invalid_shared_key()
         response.raise_for_status()
         return response
 

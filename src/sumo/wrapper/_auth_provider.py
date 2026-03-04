@@ -99,6 +99,9 @@ class AuthProvider:
             get_token_path(self._resource_id, ".sharedkey", case_uuid)
         )
 
+    def delete_token(self):
+        return False
+
     pass
 
 
@@ -400,9 +403,10 @@ class AuthProviderSumoToken(AuthProvider):
     def __init__(self, resource_id, case_uuid=None):
         super().__init__(resource_id)
         protect_token_cache(resource_id, ".sharedkey", case_uuid)
-        token_path = get_token_path(resource_id, ".sharedkey", case_uuid)
-        with open(token_path, "r") as f:
+        self.token_path = get_token_path(resource_id, ".sharedkey", case_uuid)
+        with open(self.token_path, "r") as f:
             self._token = f.readline().strip()
+
         return
 
     def get_token(self):
@@ -410,6 +414,11 @@ class AuthProviderSumoToken(AuthProvider):
 
     def get_authorization(self):
         return {"X-SUMO-Token": self._token}
+
+    def delete_token(self):
+        if os.path.exists(self.token_path):
+            os.unlink(self.token_path)
+        return True
 
 
 @tn.retry(
