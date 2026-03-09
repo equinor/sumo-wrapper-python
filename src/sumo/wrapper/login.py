@@ -8,6 +8,8 @@ logger.setLevel(level="CRITICAL")
 
 modes = ["interactive", "devicecode", "silent"]
 
+fmu_sumo_uploader_client_id = "a65dc4cc-3dec-43df-9599-e66d3abc4dca"
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description="Login to Sumo on azure")
@@ -47,6 +49,16 @@ def get_parser() -> ArgumentParser:
         help="Print access token",
     )
 
+    parser.add_argument(
+        "-u",
+        "--uploader",
+        dest="client_id",
+        action="store_const",
+        const=fmu_sumo_uploader_client_id,
+        default=None,
+        help="Use fmu-sumo-uploader client registration",
+    )
+
     return parser
 
 
@@ -54,6 +66,7 @@ def main():
     args = get_parser().parse_args()
     logger.setLevel(level=args.verbosity)
     env = args.env
+    client_id = args.client_id
     mode = args.mode
     is_interactive = mode == "interactive"
     is_devicecode = mode == "devicecode"
@@ -71,6 +84,7 @@ def main():
         env,
         interactive=is_interactive,
         devicecode=is_devicecode,
+        client_id=client_id,
     )
     token = sumo.authenticate()
 
