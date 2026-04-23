@@ -325,8 +325,8 @@ class AuthProviderDeviceCode(AuthProvider):
             if "error" in flow:
                 print(
                     "\n\n \033[31m"
-                    + "Failed to initiate device-code login. Err: %s"
-                    + "\033[0m" % json.dumps(flow, indent=4)
+                    + "Failed to initiate device-code login. Err: %s\033[0m"
+                    % json.dumps(flow, indent=4)
                 )
                 return
             flow["expires_at"] = (
