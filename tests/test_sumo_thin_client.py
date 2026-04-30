@@ -50,8 +50,7 @@ def _upload_child_level_json(conn, parent_id, json):
 
 
 def _delete_object(conn, object_id):
-    response = conn.delete(f"/objects('{object_id}')").json()
-
+    response = conn.delete(f"/objects('{object_id}')")
     return response
 
 
@@ -144,7 +143,7 @@ def test_upload_search_delete_ensemble_child(token):
 
     # Delete Ensemble
     result = _delete_object(conn=sumo_client, object_id=case_id)
-    assert result == "Accepted"
+    assert result.text == "Accepted."
 
     sleep(40)
 
@@ -210,7 +209,7 @@ def test_upload_duplicate_ensemble(token):
     # Delete Ensemble
     sleep(5)
     result = _delete_object(conn=conn, object_id=case_id1)
-    assert result == "Accepted"
+    assert result.text == "Accepted."
 
     # Ugly: sumo-core has a cache for case objects, which has a
     # time-to-live of 60 seconds. If there are multiple replicas
