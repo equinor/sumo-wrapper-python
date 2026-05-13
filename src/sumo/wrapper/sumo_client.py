@@ -26,6 +26,8 @@ WELL_KNOWN = os.environ.get(
     "SUMOCONNECTIONINFO", "https://api.sumo.equinor.com/well-known"
 )
 
+well_known = None
+
 
 class SumoClient:
     """Authenticate and perform requests to the Sumo API."""
@@ -70,8 +72,9 @@ class SumoClient:
         """
 
         logger.setLevel(verbosity)
-
-        well_known = httpx.get(WELL_KNOWN).json()
+        global well_known
+        if well_known is None:
+            well_known = httpx.get(WELL_KNOWN).json()
         if env not in well_known["envs"]:
             raise ValueError(f"Invalid environment: {env}")
 
