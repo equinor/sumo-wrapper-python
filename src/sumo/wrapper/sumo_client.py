@@ -522,7 +522,7 @@ class SumoClient:
         ).text
         self.auth.store_shared_access_key_for_case(case_uuid, token)
 
-    def client_for_case(self, case_uuid):
+    def client_for_case(self, case_uuid, interactive=False):
         """Instantiate and return new SumoClient for accessing the
         case identified by *case_uuid*."""
         if self.auth.has_case_token(case_uuid):
@@ -532,6 +532,7 @@ class SumoClient:
                 retry_strategy=self._retry_strategy,
                 timeout=self._timeout,
                 case_uuid=case_uuid,
+                interactive=interactive,
             )
         else:
             return self
