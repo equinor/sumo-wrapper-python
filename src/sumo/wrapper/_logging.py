@@ -28,6 +28,9 @@ class LogHandlerSumo(logging.Handler):
             if "objectUuid" in record.__dict__:
                 json["objectUuid"] = record.__dict__.get("objectUuid")
 
+            if "details" in record.__dict__:
+                json["details"] = record.__dict__.get("details")
+
             self._sumoClient.post("/message-log/new", json=json)
         except Exception:
             # Never fail on logging
