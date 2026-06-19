@@ -38,10 +38,17 @@ def _return_last_value(retry_state):
 
 
 class RetryStrategy:
-    def __init__(self, stop_after=6, multiplier=0.5, exp_base=2):
+    def __init__(
+        self,
+        stop_after=6,
+        multiplier=0.5,
+        exp_base=2,
+        before_sleep=_log_retry_info,
+    ):
         self._stop_after = stop_after
         self._multiplier = multiplier
         self._exp_base = exp_base
+        self._before_sleep = before_sleep
         return
 
     def make_retryer(self) -> tn.Retrying:
@@ -60,7 +67,7 @@ class RetryStrategy:
                 )
             ),
             retry_error_callback=_return_last_value,
-            before_sleep=_log_retry_info,
+            before_sleep=self._before_sleep,
         )
 
     def make_retryer_async(self) -> tn.AsyncRetrying:
@@ -79,5 +86,5 @@ class RetryStrategy:
                 )
             ),
             retry_error_callback=_return_last_value,
-            before_sleep=_log_retry_info,
+            before_sleep=self._before_sleep,
         )
