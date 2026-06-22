@@ -219,7 +219,12 @@ class SumoClient:
             )
 
     @raise_for_status
-    def get(self, path: str, params: Optional[Dict] = None) -> httpx.Response:
+    def get(
+        self,
+        path: str,
+        params: Optional[Dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
+    ) -> httpx.Response:
         """Performs a GET-request to the Sumo API.
 
         Args:
@@ -277,8 +282,9 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer()
-
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer()
         return retryer(_get)
 
     @raise_for_status
@@ -288,6 +294,7 @@ class SumoClient:
         blob: Optional[bytes] = None,
         json: Optional[dict] = None,
         params: Optional[dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Performs a POST-request to the Sumo API.
 
@@ -352,7 +359,9 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer()
 
         return retryer(_post)
 
@@ -362,6 +371,7 @@ class SumoClient:
         path: str,
         blob: Optional[bytes] = None,
         json: Optional[dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Performs a PUT-request to the Sumo API.
 
@@ -401,13 +411,18 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer()
 
         return retryer(_put)
 
     @raise_for_status
     def delete(
-        self, path: str, params: Optional[dict] = None
+        self,
+        path: str,
+        params: Optional[dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Performs a DELETE-request to the Sumo API.
 
@@ -441,7 +456,9 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer()
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer()
 
         return retryer(_delete)
 
@@ -460,7 +477,10 @@ class SumoClient:
         return location, retry_after
 
     def poll(
-        self, response_in: httpx.Response, timeout=None
+        self,
+        response_in: httpx.Response,
+        timeout=None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Poll a specific endpoint until a result is obtained.
 
@@ -474,7 +494,7 @@ class SumoClient:
         expiry = time.time() + timeout if timeout is not None else None
         while True:
             time.sleep(retry_after)
-            response = self.get(location)
+            response = self.get(location, retry_strategy=retry_strategy)
             if response.status_code != 202:
                 return response
             if expiry is not None and time.time() > expiry:
@@ -539,7 +559,10 @@ class SumoClient:
 
     @raise_for_status_async
     async def get_async(
-        self, path: str, params: Optional[dict] = None
+        self,
+        path: str,
+        params: Optional[dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Performs an async GET-request to the Sumo API.
 
@@ -598,7 +621,9 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer_async()
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer_async()
 
         return await retryer(_get)
 
@@ -609,6 +634,7 @@ class SumoClient:
         blob: Optional[bytes] = None,
         json: Optional[dict] = None,
         params: Optional[dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Performs an async POST-request to the Sumo API.
 
@@ -674,7 +700,9 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer_async()
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer_async()
 
         return await retryer(_post)
 
@@ -684,6 +712,7 @@ class SumoClient:
         path: str,
         blob: Optional[bytes] = None,
         json: Optional[dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Performs an async PUT-request to the Sumo API.
 
@@ -723,13 +752,18 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer_async()
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer_async()
 
         return await retryer(_put)
 
     @raise_for_status_async
     async def delete_async(
-        self, path: str, params: Optional[dict] = None
+        self,
+        path: str,
+        params: Optional[dict] = None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Performs an async DELETE-request to the Sumo API.
 
@@ -763,12 +797,17 @@ class SumoClient:
                 timeout=self._timeout,
             )
 
-        retryer = self._retry_strategy.make_retryer_async()
+        retryer = (
+            retry_strategy if retry_strategy else self._retry_strategy
+        ).make_retryer_async()
 
         return await retryer(_delete)
 
     async def poll_async(
-        self, response_in: httpx.Response, timeout=None
+        self,
+        response_in: httpx.Response,
+        timeout=None,
+        retry_strategy: Optional[RetryStrategy] = None,
     ) -> httpx.Response:
         """Poll a specific endpoint until a result is obtained.
 
@@ -782,7 +821,9 @@ class SumoClient:
         expiry = time.time() + timeout if timeout is not None else None
         while True:
             await asyncio.sleep(retry_after)
-            response = await self.get_async(location)
+            response = await self.get_async(
+                location, retry_strategy=retry_strategy
+            )
             if response.status_code != 202:
                 return response
             if expiry is not None and time.time() > expiry:
