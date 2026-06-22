@@ -15,10 +15,10 @@ For usage in the FMU context, the higher-level alternative
 The Sumo API is described at 
 `https://api.sumo.equinor.com/swagger-ui/ <https://api.sumo.equinor.com/swagger-ui/>`_
 
-The data model and schema is described at 
-`https://fmu-dataio.readthedocs.io/en/latest/datamodel.html <https://fmu-dataio.readthedocs.io/en/latest/datamodel.html>`_
+The data model and schema is described at
+`https://fmu-dataio.readthedocs.io/en/latest/datamodel/index.html <https://fmu-dataio.readthedocs.io/en/latest/datamodel/index.html>`
 
-Information on Sumo can be found `here <https://doc-sumo-doc-prod.radix.equinor.com/>`_
+Information on Sumo can be found `here <https://fmu-docs.equinor.com/docs/sumo/>`_
 
 Preconditions
 *************
