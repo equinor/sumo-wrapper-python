@@ -54,7 +54,6 @@ class AuthProvider:
         self._login_timeout_minutes = 5
         os.system("")  # Ensure color init on all platforms (win10)
 
-
     @tn.retry(
         retry=tn.retry_if_exception(_maybe_nfs_exception),
         stop=tn.stop_after_attempt(6),
@@ -100,11 +99,9 @@ class AuthProvider:
         return False
 
 
-
 class AuthProviderNone(AuthProvider):
     def get_token(self):
         raise Exception("No valid authorization provider found.")
-
 
 
 class AuthProviderSilent(AuthProvider):
@@ -133,7 +130,6 @@ class AuthProviderAccessToken(AuthProvider):
         return self._access_token
 
 
-
 class AuthProviderRefreshToken(AuthProvider):
     def __init__(self, refresh_token, client_id, authority, resource_id):
         super().__init__(resource_id)
@@ -142,7 +138,6 @@ class AuthProviderRefreshToken(AuthProvider):
         )
         self._scope = scope_for_resource(resource_id)
         self._app.acquire_token_by_refresh_token(refresh_token, [self._scope])
-
 
 
 @tn.retry(
@@ -244,7 +239,7 @@ class AuthProviderInteractive(AuthProvider):
             + "that is before "
             + str(
                 (
-                    datetime.now()
+                    datetime.now().astimezone()
                     + timedelta(minutes=self._login_timeout_minutes)
                 ).strftime("%H:%M:%S")
             )
@@ -272,7 +267,6 @@ class AuthProviderInteractive(AuthProvider):
             "Equinor Azure login for Sumo access was successful (interactive)"
         )
         return
-
 
 
 class AuthProviderDeviceCode(AuthProvider):
@@ -303,9 +297,10 @@ class AuthProviderDeviceCode(AuthProvider):
             flow = self._app.initiate_device_flow(scopes)
             if "error" in flow:
                 print(
-                    "\n\n \033[31m"
-                    + "Failed to initiate device-code login. Err: %s\033[0m"
-                    % json.dumps(flow, indent=4)
+                    (
+                        "\n\n \033[31m"
+                        + "Failed to initiate device-code login. Err: {}\033[0m"
+                    ).format(json.dumps(flow, indent=4))
                 )
                 return
             flow["expires_at"] = (
@@ -343,7 +338,6 @@ class AuthProviderDeviceCode(AuthProvider):
         return
 
 
-
 class AuthProviderManaged(AuthProvider):
     def __init__(self, resource_id):
         super().__init__(resource_id)
@@ -364,7 +358,6 @@ class AuthProviderManaged(AuthProvider):
         return self._app.get_token(self._scope).token
 
 
-
 class AuthProviderSumoToken(AuthProvider):
     @tn.retry(
         retry=tn.retry_if_exception(_maybe_nfs_exception),
@@ -382,7 +375,6 @@ class AuthProviderSumoToken(AuthProvider):
         self.token_path = get_token_path(resource_id, ".sharedkey", case_uuid)
         with open(self.token_path, "r") as f:
             self._token = f.readline().strip()
-
 
     def get_token(self):
         return self._token
@@ -483,10 +475,10 @@ def cleanup_shared_keys():
                         token = file.read()
                         pq = parse_qs(token)
                         se = pq["se"][0]
-                        end = datetime.strptime(se, "%Y-%m-%dT%H:%M:%S.%fZ")
+                        end = datetime.fromisoformat(se)
                         now = datetime.now(UTC)
                         if now.timestamp() > end.timestamp():
                             os.unlink(ff)
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
     return

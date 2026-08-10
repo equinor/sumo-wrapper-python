@@ -41,7 +41,7 @@ class SumoClient:
         interactive: bool = True,
         devicecode: bool = False,
         verbosity: str = "CRITICAL",
-        retry_strategy=RetryStrategy(),
+        retry_strategy=None,
         timeout=DEFAULT_TIMEOUT,
         case_uuid=None,
         http_client=None,
@@ -70,6 +70,8 @@ class SumoClient:
                 AZURE_CLIENT_ID from environment variables or the config. Defaults to None.
         """
 
+        if retry_strategy is None:
+            retry_strategy = RetryStrategy()
         logger.setLevel(verbosity)
         global well_known
         if well_known is None:

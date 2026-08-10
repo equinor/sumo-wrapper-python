@@ -31,8 +31,6 @@ class LogHandlerSumo(logging.Handler):
                 json["details"] = record.__dict__.get("details")
 
             self._sumoClient.post("/message-log/new", json=json)
-        except Exception:
+        except Exception:  # noqa: S110
             # Never fail on logging
             pass
-
-
