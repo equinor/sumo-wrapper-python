@@ -10,7 +10,7 @@ import yaml
 
 sys.path.append(os.path.abspath(os.path.join("src")))
 
-from sumo.wrapper import SumoClient  # noqa: E402
+from sumo.wrapper import SumoClient
 
 
 def _upload_parent_object(conn, json):

@@ -1,17 +1,16 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 class LogHandlerSumo(logging.Handler):
     def __init__(self, sumo_client):
         logging.Handler.__init__(self)
         self._sumoClient = sumo_client
-        return
 
     def emit(self, record):
         try:
             dt = (
-                datetime.now(timezone.utc)
+                datetime.now(UTC)
                 .replace(microsecond=0, tzinfo=None)
                 .isoformat()
                 + "Z"
@@ -36,6 +35,4 @@ class LogHandlerSumo(logging.Handler):
             # Never fail on logging
             pass
 
-        return
 
-    pass

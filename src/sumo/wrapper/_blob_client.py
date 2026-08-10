@@ -12,7 +12,6 @@ class BlobClient:
         self._async_client = async_client
         self._timeout = timeout
         self._retry_strategy = retry_strategy
-        return
 
     @raise_for_status
     def upload_blob(self, blob: bytes, url: str):
