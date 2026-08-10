@@ -7,6 +7,7 @@ from time import sleep
 
 import pytest
 import yaml
+from httpx import HTTPStatusError
 
 sys.path.append(os.path.abspath(os.path.join("src")))
 
@@ -169,10 +170,8 @@ def test_fail_on_wrong_metadata(token):
     Upload a parent object with erroneous metadata, confirm failure
     """
     conn = SumoClient(env="dev", token=token)
-    with pytest.raises(AssertionError):
-        assert _upload_parent_object(
-            conn=conn, json={"some field": "some value"}
-        )
+    with pytest.raises(HTTPStatusError):
+        _upload_parent_object(conn=conn, json={"some field": "some value"})
 
 
 def test_upload_duplicate_ensemble(token):
@@ -220,8 +219,8 @@ def test_upload_duplicate_ensemble(token):
     sleep(61)
 
     # Search for ensemble
-    with pytest.raises(AssertionError):
-        assert _download_object(conn, object_id=case_id2)
+    with pytest.raises(HTTPStatusError):
+        _download_object(conn, object_id=case_id2)
 
 
 def test_poll(token):
