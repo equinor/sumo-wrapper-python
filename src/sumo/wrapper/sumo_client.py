@@ -74,7 +74,12 @@ class SumoClient:
         logger.setLevel(verbosity)
         global well_known
         if well_known is None:
-            well_known = httpx.get(WELL_KNOWN).json()
+
+            def _get():
+                return httpx.get(WELL_KNOWN, timeout=timeout)
+
+            retryer = retry_strategy.make_retryer()
+            well_known = retryer(_get).json()
         if env not in well_known["envs"]:
             raise ValueError(f"Invalid environment: {env}")
 
