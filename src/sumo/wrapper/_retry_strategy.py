@@ -12,7 +12,6 @@ def _log_retry_info(retry_state):
         f"Attempts: {retry_state.attempt_number}; "
         f"Elapsed:  {retry_state.seconds_since_start}"
     )
-    return
 
 
 # Define the conditions for retrying based on exception types
@@ -49,7 +48,6 @@ class RetryStrategy:
         self._multiplier = multiplier
         self._exp_base = exp_base
         self._before_sleep = before_sleep
-        return
 
     def make_retryer(self) -> tn.Retrying:
         return tn.Retrying(

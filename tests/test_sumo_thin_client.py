@@ -7,10 +7,11 @@ from time import sleep
 
 import pytest
 import yaml
+from httpx import HTTPStatusError
 
 sys.path.append(os.path.abspath(os.path.join("src")))
 
-from sumo.wrapper import SumoClient  # noqa: E402
+from sumo.wrapper import SumoClient
 
 
 def _upload_parent_object(conn, json):
@@ -99,7 +100,7 @@ def test_upload_search_delete_ensemble_child(token):
         )
     except Exception as ex:
         print(ex.response.text)
-        raise ex
+        raise
 
     assert 200 <= response_surface.status_code <= 202
     assert isinstance(response_surface.json(), dict)
@@ -169,10 +170,8 @@ def test_fail_on_wrong_metadata(token):
     Upload a parent object with erroneous metadata, confirm failure
     """
     conn = SumoClient(env="dev", token=token)
-    with pytest.raises(Exception):
-        assert _upload_parent_object(
-            conn=conn, json={"some field": "some value"}
-        )
+    with pytest.raises(HTTPStatusError):
+        _upload_parent_object(conn=conn, json={"some field": "some value"})
 
 
 def test_upload_duplicate_ensemble(token):
@@ -220,8 +219,8 @@ def test_upload_duplicate_ensemble(token):
     sleep(61)
 
     # Search for ensemble
-    with pytest.raises(Exception):
-        assert _download_object(conn, object_id=case_id2)
+    with pytest.raises(HTTPStatusError):
+        _download_object(conn, object_id=case_id2)
 
 
 def test_poll(token):

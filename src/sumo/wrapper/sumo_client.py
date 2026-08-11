@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import time
-from typing import Dict, Optional, Tuple
 
 import httpx
 import jwt
@@ -38,16 +37,16 @@ class SumoClient:
     def __init__(
         self,
         env: str = "prod",
-        token: Optional[str] = None,
+        token: str | None = None,
         interactive: bool = True,
         devicecode: bool = False,
         verbosity: str = "CRITICAL",
-        retry_strategy=RetryStrategy(),
+        retry_strategy=None,
         timeout=DEFAULT_TIMEOUT,
         case_uuid=None,
         http_client=None,
         async_http_client=None,
-        client_id: Optional[str] = None,
+        client_id: str | None = None,
     ):
         """Initialize a new Sumo object
 
@@ -71,10 +70,17 @@ class SumoClient:
                 AZURE_CLIENT_ID from environment variables or the config. Defaults to None.
         """
 
+        if retry_strategy is None:
+            retry_strategy = RetryStrategy()
         logger.setLevel(verbosity)
         global well_known
         if well_known is None:
-            well_known = httpx.get(WELL_KNOWN).json()
+
+            def _get():
+                return httpx.get(WELL_KNOWN, timeout=timeout)
+
+            retryer = retry_strategy.make_retryer()
+            well_known = retryer(_get).json()
         if env not in well_known["envs"]:
             raise ValueError(f"Invalid environment: {env}")
 
@@ -128,8 +134,6 @@ class SumoClient:
                     "treating it as a refresh token"
                 )
                 refresh_token = token
-                pass
-            pass
 
         cleanup_shared_keys()
         self.auth = get_auth_provider(
@@ -144,7 +148,6 @@ class SumoClient:
         )
 
         self.base_url = base_url
-        return
 
     def __enter__(self):
         return self
@@ -165,19 +168,16 @@ class SumoClient:
     def __del__(self):
         if self._client is not None and not self._borrowed_client:
             self._client.close()
-            pass
         if self._async_client is not None and not self._borrowed_async_client:
 
             async def closeit(client):
                 await client.aclose()
-                return
 
             try:
                 loop = asyncio.get_running_loop()
                 loop.create_task(closeit(self._async_client))
             except RuntimeError:
                 pass
-            pass
 
     def authenticate(self):
         if self.auth is None:
@@ -222,8 +222,8 @@ class SumoClient:
     def get(
         self,
         path: str,
-        params: Optional[Dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        params: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs a GET-request to the Sumo API.
 
@@ -261,12 +261,12 @@ class SumoClient:
         follow_redirects = False
         if (
             re.match(
-                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",  # noqa: E501
+                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
                 path,
             )
             is not None
             or re.match(
-                r"^/tasks\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/result$",  # noqa: E501
+                r"^/tasks\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/result$",
                 path,
             )
             is not None
@@ -291,10 +291,10 @@ class SumoClient:
     def post(
         self,
         path: str,
-        blob: Optional[bytes] = None,
-        json: Optional[dict] = None,
-        params: Optional[dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        blob: bytes | None = None,
+        json: dict | None = None,
+        params: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs a POST-request to the Sumo API.
 
@@ -369,9 +369,9 @@ class SumoClient:
     def put(
         self,
         path: str,
-        blob: Optional[bytes] = None,
-        json: Optional[dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        blob: bytes | None = None,
+        json: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs a PUT-request to the Sumo API.
 
@@ -421,8 +421,8 @@ class SumoClient:
     def delete(
         self,
         path: str,
-        params: Optional[dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        params: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs a DELETE-request to the Sumo API.
 
@@ -462,7 +462,7 @@ class SumoClient:
 
         return retryer(_delete)
 
-    def _get_retry_details(self, response_in) -> Tuple[str, int]:
+    def _get_retry_details(self, response_in) -> tuple[str, int]:
         assert response_in.status_code == 202, (
             "Incorrect status code; expcted 202"
         )
@@ -480,7 +480,7 @@ class SumoClient:
         self,
         response_in: httpx.Response,
         timeout=None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Poll a specific endpoint until a result is obtained.
 
@@ -502,7 +502,6 @@ class SumoClient:
                     "No response within specified timeout."
                 )
             location, retry_after = self._get_retry_details(response)
-            pass
 
     def getLogger(self, name):
         """Gets a logger object that sends log objects into the message_log
@@ -521,7 +520,6 @@ class SumoClient:
         if len(logger.handlers) == 0:
             handler = LogHandlerSumo(self)
             logger.addHandler(handler)
-            pass
         return logger
 
     def create_shared_access_key_for_case(self, case_uuid):
@@ -561,8 +559,8 @@ class SumoClient:
     async def get_async(
         self,
         path: str,
-        params: Optional[dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        params: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs an async GET-request to the Sumo API.
 
@@ -600,12 +598,12 @@ class SumoClient:
         follow_redirects = False
         if (
             re.match(
-                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",  # noqa: E501
+                r"^/objects\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/blob$",
                 path,
             )
             is not None
             or re.match(
-                r"^/tasks\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/result$",  # noqa: E501
+                r"^/tasks\('[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}'\)/result$",
                 path,
             )
             is not None
@@ -631,10 +629,10 @@ class SumoClient:
     async def post_async(
         self,
         path: str,
-        blob: Optional[bytes] = None,
-        json: Optional[dict] = None,
-        params: Optional[dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        blob: bytes | None = None,
+        json: dict | None = None,
+        params: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs an async POST-request to the Sumo API.
 
@@ -710,9 +708,9 @@ class SumoClient:
     async def put_async(
         self,
         path: str,
-        blob: Optional[bytes] = None,
-        json: Optional[dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        blob: bytes | None = None,
+        json: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs an async PUT-request to the Sumo API.
 
@@ -762,8 +760,8 @@ class SumoClient:
     async def delete_async(
         self,
         path: str,
-        params: Optional[dict] = None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        params: dict | None = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Performs an async DELETE-request to the Sumo API.
 
@@ -807,7 +805,7 @@ class SumoClient:
         self,
         response_in: httpx.Response,
         timeout=None,
-        retry_strategy: Optional[RetryStrategy] = None,
+        retry_strategy: RetryStrategy | None = None,
     ) -> httpx.Response:
         """Poll a specific endpoint until a result is obtained.
 
@@ -831,4 +829,3 @@ class SumoClient:
                     "No response within specified timeout."
                 )
             location, retry_after = self._get_retry_details(response)
-            pass

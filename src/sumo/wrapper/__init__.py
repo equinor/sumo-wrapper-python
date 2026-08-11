@@ -8,4 +8,4 @@ try:
 except ImportError:
     __version__ = "0.0.0"
 
-__all__ = ["SumoClient", "RetryStrategy"]
+__all__ = ["RetryStrategy", "SumoClient"]

@@ -5,9 +5,8 @@ import platform
 import stat
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Dict
 from urllib.parse import parse_qs
 
 import jwt
@@ -55,8 +54,6 @@ class AuthProvider:
         self._login_timeout_minutes = 5
         os.system("")  # Ensure color init on all platforms (win10)
 
-        return
-
     @tn.retry(
         retry=tn.retry_if_exception(_maybe_nfs_exception),
         stop=tn.stop_after_attempt(6),
@@ -77,7 +74,7 @@ class AuthProvider:
         # ELSE
         return result["access_token"]
 
-    def get_authorization(self) -> Dict:
+    def get_authorization(self) -> dict:
         token = self.get_token()
         if token is None:
             return {}
@@ -92,7 +89,6 @@ class AuthProvider:
         ) as f:
             f.write(token)
         protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
-        return
 
     def has_case_token(self, case_uuid):
         return os.path.exists(
@@ -102,14 +98,10 @@ class AuthProvider:
     def delete_token(self):
         return False
 
-    pass
-
 
 class AuthProviderNone(AuthProvider):
     def get_token(self):
         raise Exception("No valid authorization provider found.")
-
-    pass
 
 
 class AuthProviderSilent(AuthProvider):
@@ -130,15 +122,12 @@ class AuthProviderAccessToken(AuthProvider):
         payload = jwt.decode(access_token, options={"verify_signature": False})
         self._expires = payload["exp"]
         self._resource_id = payload["aud"]
-        return
 
     def get_token(self):
         if time.time() >= self._expires:
             raise ValueError("Access token has expired.")
         # ELSE
         return self._access_token
-
-    pass
 
 
 class AuthProviderRefreshToken(AuthProvider):
@@ -149,9 +138,6 @@ class AuthProviderRefreshToken(AuthProvider):
         )
         self._scope = scope_for_resource(resource_id)
         self._app.acquire_token_by_refresh_token(refresh_token, [self._scope])
-        return
-
-    pass
 
 
 @tn.retry(
@@ -186,14 +172,10 @@ def get_token_cache(resource_id, suffix):
                 token = FilePersistence(token_path).load()
                 with open(token_path, "w") as f:
                     f.truncate()
-                    pass
                 encrypted_persistence.save(token)
-                pass
-            pass
 
         persistence = build_encrypted_persistence(token_path)
         cache = PersistedTokenCache(persistence)
-        pass
     return cache
 
 
@@ -218,10 +200,7 @@ def protect_token_cache(resource_id, suffix, case_uuid=None):
             foldermode = stat.filemode(os.stat(folder).st_mode)
             if foldermode != "drwx------":
                 os.chmod(os.path.dirname(token_path), 0o700)
-                pass
-            pass
         return
-    pass
 
 
 class AuthProviderInteractive(AuthProvider):
@@ -237,8 +216,6 @@ class AuthProviderInteractive(AuthProvider):
 
         if self.get_token() is None:
             self.login()
-            pass
-        return
 
     @tn.retry(
         retry=tn.retry_if_exception(_maybe_nfs_exception),
@@ -262,7 +239,7 @@ class AuthProviderInteractive(AuthProvider):
             + "that is before "
             + str(
                 (
-                    datetime.now()
+                    datetime.now().astimezone()
                     + timedelta(minutes=self._login_timeout_minutes)
                 ).strftime("%H:%M:%S")
             )
@@ -291,8 +268,6 @@ class AuthProviderInteractive(AuthProvider):
         )
         return
 
-    pass
-
 
 class AuthProviderDeviceCode(AuthProvider):
     def __init__(self, client_id, authority, resource_id):
@@ -305,8 +280,6 @@ class AuthProviderDeviceCode(AuthProvider):
         self._scope = scope_for_resource(resource_id)
         if self.get_token() is None:
             self.login()
-            pass
-        return
 
     @tn.retry(
         retry=tn.retry_if_exception(_maybe_nfs_exception),
@@ -324,9 +297,10 @@ class AuthProviderDeviceCode(AuthProvider):
             flow = self._app.initiate_device_flow(scopes)
             if "error" in flow:
                 print(
-                    "\n\n \033[31m"
-                    + "Failed to initiate device-code login. Err: %s\033[0m"
-                    % json.dumps(flow, indent=4)
+                    (
+                        "\n\n \033[31m"
+                        + "Failed to initiate device-code login. Err: {}\033[0m"
+                    ).format(json.dumps(flow, indent=4))
                 )
                 return
             flow["expires_at"] = (
@@ -363,15 +337,12 @@ class AuthProviderDeviceCode(AuthProvider):
 
         return
 
-    pass
-
 
 class AuthProviderManaged(AuthProvider):
     def __init__(self, resource_id):
         super().__init__(resource_id)
         self._app = ManagedIdentityCredential()
         self._scope = scope_for_resource(resource_id)
-        return
 
     @tn.retry(
         retry=tn.retry_if_exception(_maybe_nfs_exception),
@@ -385,8 +356,6 @@ class AuthProviderManaged(AuthProvider):
     )
     def get_token(self):
         return self._app.get_token(self._scope).token
-
-    pass
 
 
 class AuthProviderSumoToken(AuthProvider):
@@ -406,8 +375,6 @@ class AuthProviderSumoToken(AuthProvider):
         self.token_path = get_token_path(resource_id, ".sharedkey", case_uuid)
         with open(self.token_path, "r") as f:
             self._token = f.readline().strip()
-
-        return
 
     def get_token(self):
         return self._token
@@ -460,7 +427,6 @@ def get_auth_provider(
         token = auth_silent.get_token()
         if token is not None:
             return auth_silent
-        pass
     # ELSE
     if all(
         os.getenv(x)
@@ -484,7 +450,6 @@ def get_auth_provider(
                 "\n\n\033[1mDetected chromium lockfile for different node; using firefox to authenticate.\033[0m"
             )
             os.environ["BROWSER"] = "firefox"
-            pass
 
         return AuthProviderInteractive(client_id, authority, resource_id)
     # ELSE
@@ -510,15 +475,10 @@ def cleanup_shared_keys():
                         token = file.read()
                         pq = parse_qs(token)
                         se = pq["se"][0]
-                        end = datetime.strptime(se, "%Y-%m-%dT%H:%M:%S.%fZ")
-                        now = datetime.now(timezone.utc)
+                        end = datetime.fromisoformat(se)
+                        now = datetime.now(UTC)
                         if now.timestamp() > end.timestamp():
                             os.unlink(ff)
-                            pass
-                        pass
+                except Exception:  # noqa: S110
                     pass
-                except Exception:
-                    pass
-            pass
-        pass
     return
