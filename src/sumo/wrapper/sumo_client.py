@@ -149,6 +149,12 @@ class SumoClient:
 
         self.base_url = base_url
 
+        sync_client = self._client
+        if sync_client is None:
+            self._client = httpx.Client()
+        self.auth.store_fallback_auth(self)
+        self._client = sync_client
+
     def __enter__(self):
         return self
 
