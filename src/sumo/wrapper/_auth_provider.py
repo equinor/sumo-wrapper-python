@@ -90,6 +90,9 @@ class AuthProvider:
             f.write(token)
         protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
 
+    def store_fallback_auth(self, sumo_client):
+        return
+
     def has_case_token(self, case_uuid):
         return os.path.exists(
             get_token_path(self._resource_id, ".sharedkey", case_uuid)
@@ -114,6 +117,10 @@ class AuthProviderSilent(AuthProvider):
         self._resource_id = resource_id
 
         self._scope = scope_for_resource(resource_id)
+
+    def store_fallback_auth(self, sumo_client):
+        token = sumo_client.get("/createfallbackauth").text
+        self.store_shared_access_key_for_case("fallback", token)
 
 
 class AuthProviderAccessToken(AuthProvider):
@@ -267,6 +274,10 @@ class AuthProviderInteractive(AuthProvider):
             "Equinor Azure login for Sumo access was successful (interactive)"
         )
         return
+
+    def store_fallback_auth(self, sumo_client):
+        token = sumo_client.get("/createfallbackauth").text
+        self.store_shared_access_key_for_case("fallback", token)
 
 
 class AuthProviderDeviceCode(AuthProvider):
@@ -451,12 +462,15 @@ def get_auth_provider(
             )
             os.environ["BROWSER"] = "firefox"
 
-        return AuthProviderInteractive(client_id, authority, resource_id)
+        auth_interactive = AuthProviderInteractive(
+            client_id, authority, resource_id
+        )
+        token = auth_interactive.get_token()
+        if token is not None:
+            return auth_interactive
     # ELSE
-    if devicecode:
-        # Potential issues with device-code
-        # under Equinor compliant device policy
-        return AuthProviderDeviceCode(client_id, authority, resource_id)
+    if os.path.exists(get_token_path(resource_id, ".sharedkey", "fallback")):
+        return AuthProviderSumoToken(resource_id, "fallback")
     # ELSE
     return AuthProviderNone(resource_id)
 
