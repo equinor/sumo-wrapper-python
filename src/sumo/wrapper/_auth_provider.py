@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import parse_qs
 
+import httpx
 import jwt
 import msal
 import tenacity as tn
@@ -90,6 +91,14 @@ class AuthProvider:
             f.write(token)
         protect_token_cache(self._resource_id, ".sharedkey", case_uuid)
 
+    def _store_fallback_auth(self, sumo_client):
+        sync_client = sumo_client._client
+        if sync_client is None:
+            sumo_client._client = httpx.Client()
+        token = sumo_client.get("/createfallbackauth").text
+        self.store_shared_access_key_for_case("fallback", token)
+        sumo_client._client = sync_client
+
     def store_fallback_auth(self, sumo_client):
         return
 
@@ -119,8 +128,7 @@ class AuthProviderSilent(AuthProvider):
         self._scope = scope_for_resource(resource_id)
 
     def store_fallback_auth(self, sumo_client):
-        token = sumo_client.get("/createfallbackauth").text
-        self.store_shared_access_key_for_case("fallback", token)
+        self._store_fallback_auth(sumo_client)
 
 
 class AuthProviderAccessToken(AuthProvider):
@@ -276,8 +284,7 @@ class AuthProviderInteractive(AuthProvider):
         return
 
     def store_fallback_auth(self, sumo_client):
-        token = sumo_client.get("/createfallbackauth").text
-        self.store_shared_access_key_for_case("fallback", token)
+        self._store_fallback_auth(sumo_client)
 
 
 class AuthProviderDeviceCode(AuthProvider):
