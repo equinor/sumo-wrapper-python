@@ -188,6 +188,11 @@ class SumoClient:
             return None
         return self.auth.get_token()
 
+    def invalidate_access_tokens(self):
+        if self.auth is None:
+            return None
+        return self.auth.invalidate_access_tokens()
+
     @property
     def blob_client(self) -> BlobClient:
         """Get blob_client
