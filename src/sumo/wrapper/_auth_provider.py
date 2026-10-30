@@ -89,7 +89,11 @@ class AuthProvider:
         if self._app is not None:
             assert isinstance(self._app, msal.PublicClientApplication)
             assert isinstance(self._app.token_cache, PersistedTokenCache)
-            access_tokens = list(self._app.token_cache.search(self._app.token_cache.CredentialType.ACCESS_TOKEN))
+            access_tokens = list(
+                self._app.token_cache.search(
+                    self._app.token_cache.CredentialType.ACCESS_TOKEN
+                )
+            )
             for access_token in access_tokens:
                 self._app.token_cache.remove_at(access_token)
 
