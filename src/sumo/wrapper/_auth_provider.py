@@ -82,6 +82,14 @@ class AuthProvider:
 
         return {"Authorization": "Bearer " + token}
 
+    def invalidate_access_tokens(self):
+        if self._app is not None:
+            assert isinstance(self._app, msal.PublicClientApplication)
+            assert isinstance(self._app.token_cache, PersistedTokenCache)
+            access_tokens = list(self._app.token_cache.search(self._app.token_cache.CredentialType.ACCESS_TOKEN))
+            for access_token in access_tokens:
+                self._app.token_cache.remove_at(access_token)
+
     def store_shared_access_key_for_case(self, case_uuid, token):
         os.makedirs(get_token_dir(), mode=0o700, exist_ok=True)
         with open(
