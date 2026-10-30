@@ -65,7 +65,10 @@ class AuthProvider:
         retry_error_callback=_return_last_value,
         before_sleep=_log_retry_info,
     )
-    def get_token(self):
+    def get_token(self) -> str | None:
+        if self._app is None:
+            return None
+        assert isinstance(self._app, msal.PublicClientApplication)
         accounts = self._app.get_accounts()
         if len(accounts) == 0:
             return None
